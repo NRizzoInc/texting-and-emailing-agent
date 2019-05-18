@@ -1,0 +1,28 @@
+{
+    "royere":
+    {
+        "tyler":
+        {
+            "email": "teroyere@gmail.com",
+            "phone_number": "516-330-9038", 
+            "carrier": "verizon"
+        }
+    },
+
+    "rizzo":
+    {
+        "matt":
+        {
+            "email": "mattnick55@gmail.com",
+            "phone_number": "516-650-1270", 
+            "carrier": "verizon"
+        },
+
+        "nick":
+        {
+            "email": "nickmike555@gmail.com",
+            "phone_number": "516-662-9045",             
+            "carrier": "verizon"            
+        }
+    }
+}

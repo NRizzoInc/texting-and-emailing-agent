@@ -9,9 +9,14 @@ path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 
 class email_sender():
     def __init__(self):
-        path_to_contact_list = os.path.join(path_to_this_dir, "contacts.json")
-        self.contact_list = self.load_json(path_to_contact_list)
+
+        self.path_to_contact_list = os.path.join(path_to_this_dir, "contacts.json")
+        self.contact_list = self.load_json()
+        print("The current contact list is:\n")
         pprint.pprint(self.contact_list)
+
+    def send_email(self):
+        pass
 
 
     def get_contact_info(self, my_first_name, my_last_name):
@@ -61,10 +66,54 @@ class email_sender():
 
         return dict_to_return
 
-    def load_json(self, path_to_json_file):
-        with open(path_to_json_file, 'r+') as read_file:
+    def load_json(self, path_to_json=None):
+        if path_to_json == None:
+            path_to_json = self.path_to_contact_list
+
+        with open(path_to_json, 'r+') as read_file:
             data = json.load(read_file)
         return data
+    
+    def add_contacts_to_contacts_list(self, first_name, last_name, email, carrier, phone_num):
+        '''
+            This function is responsible for adding another contact to the contact list
+            Args:\n
+                first_name: first name of the person being added
+                last_name: last name of the person being added
+                email: email of the person being added
+                carrier: carrier of the person being added
+                phone_num: phone number of the person being added
+        '''
+        
+        # Regardless of where the data gets added, it should be the same 
+        common_data_dict = {
+            'email': email,
+            'carrier': carrier,
+            'phone_number': phone_num
+        }
+
+        # store existing contact list so it can be modified
+        new_contact_list = self.contact_list
+
+        # check to see if the person's last name already exists.
+        # If so just modify it instead  of creating an entirely new last name section
+        if last_name in new_contact_list.keys():
+            new_contact_list[last_name][first_name] = common_data_dict
+        
+        # If last name doesnt exist in contact list yet, then add it
+        else:
+            new_contact_list[last_name] = {}
+            new_contact_list[last_name][first_name] = common_data_dict
+
+        # write updated version of contact list to the json file
+        with open(self.path_to_contact_list, 'w+') as write_file:
+            json.dump(new_contact_list, write_file, indent=4)
+
+        # Update existing variable used by rest of program so it constantly stays up to date
+        self.contact_list = new_contact_list
+        print("The updated contacts list is:\n")
+        pprint.pprint(self.contact_list)
+
 
 if __name__ == "__main__":
     email = email_sender()
@@ -82,8 +131,5 @@ if __name__ == "__main__":
             last_name = sys.argv[2]
             contact_info = email.get_contact_info(first_name, last_name)
     
-    
-    
-    pprint.pprint(contact_info)
 
 

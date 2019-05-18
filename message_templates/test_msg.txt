@@ -1,0 +1,8 @@
+Dear ${receiver_name}, 
+
+This is a test message. 
+Have a great weekend! 
+
+Yours Truly,
+
+${sender_name}

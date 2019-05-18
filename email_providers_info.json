@@ -1,0 +1,109 @@
+{
+    "Verizon": {
+        "host_address": "smtp.verizon.net",
+        "port_num": "587",
+        "special_address": "vtext.com"
+    },
+
+    "Outlook":{
+        "host_address": "smtp-mail.outlook.com",
+        "port_num": "587"
+    },
+
+    "Gmail":{
+        "host_address": "smtp.gmail.com",
+        "port_num": "587"
+    },
+
+    "Aol":{
+        "host_address": "smtp.aol.com",
+        "port_num": "587"
+    },
+    "1&1":{
+        "host_address": "smtp.1and1.com",
+        "port_num": "587"
+    },
+    "Airmail":{
+        "host_address": "Mail.airmail.net",
+        "port_num": "587"
+    },
+    "AT&T":{
+        "host_address": "Outbound.att.net",
+        "port_num": "587",
+        "special_address": "txt.att.net"
+    },
+    "Bluewin":{
+        "host_address": "Smtpauths.bluewin.ch",
+        "port_num": "587"
+    },
+    "BT Connect":{
+        "host_address": "Mail.btconnect.tom",
+        "port_num": "587"
+    },
+    "Comcast":{
+        "host_address": "Smtp.comcast.net",
+        "port_num": "587"
+    },
+    "Earthlink":{
+        "host_address": "Smtpauth.earthlink.net",
+        "port_num": "587"
+    },
+    "Gmx":{
+        "host_address": "Mail.gmx.net",
+        "port_num": "587"
+    },
+    "HotPop":{
+        "host_address": "Mail.hotpop.com",
+        "port_num": "587"
+    },
+    "Libero":{
+        "host_address": "Mail.libero.it",
+        "port_num": "587"
+    },
+    "Lycos":{
+        "host_address": "Smtp.lycos.com",
+        "port_num": "587"
+    },
+    "O2":{
+        "host_address": "Smtp.o2.com",
+        "port_num": "587"
+    },
+    "Orange":{
+        "host_address": "Smtp.orange.net",
+        "port_num": "587"
+    },
+    "Outlook.com":{
+        "host_address": "Smtp.live.com",
+        "port_num": "587"
+    },
+    "Tin":{
+        "host_address": "Mail.tin.it",
+        "port_num": "587"
+    },
+    "Tiscali":{
+        "host_address": "Smtp.tiscali.co.uk",
+        "port_num": "587"
+    },
+    "Virgin":{
+        "host_address": "Smtp.virgin.net",
+        "port_num": "587"
+    },
+    "Wandoo":{
+        "host_address": "Smtp.wanadoo.fr",
+        "port_num": "587"
+    },
+    "Yahoo":{
+        "host_address": "Mail.yahoo.com",
+        "port_num": "587"
+    },
+    "T-Mobile":{
+        "host_address": "t-mobile.com",
+        "port_num": "587",
+        "special_address": "tmomail.net"    
+    },
+    "Sprint":{
+        "host_address": "smtp.sprintpcs.com",
+        "port_num": "587",
+        "special_address": "messaging.sprintpcs.com"    
+    }
+}

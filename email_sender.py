@@ -23,7 +23,7 @@ class email_sender():
         print("The current contact list is:\n")
         pprint.pprint(self.contact_list)
 
-    def send_email(self, contact_info, msg, type_of_msg='test', to_phone_num=False):
+    def send_email(self, contact_info, content=None, type_of_msg='default', to_phone_num=False):
         '''
             Args:
                 'type_of_msg' represents the email template name
@@ -32,39 +32,59 @@ class email_sender():
         '''
 
         # Based on input about which email service provider the user wants to login to determine info for server
-        email_service_provider = input("Which email service provider do you want to login to: ")
+        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
+        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
+        print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
+
+        email_service_provider = input("\nWhich email service provider do you want to login to: ")
         found_valid_email_provider = False
         email_service_provider_info = {}
-
+        
         while found_valid_email_provider is False:
-            if email_service_provider.lower() in self.email_providers_info.keys().lower():
-                email_service_provider_info = self.email_providers_info[email_service_provider]
+            # see if email service provider exists in the list (case-insensitive)- use lambda function to turn list to lowercase
+            if email_service_provider.lower() in lower_case_list:
+                # get the index of name match in the list (regardless of case)
+                index = lower_case_list.index(email_service_provider.lower())
+
+                # Using the index of where the correct key is located, use the dict which contains all entries of original dict to get exact key name
+                dict_key_name = dict_keys_mapped_to_list[index]
+
+                # Get the information pertaining to this dict key
+                email_service_provider_info = self.email_providers_info[dict_key_name ]
                 found_valid_email_provider = True
             else:
                 print("The desired email service provider not supported! Try using another one")
             
 
-        # Get email login
-        my_email_address = input(prompt="Enter your email address: ")
-        password = getpass.getpass(prompt="Password for user {0}: ".format(my_email_address))
+        self.connect_to_email_server(email_service_provider_info)
+        msg = self.compose_email_msg(type_of_msg)
+        
+        # send the message via the server set up earlier.
+        self.email_server.send_message(msg, content, to_phone_num, email_service_provider_info)
+        del msg
+        self.email_server.quit()
+        print("Successfully sent the email/text")
+        
 
-        host_addr = email_service_provider_info['host_address']
-        port_num = email_service_provider_info['port_num']
+    def compose_email_msg(self, type_of_msg, content, to_phone_num, email_service_provider_info):
+        '''
+            This function is responsible for composing the email message that get sent out
+            \nReturn:
 
-        # Establish connection to email server using my_email_address and password given by user
-        email_server = smtplib.SMTP(host=host_addr, port=int(port_num))
-        email_server.starttls()
-        email_server.login(my_email_address, password)
-
+            -The sendable message
+        '''
         # create the body of the email to send
-        if type_of_msg == "test":
+        if type_of_msg == "default" and content == None:
             path_to_template_file = os.path.join(self.message_templates_dir, "test_msg.txt")
         
             # read in the content of the text file to send as the body of the email
             msg_template = self.read_template(path_to_template_file)
             reciever = str(contact_info['first_name']) + str(contact_info['last_name'])
-            sendable_msg = msg_template.substitute(receiver_name=reciever, sender_name=my_email_address) 
+            sendable_msg = msg_template.substitute(receiver_name=reciever, sender_name=self.my_email_address) 
         
+        elif content != None:
+            sendable_msg = content
+
         # TODO create other elif statements for different cases
         
         # Default to default file 
@@ -72,10 +92,12 @@ class email_sender():
             path_to_template_file = os.path.join(self.message_templates_dir, "default.txt")
             sendable_msg = self.read_template(path_to_template_file)
 
+        print("Sending message:\n{0}".format(sendable_msg))
+
 
         msg = MIMEMultipart() # create a message object
         # setup the parameters of the message
-        msg['From'] = my_email_address
+        msg['From'] = self.my_email_address
         # if set to true then send to phone number with special @ for service provider
         if to_phone_num == True:
             receiver_carrier = contact_info['carrier'].lower()
@@ -110,12 +132,8 @@ class email_sender():
 
         # add in the message body
         msg.attach(MIMEText(sendable_msg, 'plain'))
+        return msg
 
-        # send the message via the server set up earlier.
-        email_server.send_message(msg)
-        del msg
-        email_server.quit()
-        
 
     def read_template(self, path_to_file):
         with open(path_to_file, 'r+', encoding='utf-8') as template_file:
@@ -168,6 +186,37 @@ class email_sender():
         }
 
         return dict_to_return
+
+    def connect_to_email_server(self, email_service_provider_info):
+        '''
+            This function is responsible for connecting to the email server.
+            Args:
+                - email_service_provider_info: contains information about host address and port # of email server
+        '''
+        # Get email login
+        self.my_email_address = input("Enter your email address: ")
+        password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+
+        host_addr = email_service_provider_info['host_address']
+        port_num = email_service_provider_info['port_num']
+
+        # Establish connection to email server using self.my_email_address and password given by user
+        print("Connecting to smtp email server")
+        self.email_server = smtplib.SMTP(host=host_addr, port=int(port_num))
+        self.email_server.starttls()
+        # Try to login to email server, if it fails then catch exception
+        try:
+            self.email_server.login(self.my_email_address, password)
+        except Exception as error:
+            if '535' in str(error):
+                # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
+                # TODO make connection more secure
+                print("\nCould not connect to email server because of error:\n{0}\n".format(error))
+                print("Try changing your account settings to allow less secure apps to allow connection to be made.")
+                print("Quiting program, try connecting again with correct email/password, after making the changes, or trying a different email")
+            else:
+                print("Encountered error while trying to connect to email server: \n{0}".format(error))
+            quit()
 
     def load_json(self, path_to_json=None):
         if path_to_json == None:
@@ -233,6 +282,10 @@ if __name__ == "__main__":
             first_name = sys.argv[1]
             last_name = sys.argv[2]
             contact_info = email.get_contact_info(first_name, last_name)
+    
+    email.send_email(contact_info)
+
+
     
 
 

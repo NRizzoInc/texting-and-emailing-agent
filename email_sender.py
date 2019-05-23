@@ -1,15 +1,31 @@
+'''
+    Need to pip:
+        pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+'''
+#TODO: If contact list has multiple emails, allow user to pick
+# Google imports
+from __future__ import print_function
+import pickle
+from googleapiclient import errors
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 import os
 import sys
 import json
-import smtplib
 import pprint
 import getpass
+# Email imports
+import smtplib
+import ssl
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template # needed to send a template txt file
+
 path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
+
 
 class email_sender():
     def __init__(self):
@@ -34,13 +50,14 @@ class email_sender():
         # Based on input about which email service provider the user wants to login to determine info for server
         lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
         dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
-        print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
-
-        email_service_provider = input("\nWhich email service provider do you want to login to: ")
+        
         found_valid_email_provider = False
         email_service_provider_info = {}
         
         while found_valid_email_provider is False:
+            print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
+            email_service_provider = input("\nWhich email service provider do you want to login to: ")
+
             # see if email service provider exists in the list (case-insensitive)- use lambda function to turn list to lowercase
             if email_service_provider.lower() in lower_case_list:
                 # get the index of name match in the list (regardless of case)
@@ -50,23 +67,22 @@ class email_sender():
                 dict_key_name = dict_keys_mapped_to_list[index]
 
                 # Get the information pertaining to this dict key
-                email_service_provider_info = self.email_providers_info[dict_key_name ]
+                email_service_provider_info = self.email_providers_info[dict_key_name]
                 found_valid_email_provider = True
             else:
                 print("The desired email service provider not supported! Try using another one")
             
 
-        self.connect_to_email_server(email_service_provider_info)
-        msg = self.compose_email_msg(type_of_msg)
+        self.connect_to_email_server(email_service_provider_info['host_address'], email_service_provider_info['port_num'])
+        msg = self.compose_email_msg(type_of_msg, content, to_phone_num, email_service_provider_info, contact_info)
         
         # send the message via the server set up earlier.
-        self.email_server.send_message(msg, content, to_phone_num, email_service_provider_info)
-        del msg
+        self.email_server.send_message(msg)
         self.email_server.quit()
-        print("Successfully sent the email/text")
+        print("Successfully sent the email/text to {0} {1}".format(contact_info['first_name'], contact_info['last_name']))
         
 
-    def compose_email_msg(self, type_of_msg, content, to_phone_num, email_service_provider_info):
+    def compose_email_msg(self, type_of_msg, content, to_phone_num, email_service_provider_info, contact_info):
         '''
             This function is responsible for composing the email message that get sent out
             \nReturn:
@@ -79,7 +95,7 @@ class email_sender():
         
             # read in the content of the text file to send as the body of the email
             msg_template = self.read_template(path_to_template_file)
-            reciever = str(contact_info['first_name']) + str(contact_info['last_name'])
+            reciever = str(contact_info['first_name'])
             sendable_msg = msg_template.substitute(receiver_name=reciever, sender_name=self.my_email_address) 
         
         elif content != None:
@@ -187,23 +203,29 @@ class email_sender():
 
         return dict_to_return
 
-    def connect_to_email_server(self, email_service_provider_info):
+    def connect_to_email_server(self, host_address, port_num=465):
         '''
             This function is responsible for connecting to the email server.
             Args:
-                - email_service_provider_info: contains information about host address and port # of email server
+                - host_address: contains information about host address of email server 
+                - port_num: contains infomraiton about the port # of email server (defaults to 465 for secure connections)
         '''
         # Get email login
         self.my_email_address = input("Enter your email address: ")
         password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
 
-        host_addr = email_service_provider_info['host_address']
-        port_num = email_service_provider_info['port_num']
+        server = host_address
+        my_port_num = port_num
 
         # Establish connection to email server using self.my_email_address and password given by user
         print("Connecting to smtp email server")
-        self.email_server = smtplib.SMTP(host=host_addr, port=int(port_num))
-        self.email_server.starttls()
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        
+        self.email_server = smtplib.SMTP(host=server, port=int(my_port_num))
+        self.email_server.ehlo()
+        self.email_server.starttls(context=context)
+        self.email_server.ehlo()        
+
         # Try to login to email server, if it fails then catch exception
         try:
             self.email_server.login(self.my_email_address, password)
@@ -213,6 +235,8 @@ class email_sender():
                 # TODO make connection more secure
                 print("\nCould not connect to email server because of error:\n{0}\n".format(error))
                 print("Try changing your account settings to allow less secure apps to allow connection to be made.")
+                link_to_page = "https://security.google.com/settings/security/apppasswords?pli=1"
+                print("Or try enabling two factor authorization and generating an app-password\n{0}".format(link_to_page))
                 print("Quiting program, try connecting again with correct email/password, after making the changes, or trying a different email")
             else:
                 print("Encountered error while trying to connect to email server: \n{0}".format(error))

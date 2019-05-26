@@ -3,13 +3,6 @@
         pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 '''
 #TODO: If contact list has multiple emails, allow user to pick
-# Google imports
-from __future__ import print_function
-import pickle
-from googleapiclient import errors
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 import os
 import sys
 import json
@@ -39,12 +32,9 @@ class email_sender():
         print("The current contact list is:\n")
         pprint.pprint(self.contact_list)
 
-    def send_email(self, contact_info, content=None, type_of_msg='default', to_phone_num=False):
+    def send_email(self, receiver_contact_info):
         '''
-            Args:
-                'type_of_msg' represents the email template name
-                'to_phone_num' represents wheter or not the message should be sent to the person's email to phone number.
-                    \n(Set to_phone_num to true to send it to their phone number)
+            
         '''
 
         # Based on input about which email service provider the user wants to login to determine info for server
@@ -53,7 +43,7 @@ class email_sender():
         
         found_valid_email_provider = False
         email_service_provider_info = {}
-        
+
         while found_valid_email_provider is False:
             print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
@@ -74,78 +64,126 @@ class email_sender():
             
 
         self.connect_to_email_server(email_service_provider_info['host_address'], email_service_provider_info['port_num'])
-        msg = self.compose_email_msg(type_of_msg, content, to_phone_num, email_service_provider_info, contact_info)
+        msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
         
         # send the message via the server set up earlier.
-        self.email_server.send_message(msg)
+        if msg is None: # will only be None if can't send email or text
+            print("Could not send an email or text message")
+        else:
+            self.email_server.send_message(msg)
+            print("Successfully sent the email/text to {0} {1}".format(receiver_contact_info['first_name'], receiver_contact_info['last_name']))
         self.email_server.quit()
-        print("Successfully sent the email/text to {0} {1}".format(contact_info['first_name'], contact_info['last_name']))
         
 
-    def compose_email_msg(self, type_of_msg, content, to_phone_num, email_service_provider_info, contact_info):
+    def compose_msg(self, email_service_provider_info, receiver_contact_info):
         '''
             This function is responsible for composing the email message that get sent out
             \nReturn:
 
             -The sendable message
         '''
+        # determine if user wants to send an email message or phone text
+        send_to_phone = False
+        if 'y' in input("Do you want to send an email message? (y/n): ").lower():
+            msg = self.componse_email_msg(email_service_provider_info)
+        else:
+            msg = self.compose_text_msg(receiver_contact_info)
+
+        return msg
+
+
+    def compose_text_msg(self, receiver_contact_info):
+        receiver_carrier = receiver_contact_info['carrier'].lower()        
+
+        # Check if this email provider allows emails to be sent to phone numbers
+        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
+        # use index of lower case match to get actual value of key according to original mapped dict keys
+        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
+
+        if receiver_carrier in lower_case_list:
+            index_in_list_of_carrier = lower_case_list.index(receiver_carrier)
+            key_for_desired_carrier = dict_keys_mapped_to_list[index_in_list_of_carrier]
+
+            if 'special_address' not in self.email_providers_info[key_for_desired_carrier].keys():
+                print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
+                                                    receiver_contact_info['first_name'], receiver_contact_info['last_name']))
+
+                # Since cant send a text message to the person, ask if user want to send email message instead
+                if input("Do you want to send an email instead (y/n): ").lower() == 'y':
+                    return self.componse_email_msg()
+                
+                # If user cant send a text and wont send an email then just return
+                else:
+                    return None
+            else:
+                domain_name = self.email_providers_info[key_for_desired_carrier]['special_address']
+
+        # Remove all non-numerical parts of phone number (should be contiguous 10 digit number)
+        actual_phone_num = ''.join(char for char in receiver_contact_info['phone_num'] if char.isdigit())
+        
+        text_msg_address = "{0}@{1}".format(actual_phone_num, domain_name)
+        print("Sending text message to {0}".format(text_msg_address))
+        
+
+        # Get content to send in text message
+        body = "text msg body" # TODO take in input
+        
+        # setup the parameters of the message (dont need subject for text messages)
+        msg = MIMEMultipart() # create a message object
+        msg['From'] = self.my_email_address
+        msg['To'] = text_msg_address
+        # add in the message body
+        msg.set_payload(body)
+        # msg.attach(MIMEText(body, 'plain'))
+        return msg
+
+
+
+    def componse_email_msg(self, email_service_provider_info):
+        # Get a list of all possible message types
+        list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(os.path.join(path_to_this_dir, 'message_templates'))]
+        contents = ''
+        
+        type_of_msg = 'default' 
+        path_to_msg_template = os.path.join(self.message_templates_dir, 'default.txt')
+
+        with open(path_to_msg_template) as read_file:
+            contents = read_file.read()
+
+        for msg_type in list_of_msg_types:
+            path_to_msg_template = os.path.join(self.message_templates_dir, msg_type + '.txt')
+            with open(path_to_msg_template) as read_file:
+                msg_contents = read_file.read()
+            print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
+            if 'y' in input("Would you like to send this message type? (y/n): ").lower():
+                type_of_msg = msg_type   
+                contents = msg_contents 
+                break
+
+
         # create the body of the email to send
-        if type_of_msg == "default" and content == None:
-            path_to_template_file = os.path.join(self.message_templates_dir, "test_msg.txt")
-        
-            # read in the content of the text file to send as the body of the email
-            msg_template = self.read_template(path_to_template_file)
-            reciever = str(contact_info['first_name'])
-            sendable_msg = msg_template.substitute(receiver_name=reciever, sender_name=self.my_email_address) 
-        
-        elif content != None:
-            sendable_msg = content
+        # read in the content of the text file to send as the body of the email
 
         # TODO create other elif statements for different cases
+        if type_of_msg == "test_msg":
+            receiver = str(receiver_contact_info['first_name'])
+            sendable_msg = self.read_template(path_to_msg_template).substitute(receiver_name=receiver, sender_name=self.my_email_address) 
+
+        elif type_of_msg == 'input_content':
+            my_input = input("Input what you would like to send in the body of the email: ")
+            sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
         
         # Default to default file 
         else:
-            path_to_template_file = os.path.join(self.message_templates_dir, "default.txt")
-            sendable_msg = self.read_template(path_to_template_file)
+            sendable_msg = contents
 
         print("Sending message:\n{0}".format(sendable_msg))
 
-
-        msg = MIMEMultipart() # create a message object
         # setup the parameters of the message
+        msg = MIMEMultipart() # create a message object
         msg['From'] = self.my_email_address
-        # if set to true then send to phone number with special @ for service provider
-        if to_phone_num == True:
-            receiver_carrier = contact_info['carrier'].lower()
-            
-            send_email = False # eventually set based on circumstances to see if user needs to send and email instead of text
-
-            # Check if this email provider allows emails to be sent to phone numbers
-            if receiver_carrier in self.email_providers_info.keys().lower():
-                index_in_list_of_carrier = [x.lower() for x in self.email_providers_info.keys()].index(receiver_carrier)
-                if 'special_address' not in self.email_providers_info[index_in_list_of_carrier].keys():
-                    print("Sending text messages through email is not possible when the reciever uses this email provider")
-                    send_email = input("Do you want to send an email instead (y/n): ")
-                    if send_email.lower() == 'y':
-                        send_email = True
-                    else:
-                        return # end function since cant send text or email
-
-                else:
-                    special_at_sign = email_service_provider_info['special_address']
-
-            # if send_email never changed then continue to send the message via text
-            if send_email is False: 
-                msg['To'] = "{0}@{1}".format(contact_info['phone_num'], special_at_sign) 
-            else:
-                msg['To'] = contact_info['email'] # send message as if it were a text
-
-        # otherwise just send it to their email
-        else:
-            msg['To'] = contact_info['email']
-
-        msg['Subject'] = "This is a test"
-
+        msg['To'] = receiver_contact_info['email'] # send message as if it were a text
+        msg['Subject'] = "Emailing Application"
         # add in the message body
         msg.attach(MIMEText(sendable_msg, 'plain'))
         return msg
@@ -156,7 +194,7 @@ class email_sender():
             template_file_content = template_file.read()
         return Template(template_file_content)
 
-    def get_contact_info(self, my_first_name, my_last_name):
+    def get_receiver_contact_info(self, my_first_name, my_last_name):
         '''
             This function will search the existing database for entries with the input first_name and last_name.\n
 
@@ -165,7 +203,7 @@ class email_sender():
                 The phone number return accepts common type of seperaters or none (ex: '-')             
         '''
 
-        contact_info_dict = {}
+        receiver_contact_info_dict = {}
         email = ''
         phone_num = ''
         carrier = ''
@@ -180,10 +218,10 @@ class email_sender():
                     contact_first_name = first_name
                     contact_last_name = last_name
                     # stores contact information in the form {"email": "blah@gmail.com", "carrier":"version"}
-                    contact_info_dict = self.contact_list[last_name][first_name]
-                    email = contact_info_dict['email']
-                    phone_num = contact_info_dict['phone_number']
-                    carrier = contact_info_dict['carrier']
+                    receiver_contact_info_dict = self.contact_list[last_name][first_name]
+                    email = receiver_contact_info_dict['email']
+                    phone_num = receiver_contact_info_dict['phone_number']
+                    carrier = receiver_contact_info_dict['carrier']
 
         # if values were not initialized then no match was found
         if email == '' and phone_num == '' and carrier == '':
@@ -296,7 +334,8 @@ if __name__ == "__main__":
 
     #if user doesnt give an input then use defaults
     if len(sys.argv) == 1: # there will always be at least 1 argument (the name of the python script)
-        contact_info = email.get_contact_info('nick', 'rizzo')
+        # receiver_contact_info contains first_name, last_name, email, carrier, phone number
+        receiver_contact_info = email.get_receiver_contact_info('nick', 'rizzo')
     
     # If user gives input use those values
     else:
@@ -305,9 +344,10 @@ if __name__ == "__main__":
             # Get arguments from when script is called
             first_name = sys.argv[1]
             last_name = sys.argv[2]
-            contact_info = email.get_contact_info(first_name, last_name)
+            receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
     
-    email.send_email(contact_info)
+
+    email.send_email(receiver_contact_info)
 
 
     

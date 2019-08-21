@@ -232,7 +232,7 @@ class email_sender():
 
         # if values were not initialized then no match was found
         if email == '' and phone_num == '' and carrier == '':
-            print("Contact does not exist!")
+            print("Contact does not exist! \nAdd them to the contact list by calling 'add_contacts_to_contacts_list()'")
         
         print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(my_first_name, my_last_name))
         print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
@@ -309,8 +309,8 @@ class email_sender():
         # Regardless of where the data gets added, it should be the same 
         common_data_dict = {
             'email': email,
-            'carrier': carrier,
-            'phone_number': phone_num
+            'phone_number': phone_num,
+            'carrier': carrier
         }
 
         # store existing contact list so it can be modified

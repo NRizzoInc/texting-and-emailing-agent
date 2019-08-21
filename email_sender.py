@@ -130,7 +130,7 @@ class email_sender():
         
 
         # Get content to send in text message
-        body = "SMS Test 2" # TODO take in input
+        body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
         body += "\n" # have to add newline char at the end of the body
         
         # setup the parameters of the message

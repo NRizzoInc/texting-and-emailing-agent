@@ -2,7 +2,7 @@
     "Verizon": {
         "host_address": "smtp.verizon.net",
         "port_num": "587",
-        "special_address": "vtext.com"
+        "SMS-Gateways": "vtext.com"
     },
 
     "Outlook":{
@@ -30,7 +30,7 @@
     "AT&T":{
         "host_address": "Outbound.att.net",
         "port_num": "587",
-        "special_address": "txt.att.net"
+        "SMS-Gateways": "txt.att.net"
     },
     "Bluewin":{
         "host_address": "Smtpauths.bluewin.ch",
@@ -86,7 +86,8 @@
     },
     "Virgin":{
         "host_address": "Smtp.virgin.net",
-        "port_num": "587"
+        "port_num": "587",
+        "SMS-Gateways": "vmobl.com"
     },
     "Wandoo":{
         "host_address": "Smtp.wanadoo.fr",
@@ -99,11 +100,11 @@
     "T-Mobile":{
         "host_address": "t-mobile.com",
         "port_num": "587",
-        "special_address": "tmomail.net"    
+        "SMS-Gateways": "tmomail.net"    
     },
     "Sprint":{
         "host_address": "smtp.sprintpcs.com",
         "port_num": "587",
-        "special_address": "messaging.sprintpcs.com"    
+        "SMS-Gateways": "messaging.sprintpcs.com"    
     }
 }

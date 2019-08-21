@@ -1,8 +1,7 @@
 '''
-    Need to pip:
-        pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 '''
 #TODO: If contact list has multiple emails, allow user to pick
+#TODO: somehow block contact list
 import os
 import sys
 import json
@@ -29,6 +28,7 @@ class email_sender():
         self.path_to_contact_list = os.path.join(path_to_this_dir, "contacts.json")
         self.contact_list = self.load_json()
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
+        self.send_to_phone = False
         print("The current contact list is:\n")
         pprint.pprint(self.contact_list)
 
@@ -70,7 +70,12 @@ class email_sender():
         if msg is None: # will only be None if can't send email or text
             print("Could not send an email or text message")
         else:
-            self.email_server.send_message(msg)
+            # method of sending email changes depending on whether it is an email of text
+            if self.send_to_phone is True:
+                sms = msg.as_string() # need to convert message to string
+                self.email_server.sendmail(msg["From"], msg["To"], sms)
+            else:
+                self.email_server.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(receiver_contact_info['first_name'], receiver_contact_info['last_name']))
         self.email_server.quit()
         
@@ -83,7 +88,6 @@ class email_sender():
             -The sendable message
         '''
         # determine if user wants to send an email message or phone text
-        send_to_phone = False
         if 'y' in input("Do you want to send an email message? (y/n): ").lower():
             msg = self.componse_email_msg(email_service_provider_info)
         else:
@@ -104,7 +108,7 @@ class email_sender():
             index_in_list_of_carrier = lower_case_list.index(receiver_carrier)
             key_for_desired_carrier = dict_keys_mapped_to_list[index_in_list_of_carrier]
 
-            if 'special_address' not in self.email_providers_info[key_for_desired_carrier].keys():
+            if 'SMS-Gateways' not in self.email_providers_info[key_for_desired_carrier].keys():
                 print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
                                                     receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
@@ -116,7 +120,7 @@ class email_sender():
                 else:
                     return None
             else:
-                domain_name = self.email_providers_info[key_for_desired_carrier]['special_address']
+                domain_name = self.email_providers_info[key_for_desired_carrier]['SMS-Gateways']
 
         # Remove all non-numerical parts of phone number (should be contiguous 10 digit number)
         actual_phone_num = ''.join(char for char in receiver_contact_info['phone_num'] if char.isdigit())
@@ -126,15 +130,18 @@ class email_sender():
         
 
         # Get content to send in text message
-        body = "text msg body" # TODO take in input
+        body = "SMS Test 2" # TODO take in input
+        body += "\n" # have to add newline char at the end of the body
         
-        # setup the parameters of the message (dont need subject for text messages)
-        msg = MIMEMultipart() # create a message object
+        # setup the parameters of the message
+        msg = MIMEText(body) # create a message object with the body
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
-        # add in the message body
-        msg.set_payload(body)
-        # msg.attach(MIMEText(body, 'plain'))
+        msg['Subject'] = "Python Text Message" # keep newline
+
+        # inform rest of program that sms is being sent
+        self.send_to_phone = True
+
         return msg
 
 
@@ -348,8 +355,4 @@ if __name__ == "__main__":
     
 
     email.send_email(receiver_contact_info)
-
-
-    
-
 

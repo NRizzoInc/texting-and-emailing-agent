@@ -32,8 +32,11 @@ class email_sender():
         print("The current contact list is:\n")
         pprint.pprint(self.contact_list)
 
-    def send_email(self, receiver_contact_info):
+    def send_email(self, receiver_contact_info, use_default_sender=False):
         '''
+            Args:
+                - use_default_sender: boolean that when set to True means the program 
+                    will login in to a known email account wihtout extra inputs needed
             
         '''
 
@@ -44,7 +47,7 @@ class email_sender():
         found_valid_email_provider = False
         email_service_provider_info = {}
 
-        while found_valid_email_provider is False:
+        while found_valid_email_provider is False and use_default_sender is False:
             print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
 
@@ -62,8 +65,12 @@ class email_sender():
             else:
                 print("The desired email service provider not supported! Try using another one")
             
+        # if user wants to use the pre-setup gmail account then program needs to change which smtp server it is trying to access
+        if use_default_sender is True:
+            email_service_provider_info = self.email_providers_info['Gmail']
+            
 
-        self.connect_to_email_server(email_service_provider_info['host_address'], email_service_provider_info['port_num'])
+        self.connect_to_email_server(email_service_provider_info['host_address'], port_num=email_service_provider_info['port_num'], use_default_sender=use_default_sender)
         msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
         
         # send the message via the server set up earlier.
@@ -217,9 +224,9 @@ class email_sender():
 
         # Go through the list looking for name matches (case-insensitive)
         for last_name in self.contact_list.keys():
-            print(last_name)
+            # print(last_name)
             for first_name in self.contact_list[last_name].keys():
-                print(first_name)
+                # print(first_name)
                 if first_name.lower() == my_first_name.lower() and last_name.lower() == my_last_name.lower():
                     print("\nFound a match!\n")
                     contact_first_name = first_name
@@ -248,16 +255,25 @@ class email_sender():
 
         return dict_to_return
 
-    def connect_to_email_server(self, host_address, port_num=465):
+    def connect_to_email_server(self, host_address, use_default_sender=False, port_num=465):
         '''
             This function is responsible for connecting to the email server.
             Args:
                 - host_address: contains information about host address of email server 
+                - use_default_sender: boolean that when set to True means the program 
+                    will login in to a known email account wihtout extra inputs needed
                 - port_num: contains infomraiton about the port # of email server (defaults to 465 for secure connections)
         '''
         # Get email login
-        self.my_email_address = input("Enter your email address: ")
-        password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+        if use_default_sender is False:
+            # if false then make user use their own email username and password
+            self.my_email_address = input("Enter your email address: ")
+            password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+        else:
+            print("Using default gmail account created for this program to send email\n")
+            # I created a dummy gmail account that this program can login to
+            self.my_email_address = "codinggenius9@gmail.com"
+            password = "codingisfun1"
 
         server = host_address
         my_port_num = port_num
@@ -337,22 +353,28 @@ class email_sender():
 
 
 if __name__ == "__main__":
-    email = email_sender()
 
     #if user doesnt give an input then use defaults
-    if len(sys.argv) == 1: # there will always be at least 1 argument (the name of the python script)
-        # receiver_contact_info contains first_name, last_name, email, carrier, phone number
-        receiver_contact_info = email.get_receiver_contact_info('nick', 'rizzo')
+    if len(sys.argv) < 2: 
+        print("Invalid number of arguments entered!\nProvide first and last name seperated by spaces!")
     
-    # If user gives input use those values
     else:
-        if len(sys.argv) < 2: print("Invalid number of arguments entered!")
+        # Create a class obj for this file
+        email = email_sender()
+        
+        # Get arguments from when script is called
+        first_name = sys.argv[1]
+        last_name = sys.argv[2]
+        # receiver_contact_info contains first_name, last_name, email, carrier, phone number
+        receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
+
+        # if there is a third argument, then use default email account (dont need to login)
+        if len(sys.argv[3]) != 0:
+            email.send_email(receiver_contact_info, use_default_sender=True)
         else:
-            # Get arguments from when script is called
-            first_name = sys.argv[1]
-            last_name = sys.argv[2]
-            receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
+            email.send_email(receiver_contact_info)
+
+
     
 
-    email.send_email(receiver_contact_info)
 

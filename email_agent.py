@@ -404,11 +404,82 @@ class email_agent():
         self.connect_to_email_server(email_service_provider_info['host_address'], "receive",
             port_num=email_service_provider_info['port_num'], use_default=use_default)
 
+        # opens folder/label you want to read from
         self.email_server.select('INBOX')
-        print("Opened inbox")
-        
-        pass
+        print("Successfully Opened Inbox")
 
+        # search the inbox for all valid emails (first argument is 'charset' and second is 'filter')
+        return_code, data = self.email_server.search(None, 'ALL') # "ALL" returns all emails without any filter
+        mail_ids = data[0].decode() # convert byte to string
+
+        # convert to descending ordered list (mail_ids is a str with the mail_ids seperated by spaces)
+        id_list = list(map(lambda x:int(x), list(mail_ids.split()))) 
+        id_list.sort(reverse = True) # sort() performs operation on the same variable
+
+        # fetch the emails in order of most recent to least recent
+        # most recent email has the highest id number
+        print("id_list: {}".format(id_list))
+        for id_num in id_list:
+            if id_num == max(id_list):
+                print("Fetching most recent email")
+
+            return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
+            raw_email = data[0][1]
+
+            # function returns (to, from, subject, body)
+            email_msg = {}
+            email_msg['To'], email_msg['From'], email_msg['Subject'], email_msg['Body'] = self.process_raw_email(raw_email)
+
+            next_email = input("Do you want to see the next email (yes/no): ")
+            if "n" in next_email:
+                break
+        
+
+        
+
+        # logout of email once finished (always do this last)
+        print("Logging out of email")
+        self.email_server.logout()
+
+    def process_raw_email(self, raw_email):
+        '''
+            This function returns the body of the raw email.
+            The raw email needs to be processed because it contains alot of junk that makes it illegible 
+
+            Args:
+                -raw_email: a byte string that can be converted into a Message object
+            Return:
+                -refined_email(touple): The touple will contain (To, From, Subject, body) 
+        '''
+        # convert byte literal to string removing b''
+        email_msg = email.message_from_bytes(raw_email)      
+
+
+        # If message is multi part we only want the text version of the body
+        # This walks the message and gets the body.
+        if email_msg.is_multipart():
+            for part in email_msg.walk():       
+                if part.get_content_type() == "text/plain":
+                    #to control automatic email-style MIME decoding (e.g., Base64, uuencode, quoted-printable)
+                    body = part.get_payload(decode=True) 
+                    body = body.decode()
+
+                elif part.get_content_type() == "text/html":
+                    continue
+        
+        print("\n<{0}>\n".format('-'*150)) # email deliniator
+
+        print("""Email:\n
+        To: {0}\n
+        From: {1}\n
+        Subject: {2}\n\n
+        Body: {3}
+        """.format(email_msg['To'], email_msg['From'], email_msg['Subject'], body))
+
+        print("\n<{0}>\n".format('-'*150)) # email deliniator
+
+        return (email_msg['To'], email_msg['From'], email_msg['Subject'], body)
+        
 
 if __name__ == "__main__":
 
@@ -419,15 +490,15 @@ if __name__ == "__main__":
     if 'add_contacts' in sys.argv:
         first_name = input("Please enter their first name: ")
         last_name = input("Please enter their last name: ")
-        email = input("Please enter their email: ")
+        my_email = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phone_num = input("Please enter their phone number: ")
-        email_agent(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, email, carrier, phone_num)
+        email_agent(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, my_email, carrier, phone_num)
         
     
     else:
         # Create a class obj for this file
-        email = email_agent()
+        emailer = email_agent()
 
         # determine what the user wants to use the emailing agent for
         service_type = input("\nTo send an email type 'send'.\nTo check your inbox type 'get':\n").lower()
@@ -443,23 +514,23 @@ if __name__ == "__main__":
             first_name = sys.argv[1]
             last_name = sys.argv[2]
             # receiver_contact_info contains first_name, last_name, email, carrier, phone number
-            receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
+            receiver_contact_info = emailer.get_receiver_contact_info(first_name, last_name)
 
             if arg_length == 3:
-                email.send_email(receiver_contact_info)
+                emailer.send_email(receiver_contact_info)
 
             elif arg_length == 4:
                 # if there is a third argument, then use default email account (dont need to login)
-                email.send_email(receiver_contact_info, use_default=True)
+                emailer.send_email(receiver_contact_info, use_default=True)
         
         elif "get" in service_type:
 
             # Entering something in the second argument signifies that you want to use the default login
             if arg_length == 2:
-                email.receive_email(use_default=True)
+                emailer.receive_email(use_default=True)
             
             else:
-                email.receive_email(use_default=False)
+                emailer.receive_email(use_default=False)
 
         
         else:

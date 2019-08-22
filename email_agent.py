@@ -1,15 +1,15 @@
 '''
 '''
 #TODO: If contact list has multiple emails, allow user to pick
-#TODO: somehow block contact list
 import os
 import sys
 import json
 import pprint
 import getpass
 # Email imports
-import smtplib
 import ssl
+import smtplib # to send emails- Simple Mail Transfer Protocol
+import imaplib # to receive emails- Internet Access Message Protocol
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -19,7 +19,7 @@ path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
 
 
-class email_sender():
+class email_agent():
     def __init__(self, display_contacts=True):
         '''
             This class is responsible for sending emails 
@@ -29,49 +29,29 @@ class email_sender():
         self.contact_list = self.load_json()
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
+
+        # these are the credentials to login to a throwaway gmail account 
+        # with lower security that I set up for this program
+        self.my_email_address = "codinggenius9@gmail.com"
+        self.password = "codingisfun1"
+
         if display_contacts is True:    
             print("The current contact list is:\n")
             pprint.pprint(self.contact_list)
 
-    def send_email(self, receiver_contact_info, use_default_sender=False):
+    def send_email(self, receiver_contact_info, use_default=False):
         '''
             Args:
-                - use_default_sender: boolean that when set to True means the program 
+                - use_default: boolean that when set to True means the program 
                     will login in to a known email account wihtout extra inputs needed
             
-        '''
+        '''            
 
-        # Based on input about which email service provider the user wants to login to determine info for server
-        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
-        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
-        
-        found_valid_email_provider = False
-        email_service_provider_info = {}
+        email_service_provider_info = self.get_email_info("send", use_default=use_default)['smtp_server']
 
-        while found_valid_email_provider is False and use_default_sender is False:
-            print("The available list of providers you can login to is: \n{0}".format(list(self.email_providers_info.keys())))
-            email_service_provider = input("\nWhich email service provider do you want to login to: ")
+        self.connect_to_email_server(email_service_provider_info['host_address'], "send",
+            port_num=email_service_provider_info['port_num'], use_default=use_default)
 
-            # see if email service provider exists in the list (case-insensitive)- use lambda function to turn list to lowercase
-            if email_service_provider.lower() in lower_case_list:
-                # get the index of name match in the list (regardless of case)
-                index = lower_case_list.index(email_service_provider.lower())
-
-                # Using the index of where the correct key is located, use the dict which contains all entries of original dict to get exact key name
-                dict_key_name = dict_keys_mapped_to_list[index]
-
-                # Get the information pertaining to this dict key
-                email_service_provider_info = self.email_providers_info[dict_key_name]
-                found_valid_email_provider = True
-            else:
-                print("The desired email service provider not supported! Try using another one")
-            
-        # if user wants to use the pre-setup gmail account then program needs to change which smtp server it is trying to access
-        if use_default_sender is True:
-            email_service_provider_info = self.email_providers_info['Gmail']
-            
-
-        self.connect_to_email_server(email_service_provider_info['host_address'], port_num=email_service_provider_info['port_num'], use_default_sender=use_default_sender)
         msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
         
         # send the message via the server set up earlier.
@@ -116,9 +96,9 @@ class email_sender():
             index_in_list_of_carrier = lower_case_list.index(receiver_carrier)
             key_for_desired_carrier = dict_keys_mapped_to_list[index_in_list_of_carrier]
 
-            if 'SMS-Gateways' not in self.email_providers_info[key_for_desired_carrier].keys():
+            if 'SMS-Gateways' not in self.email_providers_info[key_for_desired_carrier]["smtp_server"].keys():
                 print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
-                                                    receiver_contact_info['first_name'], receiver_contact_info['last_name']))
+                        receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
                 # Since cant send a text message to the person, ask if user want to send email message instead
                 if input("Do you want to send an email instead (y/n): ").lower() == 'y':
@@ -128,7 +108,7 @@ class email_sender():
                 else:
                     return None
             else:
-                domain_name = self.email_providers_info[key_for_desired_carrier]['SMS-Gateways']
+                domain_name = self.email_providers_info[key_for_desired_carrier]["smtp_server"]['SMS-Gateways']
 
         # Remove all non-numerical parts of phone number (should be contiguous 10 digit number)
         actual_phone_num = ''.join(char for char in receiver_contact_info['phone_num'] if char.isdigit())
@@ -145,7 +125,7 @@ class email_sender():
         msg = MIMEText(body) # create a message object with the body
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
-        msg['Subject'] = "Python Text Message" # keep newline
+        msg['Subject'] = "Python Text Message Application" # keep newline
 
         # inform rest of program that sms is being sent
         self.send_to_phone = True
@@ -256,48 +236,56 @@ class email_sender():
 
         return dict_to_return
 
-    def connect_to_email_server(self, host_address, use_default_sender=False, port_num=465):
+    def connect_to_email_server(self, host_address, purpose:str, use_default=False, port_num=465):
         '''
             This function is responsible for connecting to the email server.
             Args:
                 - host_address: contains information about host address of email server 
-                - use_default_sender: boolean that when set to True means the program 
+                - purpose: A string that is either "send" or "receive" which is needed to determine which protocol to use
+                - use_default: boolean that when set to True means the program 
                     will login in to a known email account wihtout extra inputs needed
                 - port_num: contains infomraiton about the port # of email server (defaults to 465 for secure connections)
+            Return:
+                - No returns, but this function does create a couple 'self' variables (self.email_server)
         '''
         # Get email login
-        if use_default_sender is False:
+        if use_default is False:
             # if false then make user use their own email username and password
             self.my_email_address = input("Enter your email address: ")
-            password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+            self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
         else:
-            print("Using default gmail account created for this program to send email\n")
+            print("Using default gmail account created for this program to login to an email\n")
             # I created a dummy gmail account that this program can login to
-            self.my_email_address = "codinggenius9@gmail.com"
-            password = "codingisfun1"
 
         server = host_address
         my_port_num = port_num
 
         # Establish connection to email server using self.my_email_address and password given by user
-        print("Connecting to smtp email server")
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)        
+        if purpose == "send":
+            print("Connecting to SMTP email server")
+            self.email_server = smtplib.SMTP(host=server, port=int(my_port_num))
+            self.email_server.ehlo()
+            self.email_server.starttls(context=context)
+            self.email_server.ehlo()        
         
-        self.email_server = smtplib.SMTP(host=server, port=int(my_port_num))
-        self.email_server.ehlo()
-        self.email_server.starttls(context=context)
-        self.email_server.ehlo()        
+        elif purpose == "receive":
+            print("Connecting to IMAP email server")
+            self.email_server = imaplib.IMAP4_SSL(host=server, port=int(my_port_num), ssl_context=context)
+
 
         # Try to login to email server, if it fails then catch exception
         try:
-            self.email_server.login(self.my_email_address, password)
+            self.email_server.login(self.my_email_address, self.password)
+            print("Successfully logged into email account!\n")
         except Exception as error:
             if '535' in str(error):
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
                 # TODO make connection more secure
                 print("\nCould not connect to email server because of error:\n{0}\n".format(error))
                 print("Try changing your account settings to allow less secure apps to allow connection to be made.")
-                link_to_page = "https://security.google.com/settings/security/apppasswords?pli=1"
+                link_to_page = "https://myaccount.google.com/lesssecureapps"
                 print("Or try enabling two factor authorization and generating an app-password\n{0}".format(link_to_page))
                 print("Quiting program, try connecting again with correct email/password, after making the changes, or trying a different email")
             else:
@@ -311,6 +299,63 @@ class email_sender():
         with open(path_to_json, 'r+') as read_file:
             data = json.load(read_file)
         return data
+
+    def get_email_info(self, purpose:str, use_default=False):
+        '''
+            This function returns a dictionary containing information about a host address and port number of an email company
+
+            Args:
+                -use_default: (Boolean) When set to True, the program will provide the information for the default email address
+                -purpose: (string) Either "send" or "receive"
+            Return:
+                -email_service_provider_info: (Dict) Contains information about a specific email company necessary for logging in.
+                    I.E.: {"host_address": "smtp.gmail.com", "port_num": "587"}
+        '''
+        # Based on input about which email service provider the user wants to login to determine info for server
+
+        # concert the dictionary to all lower case to make searching easier
+        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
+        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
+
+        # narrow down content of list based on if it can fit the "purpose" (send/receive)
+        # if "host_address" is empty then not valid for this purpose
+        if purpose == "send":
+            possible_providers = [i for i in self.email_providers_info.keys() if 
+                    len(self.email_providers_info[i]["smtp_server"]["host_address"]) != 0]   
+        elif purpose == "receive":
+            possible_providers = [i for i in self.email_providers_info.keys() if 
+                    len(self.email_providers_info[i]["imap_server"]["host_address"]) != 0]  
+
+        else:
+            # error check myself incase I forget about this in the future
+            raise Exception("Either use a valid 'purpose' or add another option")
+
+        found_valid_email_provider = False
+        email_service_provider_info = {}
+
+        while found_valid_email_provider is False and use_default is False:
+            print("The available list of providers you can login to is: \n{0}".format(list(possible_providers)))
+            email_service_provider = input("\nWhich email service provider do you want to login to: ")
+
+            # see if email service provider exists in the list (case-insensitive)- use lambda function to turn list to lowercase
+            if email_service_provider.lower() in lower_case_list:
+                # get the index of name match in the list (regardless of case)
+                index = lower_case_list.index(email_service_provider.lower())
+
+                # Using the index of where the correct key is located, use the dict which contains all entries of original dict to get exact key name
+                dict_key_name = dict_keys_mapped_to_list[index]
+
+                # Get the information pertaining to this dict key
+                email_service_provider_info = self.email_providers_info[dict_key_name]
+                found_valid_email_provider = True
+            else:
+                print("The desired email service provider not supported! Try using another one")
+            
+        # if user wants to use the pre-setup gmail account then program needs to change which smtp server it is trying to access
+        if use_default is True:
+            email_service_provider_info = self.email_providers_info['Gmail']
+
+        return email_service_provider_info
     
     def add_contacts_to_contacts_list(self, first_name, last_name, email, carrier, phone_num):
         '''
@@ -352,8 +397,23 @@ class email_sender():
         print("The updated contacts list is:\n")
         pprint.pprint(self.contact_list)
 
+    def receive_email(self, use_default=False):
+
+        email_service_provider_info = self.get_email_info("receive", use_default)['imap_server']
+
+        self.connect_to_email_server(email_service_provider_info['host_address'], "receive",
+            port_num=email_service_provider_info['port_num'], use_default=use_default)
+
+        self.email_server.select('INBOX')
+        print("Opened inbox")
+        
+        pass
+
 
 if __name__ == "__main__":
+
+    arg_length = len(sys.argv)
+    # the order of arguments is: 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
 
     # use this phrase to easily add more contacts to the contact list
     if 'add_contacts' in sys.argv:
@@ -362,28 +422,49 @@ if __name__ == "__main__":
         email = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phone_num = input("Please enter their phone number: ")
-        email_sender(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, email, carrier, phone_num)
-
-    #if user doesnt give any input then block
-    elif len(sys.argv) < 3: 
-        print("Invalid number of arguments entered!\nProvide first and last name seperated by spaces!")
+        email_agent(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, email, carrier, phone_num)
+        
     
     else:
         # Create a class obj for this file
-        email = email_sender()
+        email = email_agent()
+
+        # determine what the user wants to use the emailing agent for
+        service_type = input("\nTo send an email type 'send'.\nTo check your inbox type 'get':\n").lower()
+
+        if "send" in service_type:
+
+            # First check that enough arguments were provided
+            if arg_length < 3: 
+                print("Invalid number of arguments entered!\nProvide first and last name seperated by spaces! \
+                        \n(type 'default' as well to skip email login)")
         
-        # Get arguments from when script is called
-        first_name = sys.argv[1]
-        last_name = sys.argv[2]
-        # receiver_contact_info contains first_name, last_name, email, carrier, phone number
-        receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
+            # Get arguments from when script is called
+            first_name = sys.argv[1]
+            last_name = sys.argv[2]
+            # receiver_contact_info contains first_name, last_name, email, carrier, phone number
+            receiver_contact_info = email.get_receiver_contact_info(first_name, last_name)
 
-        # if there is a third argument, then use default email account (dont need to login)
-        if len(sys.argv[3]) != 0:
-            email.send_email(receiver_contact_info, use_default_sender=True)
+            if arg_length == 3:
+                email.send_email(receiver_contact_info)
+
+            elif arg_length == 4:
+                # if there is a third argument, then use default email account (dont need to login)
+                email.send_email(receiver_contact_info, use_default=True)
+        
+        elif "get" in service_type:
+
+            # Entering something in the second argument signifies that you want to use the default login
+            if arg_length == 2:
+                email.receive_email(use_default=True)
+            
+            else:
+                email.receive_email(use_default=False)
+
+        
         else:
-            email.send_email(receiver_contact_info)
-
+            print("Please Enter a Valid Option!")
+        
 
     
 

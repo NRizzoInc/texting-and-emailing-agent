@@ -20,7 +20,7 @@ sys.path.append(path_to_this_dir)
 
 
 class email_sender():
-    def __init__(self):
+    def __init__(self, display_contacts=True):
         '''
             This class is responsible for sending emails 
         '''
@@ -29,8 +29,9 @@ class email_sender():
         self.contact_list = self.load_json()
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
-        print("The current contact list is:\n")
-        pprint.pprint(self.contact_list)
+        if display_contacts is True:    
+            print("The current contact list is:\n")
+            pprint.pprint(self.contact_list)
 
     def send_email(self, receiver_contact_info, use_default_sender=False):
         '''
@@ -239,7 +240,7 @@ class email_sender():
 
         # if values were not initialized then no match was found
         if email == '' and phone_num == '' and carrier == '':
-            print("Contact does not exist! \nAdd them to the contact list by calling 'add_contacts_to_contacts_list()'")
+            raise Exception("Contact does not exist! \n\nAdd them to the contact list by calling this program followed by 'add_contacts'")
         
         print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(my_first_name, my_last_name))
         print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
@@ -354,8 +355,17 @@ class email_sender():
 
 if __name__ == "__main__":
 
-    #if user doesnt give an input then use defaults
-    if len(sys.argv) < 2: 
+    # use this phrase to easily add more contacts to the contact list
+    if 'add_contacts' in sys.argv:
+        first_name = input("Please enter their first name: ")
+        last_name = input("Please enter their last name: ")
+        email = input("Please enter their email: ")
+        carrier = input("Please enter their cell phone carrier this person uses: ")
+        phone_num = input("Please enter their phone number: ")
+        email_sender(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, email, carrier, phone_num)
+
+    #if user doesnt give any input then block
+    elif len(sys.argv) < 3: 
         print("Invalid number of arguments entered!\nProvide first and last name seperated by spaces!")
     
     else:

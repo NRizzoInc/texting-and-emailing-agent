@@ -6,6 +6,8 @@ import sys
 import json
 import pprint
 import getpass
+import datetime
+import shutil
 # Email imports
 import ssl
 import smtplib # to send emails- Simple Mail Transfer Protocol
@@ -405,40 +407,71 @@ class email_agent():
             port_num=email_service_provider_info['port_num'], use_default=use_default)
 
         # opens folder/label you want to read from
-        self.email_server.select('INBOX')
+        self.email_server.select('INBOX', readonly=True)
         print("Successfully Opened Inbox")
 
-        # search the inbox for all valid emails (first argument is 'charset' and second is 'filter')
-        return_code, data = self.email_server.search(None, 'ALL') # "ALL" returns all emails without any filter
-        mail_ids = data[0].decode() # convert byte to string
-
-        # convert to descending ordered list (mail_ids is a str with the mail_ids seperated by spaces)
-        id_list = list(map(lambda x:int(x), list(mail_ids.split()))) 
-        id_list.sort(reverse = True) # sort() performs operation on the same variable
-
-        # fetch the emails in order of most recent to least recent
-        # most recent email has the highest id number
-        print("id_list: {}".format(id_list))
-        for id_num in id_list:
-            if id_num == max(id_list):
-                print("Fetching most recent email")
-
-            return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
-            raw_email = data[0][1]
-
-            # function returns (to, from, subject, body)
-            email_msg = {}
-            email_msg['To'], email_msg['From'], email_msg['Subject'], email_msg['Body'] = self.process_raw_email(raw_email)
-
-            next_email = input("Do you want to see the next email (yes/no): ")
-            if "n" in next_email:
-                break
+        # input error checking
+        filterInput = ""
+        while filterInput != "n" and filterInput != "y":
+            # search the inbox for all valid emails (first argument is 'charset' and second is 'filter')
+            # "ALL" returns all emails without any filter
+            # (UNSEEN) filter to all unread emails
+            filterInput = input("Do you want to see only unopened emails (y/n): ")
+            if filterInput == "n":
+                emailFilter = "ALL"
+            elif filterInput == "y":
+                emailFilter = "(UNSEEN)"
+            else:
+                print("Please enter a valid answer!\n")
         
+        # get all the emails and their id #'s that match the filter
+        search_code, data = self.email_server.search(None, emailFilter) 
 
+        # Only try to check message data if return code is valid and there are emails matching the filter
+        num_emails = len(data[0].decode()) 
+        if search_code == "OK" and num_emails > 0:
+            mail_ids = data[0].decode() # convert byte to string
+
+            # convert to descending ordered list (mail_ids is a str with the mail_ids seperated by spaces)
+            id_list = list(map(lambda x:int(x), list(mail_ids.split()))) 
+            id_list.sort(reverse = True) # sort() performs operation on the same variable
+
+            # fetch the emails in order of most recent to least recent
+            # most recent email has the highest id number
+            print("id_list: {}".format(id_list))
+            for id_num in id_list:
+                if id_num == max(id_list):
+                    print("Fetching most recent email")
+
+                return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
+                raw_email = data[0][1]
+
+                # function returns (To, From, DateTime, Subject, Body)
+                emailTouple = self.process_raw_email(raw_email)
+                email_msg = {
+                    "To": emailTouple[0],
+                    "From": emailTouple[1],
+                    "DateTime": emailTouple[2],
+                    "Subject": emailTouple[3],
+                    "Body": emailTouple[4]
+                }
+
+                # only give prompt if this is not the last email
+                if id_num != min(id_list):
+                    next_email = input("Do you want to see the next email (yes/no): ")
+                    if "n" in next_email:
+                        break
+                else:
+                    print("That was the last email!")
+
+        elif num_emails == 0:
+            print("No new emails in the inbox!")
+        else:
+            print("Invalid return code from inbox!")
         
 
         # logout of email once finished (always do this last)
-        print("Logging out of email")
+        print("\nLogging out of email")
         self.email_server.logout()
 
     def process_raw_email(self, raw_email):
@@ -449,7 +482,7 @@ class email_agent():
             Args:
                 -raw_email: a byte string that can be converted into a Message object
             Return:
-                -refined_email(touple): The touple will contain (To, From, Subject, body) 
+                -refined_email(touple): The touple will contain (To, From, DateTime, Subject, body) 
         '''
         # convert byte literal to string removing b''
         email_msg = email.message_from_bytes(raw_email)      
@@ -466,19 +499,30 @@ class email_agent():
 
                 elif part.get_content_type() == "text/html":
                     continue
-        
-        print("\n<{0}>\n".format('-'*150)) # email deliniator
+
+        # Get date and time of email
+        date_tuple = email.utils.parsedate_tz(email_msg['Date'])
+        if date_tuple:
+            local_date = datetime.datetime.fromtimestamp(
+                email.utils.mktime_tz(date_tuple))
+            dateTime = local_date.strftime("%a, %d %b %Y %H:%M:%S")
+
+        # email delineator (get column size)
+        columns, rows = shutil.get_terminal_size(fallback=(80, 24))
+        delineator = columns - 2 # have to account for '<' and '>' chars on either end 
+        print("\n<{0}>\n".format('-'*delineator)) 
 
         print("""Email:\n
         To: {0}\n
         From: {1}\n
-        Subject: {2}\n\n
-        Body: {3}
-        """.format(email_msg['To'], email_msg['From'], email_msg['Subject'], body))
+        DateTime: {2}\n
+        Subject: {3}\n\n
+        Body: {4}
+        """.format(email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body))
 
-        print("\n<{0}>\n".format('-'*150)) # email deliniator
+        print("\n<{0}>\n".format('-'*delineator)) # email delineator
 
-        return (email_msg['To'], email_msg['From'], email_msg['Subject'], body)
+        return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
         
 
 if __name__ == "__main__":

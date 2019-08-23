@@ -513,10 +513,11 @@ class email_agent():
         print("\n<{0}>\n".format('-'*delineator)) 
 
         print("""Email:\n
-        To: {0}\n
-        From: {1}\n
-        DateTime: {2}\n
-        Subject: {3}\n\n
+        To: {0}
+        From: {1}
+        DateTime: {2}
+        Subject: {3}
+        
         Body: {4}
         """.format(email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body))
 

@@ -66,7 +66,8 @@ class email_agent():
                 self.email_server.sendmail(msg["From"], msg["To"], sms)
             else:
                 self.email_server.send_message(msg)
-            print("Successfully sent the email/text to {0} {1}".format(receiver_contact_info['first_name'], receiver_contact_info['last_name']))
+            print("Successfully sent the email/text to {0} {1}".format(
+                receiver_contact_info['first_name'], receiver_contact_info['last_name']))
         self.email_server.quit()
         
 
@@ -138,7 +139,8 @@ class email_agent():
 
     def componse_email_msg(self, email_service_provider_info):
         # Get a list of all possible message types
-        list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(os.path.join(path_to_this_dir, 'message_templates'))]
+        list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
+                        os.path.join(path_to_this_dir, 'message_templates'))]
         contents = ''
         
         type_of_msg = 'default' 
@@ -164,7 +166,8 @@ class email_agent():
         # TODO create other elif statements for different cases
         if type_of_msg == "test_msg":
             receiver = str(receiver_contact_info['first_name'])
-            sendable_msg = self.read_template(path_to_msg_template).substitute(receiver_name=receiver, sender_name=self.my_email_address) 
+            sendable_msg = self.read_template(path_to_msg_template).substitute(
+                receiver_name=receiver, sender_name=self.my_email_address) 
 
         elif type_of_msg == 'input_content':
             my_input = input("Input what you would like to send in the body of the email: ")
@@ -222,7 +225,8 @@ class email_agent():
 
         # if values were not initialized then no match was found
         if email == '' and phone_num == '' and carrier == '':
-            raise Exception("Contact does not exist! \n\nAdd them to the contact list by calling this program followed by 'add_contacts'")
+            raise Exception("Contact does not exist! \n\nAdd them to the contact \
+                list by calling this program followed by 'add_contacts'")
         
         print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(my_first_name, my_last_name))
         print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
@@ -243,10 +247,10 @@ class email_agent():
             This function is responsible for connecting to the email server.
             Args:
                 - host_address: contains information about host address of email server 
-                - purpose: A string that is either "send" or "receive" which is needed to determine which protocol to use
+                - purpose: A str that is either "send" or "receive" which is needed to determine which protocol to use
                 - use_default: boolean that when set to True means the program 
                     will login in to a known email account wihtout extra inputs needed
-                - port_num: contains infomraiton about the port # of email server (defaults to 465 for secure connections)
+                - port_num: contains information about the port # of email server (defaults to 465)
             Return:
                 - No returns, but this function does create a couple 'self' variables (self.email_server)
         '''
@@ -289,7 +293,8 @@ class email_agent():
                 print("Try changing your account settings to allow less secure apps to allow connection to be made.")
                 link_to_page = "https://myaccount.google.com/lesssecureapps"
                 print("Or try enabling two factor authorization and generating an app-password\n{0}".format(link_to_page))
-                print("Quiting program, try connecting again with correct email/password, after making the changes, or trying a different email")
+                print("Quiting program, try connecting again with correct email/password, \
+                    after making the changes, or trying a different email")
             else:
                 print("Encountered error while trying to connect to email server: \n{0}".format(error))
             quit()
@@ -304,13 +309,14 @@ class email_agent():
 
     def get_email_info(self, purpose:str, use_default=False):
         '''
-            This function returns a dictionary containing information about a host address and port number of an email company
+            This function returns a dictionary containing information 
+            about a host address and port number of an email company.
 
             Args:
-                -use_default: (Boolean) When set to True, the program will provide the information for the default email address
+                -use_default: (Boolean) When set to True, the program will provide info for the built in email address.
                 -purpose: (string) Either "send" or "receive"
             Return:
-                -email_service_provider_info: (Dict) Contains information about a specific email company necessary for logging in.
+                -email_service_provider_info: (Dict) Contains info about the email company necessary for logging in.
                     I.E.: {"host_address": "smtp.gmail.com", "port_num": "587"}
         '''
         # Based on input about which email service provider the user wants to login to determine info for server
@@ -339,12 +345,14 @@ class email_agent():
             print("The available list of providers you can login to is: \n{0}".format(list(possible_providers)))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
 
-            # see if email service provider exists in the list (case-insensitive)- use lambda function to turn list to lowercase
+            # see if email service provider exists in the list (case-insensitive)
+            # -use lambda function to turn list to lowercase
             if email_service_provider.lower() in lower_case_list:
                 # get the index of name match in the list (regardless of case)
                 index = lower_case_list.index(email_service_provider.lower())
 
-                # Using the index of where the correct key is located, use the dict which contains all entries of original dict to get exact key name
+                # Using the index of where the correct key is located, 
+                # use the dict which contains all entries of original dict to get exact key name
                 dict_key_name = dict_keys_mapped_to_list[index]
 
                 # Get the information pertaining to this dict key
@@ -353,7 +361,8 @@ class email_agent():
             else:
                 print("The desired email service provider not supported! Try using another one")
             
-        # if user wants to use the pre-setup gmail account then program needs to change which smtp server it is trying to access
+        # if user wants to use the pre-setup gmail accoun,
+        # then program needs to change which smtp server it is trying to access
         if use_default is True:
             email_service_provider_info = self.email_providers_info['Gmail']
 
@@ -407,7 +416,7 @@ class email_agent():
             port_num=email_service_provider_info['port_num'], use_default=use_default)
 
         # opens folder/label you want to read from
-        self.email_server.select('INBOX', readonly=True)
+        self.email_server.select('INBOX')
         print("Successfully Opened Inbox")
 
         # input error checking
@@ -517,7 +526,7 @@ class email_agent():
         From: {1}
         DateTime: {2}
         Subject: {3}
-        
+
         Body: {4}
         """.format(email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body))
 
@@ -529,7 +538,8 @@ class email_agent():
 if __name__ == "__main__":
 
     arg_length = len(sys.argv)
-    # the order of arguments is: 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
+    # the order of arguments is: 
+    # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
 
     # use this phrase to easily add more contacts to the contact list
     if 'add_contacts' in sys.argv:
@@ -538,7 +548,8 @@ if __name__ == "__main__":
         my_email = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phone_num = input("Please enter their phone number: ")
-        email_agent(display_contacts=False).add_contacts_to_contacts_list(first_name, last_name, my_email, carrier, phone_num)
+        email_agent(display_contacts=False).add_contacts_to_contacts_list(
+            first_name, last_name, my_email, carrier, phone_num)
         
     
     else:

@@ -1,4 +1,5 @@
 '''
+    The purpose of this file is to be able to send/receive emails
 '''
 #TODO: If contact list has multiple emails, allow user to pick
 import os
@@ -21,12 +22,12 @@ path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
 
 
-class email_agent():
+class emailAgent():
     def __init__(self, display_contacts=True):
         '''
             This class is responsible for sending emails 
         '''
-        self.message_templates_dir = os.path.join(path_to_this_dir, "message_templates")
+        self.messageTemplates_dir = os.path.join(path_to_this_dir, "messageTemplates")
         self.path_to_contact_list = os.path.join(path_to_this_dir, "contacts.json")
         self.contact_list = self.load_json()
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
@@ -80,7 +81,7 @@ class email_agent():
         '''
         # determine if user wants to send an email message or phone text
         if 'y' in input("Do you want to send an email message? (y/n): ").lower():
-            msg = self.componse_email_msg(email_service_provider_info)
+            msg = self.compose_email_msg(email_service_provider_info)
         else:
             msg = self.compose_text_msg(receiver_contact_info)
 
@@ -105,7 +106,7 @@ class email_agent():
 
                 # Since cant send a text message to the person, ask if user want to send email message instead
                 if input("Do you want to send an email instead (y/n): ").lower() == 'y':
-                    return self.componse_email_msg()
+                    return self.compose_email_msg()
                 
                 # If user cant send a text and wont send an email then just return
                 else:
@@ -137,20 +138,20 @@ class email_agent():
 
 
 
-    def componse_email_msg(self, email_service_provider_info):
+    def compose_email_msg(self, email_service_provider_info):
         # Get a list of all possible message types
         list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
-                        os.path.join(path_to_this_dir, 'message_templates'))]
+                        os.path.join(path_to_this_dir, 'messageTemplates'))]
         contents = ''
         
         type_of_msg = 'default' 
-        path_to_msg_template = os.path.join(self.message_templates_dir, 'default.txt')
+        path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
 
         with open(path_to_msg_template) as read_file:
             contents = read_file.read()
 
         for msg_type in list_of_msg_types:
-            path_to_msg_template = os.path.join(self.message_templates_dir, msg_type + '.txt')
+            path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
             with open(path_to_msg_template) as read_file:
                 msg_contents = read_file.read()
             print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
@@ -548,13 +549,13 @@ if __name__ == "__main__":
         my_email = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phone_num = input("Please enter their phone number: ")
-        email_agent(display_contacts=False).add_contacts_to_contacts_list(
+        emailAgent(display_contacts=False).add_contacts_to_contacts_list(
             first_name, last_name, my_email, carrier, phone_num)
         
     
     else:
         # Create a class obj for this file
-        emailer = email_agent()
+        emailer = emailAgent()
 
         # determine what the user wants to use the emailing agent for
         service_type = input("\nTo send an email type 'send'.\nTo check your inbox type 'get':\n").lower()

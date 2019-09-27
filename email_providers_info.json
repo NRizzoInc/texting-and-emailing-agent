@@ -1,4 +1,16 @@
 {
+    "Default":{
+        "smtp_server": {
+            "host_address": "smtp.gmail.com",
+            "port_num": "587"
+        },
+
+        "imap_server": {
+            "host_address": "imap.gmail.com",
+            "port_num": "993"
+        }   
+    },
+
     "Verizon": {
         "smtp_server": {    
             "host_address": "smtp.verizon.net",

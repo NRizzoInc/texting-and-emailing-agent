@@ -33,6 +33,10 @@ class emailAgent():
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
 
+        # boolean that when set to True means the program will login
+        # to a known email account wihtout extra inputs needed
+        self.use_default = False 
+
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
         self.my_email_address = "codinggenius9@gmail.com"
@@ -42,18 +46,16 @@ class emailAgent():
             print("The current contact list is:\n")
             pprint.pprint(self.contact_list)
 
-    def send_email(self, receiver_contact_info, use_default=False):
+    def send_email(self, receiver_contact_info):
         '''
-            Args:
-                - use_default: boolean that when set to True means the program 
-                    will login in to a known email account wihtout extra inputs needed
+            Calls all other functions necessary to send an email
             
         '''            
 
-        email_service_provider_info = self.get_email_info("send", use_default=use_default)['smtp_server']
+        email_service_provider_info = self.get_email_info("send")['smtp_server']
 
         self.connect_to_email_server(email_service_provider_info['host_address'], "send",
-            port_num=email_service_provider_info['port_num'], use_default=use_default)
+            port_num=email_service_provider_info['port_num'])
 
         msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
         
@@ -243,20 +245,18 @@ class emailAgent():
 
         return dict_to_return
 
-    def connect_to_email_server(self, host_address, purpose:str, use_default=False, port_num=465):
+    def connect_to_email_server(self, host_address, purpose:str, port_num=465):
         '''
             This function is responsible for connecting to the email server.
             Args:
                 - host_address: contains information about host address of email server 
                 - purpose: A str that is either "send" or "receive" which is needed to determine which protocol to use
-                - use_default: boolean that when set to True means the program 
-                    will login in to a known email account wihtout extra inputs needed
                 - port_num: contains information about the port # of email server (defaults to 465)
             Return:
                 - No returns, but this function does create a couple 'self' variables (self.email_server)
         '''
         # Get email login
-        if use_default is False:
+        if self.use_default is False:
             # if false then make user use their own email username and password
             self.my_email_address = input("Enter your email address: ")
             self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
@@ -308,13 +308,12 @@ class emailAgent():
             data = json.load(read_file)
         return data
 
-    def get_email_info(self, purpose:str, use_default=False):
+    def get_email_info(self, purpose:str):
         '''
             This function returns a dictionary containing information 
             about a host address and port number of an email company.
 
             Args:
-                -use_default: (Boolean) When set to True, the program will provide info for the built in email address.
                 -purpose: (string) Either "send" or "receive"
             Return:
                 -email_service_provider_info: (Dict) Contains info about the email company necessary for logging in.
@@ -342,8 +341,9 @@ class emailAgent():
         found_valid_email_provider = False
         email_service_provider_info = {}
 
-        while found_valid_email_provider is False and use_default is False:
-            print("The available list of providers you can login to is: \n{0}".format(list(possible_providers)))
+        while found_valid_email_provider is False and self.use_default is False:
+            print("The available list of providers you can login to is: \n{0}\n\
+                Select 'Default' if you dont want to skip logging in.".format(list(possible_providers)))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
 
             # see if email service provider exists in the list (case-insensitive)
@@ -364,14 +364,16 @@ class emailAgent():
             
         # if user wants to use the pre-setup gmail accoun,
         # then program needs to change which smtp server it is trying to access
-        if use_default is True:
-            email_service_provider_info = self.email_providers_info['Gmail']
+        if self.use_default is True or email_service_provider.lower() == "default":
+            email_service_provider_info = self.email_providers_info['Default']
+            # set to true for case of user opting into default during runtime
+            self.use_default = True 
 
         return email_service_provider_info
     
     def add_contacts_to_contacts_list(self, first_name, last_name, email, carrier, phone_num):
         '''
-            This function is responsible for adding another contact to the contact list
+            This function is responsible for adding another contact to the contact list by processing the inputs
             Args:\n
                 first_name: first name of the person being added
                 last_name: last name of the person being added
@@ -409,12 +411,26 @@ class emailAgent():
         print("The updated contacts list is:\n")
         pprint.pprint(self.contact_list)
 
-    def receive_email(self, use_default=False):
+    def simpleAddContact(self):
+        '''
+            This function is responsible for adding another contact to the contact list 
+            (no args needed because it will ask for inputs)
+        '''
 
-        email_service_provider_info = self.get_email_info("receive", use_default)['imap_server']
+        first_name = input("Please enter their first name: ")
+        last_name = input("Please enter their last name: ")
+        my_email = input("Please enter their email: ")
+        carrier = input("Please enter their cell phone carrier this person uses: ")
+        phone_num = input("Please enter their phone number: ")
+        emailAgent(display_contacts=False).add_contacts_to_contacts_list(
+            first_name, last_name, my_email, carrier, phone_num)
+
+    def receive_email(self):
+
+        email_service_provider_info = self.get_email_info("receive")['imap_server']
 
         self.connect_to_email_server(email_service_provider_info['host_address'], "receive",
-            port_num=email_service_provider_info['port_num'], use_default=use_default)
+            port_num=email_service_provider_info['port_num'])
 
         # opens folder/label you want to read from
         self.email_server.select('INBOX')
@@ -484,6 +500,13 @@ class emailAgent():
         print("\nLogging out of email")
         self.email_server.logout()
 
+    def setDefaultState(self, newState:bool):
+        ''' 
+            This function is responsible for changing the 'self' variable "use_default" 
+            to whatever the argument newState is.
+        '''
+        self.use_default = newState
+
     def process_raw_email(self, raw_email):
         '''
             This function returns the body of the raw email.
@@ -543,30 +566,35 @@ if __name__ == "__main__":
     # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
 
     # use this phrase to easily add more contacts to the contact list
-    if 'add_contacts' in sys.argv:
-        first_name = input("Please enter their first name: ")
-        last_name = input("Please enter their last name: ")
-        my_email = input("Please enter their email: ")
-        carrier = input("Please enter their cell phone carrier this person uses: ")
-        phone_num = input("Please enter their phone number: ")
-        emailAgent(display_contacts=False).add_contacts_to_contacts_list(
-            first_name, last_name, my_email, carrier, phone_num)
+    if 'add_contacts' in sys.argv:        
+        emailAgent.simpleAddContact()
         
-    
     else:
         # Create a class obj for this file
         emailer = emailAgent()
 
         # determine what the user wants to use the emailing agent for
-        service_type = input("\nTo send an email type 'send'.\nTo check your inbox type 'get':\n").lower()
+        service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
 
         if "send" in service_type:
 
-            # First check that enough arguments were provided
+            # First check that enough arguments were provided (if not do it manually)
             if arg_length < 3: 
-                print("Invalid number of arguments entered!\nProvide first and last name seperated by spaces! \
-                        \n(type 'default' as well to skip email login)")
-        
+                print("\nInvalid number of arguments entered! \
+                       \nProvide first and last name seperated by spaces when running this script! \
+                       \nThe existing contact list includes: \n{0}".format(emailAgent.contact_list))
+
+                addContact = input("Do you want to add a new contact to this list(y/n): ")
+                if addContact == 'y': emailAgent.simpleAddContact()
+                
+                nextAction = input("Do you want to send a message to one of these contacts (y/n): ")
+                if nextAction == 'y': 
+                   fullName = input("Enter their first name followed by their last name: ").split(' ')
+
+                   sys.argv[1] = fullName[0] # first name
+                   sys.argv[2] = fullName[1] # last name
+                    
+
             # Get arguments from when script is called
             first_name = sys.argv[1]
             last_name = sys.argv[2]
@@ -578,16 +606,19 @@ if __name__ == "__main__":
 
             elif arg_length == 4:
                 # if there is a third argument, then use default email account (dont need to login)
-                emailer.send_email(receiver_contact_info, use_default=True)
+                emailer.setDefaultState(True)
+                emailer.send_email(receiver_contact_info)
         
         elif "get" in service_type:
 
             # Entering something in the second argument signifies that you want to use the default login
             if arg_length == 2:
-                emailer.receive_email(use_default=True)
+                emailer.setDefaultState(True)
+                emailer.receive_email()
             
             else:
-                emailer.receive_email(use_default=False)
+                emailer.setDefaultState(False)
+                emailer.receive_email()
 
         
         else:

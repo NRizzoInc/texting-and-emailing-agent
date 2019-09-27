@@ -29,7 +29,14 @@ class emailAgent():
         '''
         self.messageTemplates_dir = os.path.join(path_to_this_dir, "messageTemplates")
         self.path_to_contact_list = os.path.join(path_to_this_dir, "contacts.json")
-        self.contact_list = self.load_json()
+
+
+        # Open the contact list file (create new file if it does not exist)
+        if not os.path.exists(self.path_to_contact_list):
+            with open(self.path_to_contact_list, 'w+') as writeFile:
+                json.dump({}, writeFile) #write empty dictionary to file (creates the file)
+        self.contact_list = self.load_json(self.path_to_contact_list)
+
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
 
@@ -42,6 +49,8 @@ class emailAgent():
         self.my_email_address = "codinggenius9@gmail.com"
         self.password = "codingisfun1"
 
+
+        # display contents of the existing contact list
         if display_contacts is True:    
             print("The current contact list is:\n")
             pprint.pprint(self.contact_list)
@@ -60,8 +69,12 @@ class emailAgent():
         msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
         
         # send the message via the server set up earlier.
-        if msg is None: # will only be None if can't send email or text
+        if msg == None: # will only be None if can't send email or text message
             print("Could not send an email or text message")
+            
+        elif msg == "invalid":
+            print("No valid method of sending a message was chosen")
+
         else:
             # method of sending email changes depending on whether it is an email of text
             if self.send_to_phone is True:
@@ -79,13 +92,19 @@ class emailAgent():
             This function is responsible for composing the email message that get sent out
             \nReturn:
 
-            -The sendable message
+            -Returns:
+                * The sendable message 
+                * 'invalid' if no type of message was chosen to be send
+                * None if selected message could not be sent
         '''
         # determine if user wants to send an email message or phone text
         if 'y' in input("Do you want to send an email message? (y/n): ").lower():
             msg = self.compose_email_msg(email_service_provider_info)
         else:
-            msg = self.compose_text_msg(receiver_contact_info)
+            if 'y' in input("Do you want to send a text message if possible (y/n): ").lower():
+                msg = self.compose_text_msg(receiver_contact_info)
+            else:
+                msg = 'invalid' # signifies to caller that no message is being sent
 
         return msg
 
@@ -342,8 +361,8 @@ class emailAgent():
         email_service_provider_info = {}
 
         while found_valid_email_provider is False and self.use_default is False:
-            print("The available list of providers you can login to is: \n{0}\n\
-                Select 'Default' if you dont want to skip logging in.".format(list(possible_providers)))
+            print("The available list of providers you can login to is: \n{0} \
+                  \nSelect 'Default' if you dont want to skip logging in.".format(list(possible_providers)))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
 
             # see if email service provider exists in the list (case-insensitive)
@@ -422,6 +441,8 @@ class emailAgent():
         my_email = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phone_num = input("Please enter their phone number: ")
+
+        # call function that handles the actual adding
         emailAgent(display_contacts=False).add_contacts_to_contacts_list(
             first_name, last_name, my_email, carrier, phone_num)
 
@@ -571,7 +592,7 @@ if __name__ == "__main__":
         
     else:
         # Create a class obj for this file
-        emailer = emailAgent()
+        emailer = emailAgent(display_contacts=False)
 
         # determine what the user wants to use the emailing agent for
         service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
@@ -582,26 +603,35 @@ if __name__ == "__main__":
             if arg_length < 3: 
                 print("\nInvalid number of arguments entered! \
                        \nProvide first and last name seperated by spaces when running this script! \
-                       \nThe existing contact list includes: \n{0}".format(emailAgent.contact_list))
+                       \n\nThe existing contact list includes: ")
+                pprint.pprint(emailer.contact_list)
 
                 addContact = input("Do you want to add a new contact to this list(y/n): ")
-                if addContact == 'y': emailAgent.simpleAddContact()
+                if addContact == 'y': emailer.simpleAddContact()
                 
-                nextAction = input("Do you want to send a message to one of these contacts (y/n): ")
-                if nextAction == 'y': 
-                   fullName = input("Enter their first name followed by their last name: ").split(' ')
-
-                   sys.argv[1] = fullName[0] # first name
-                   sys.argv[2] = fullName[1] # last name
+                sendMsg = input("Do you want to send a message to one of these contacts (y/n): ")
+                if sendMsg == 'y': 
+                    # error check for invalid input
+                    fullName = list()
+                    while len(fullName) < 2:
+                        fullName = input("Enter their first name followed by their last name: ").split(' ')
+                   
+                    first_name = fullName[0]
+                    last_name = fullName[1]
+                elif sendMsg == 'n': sys.exit(0)
                     
+            else:
+                # Get arguments from when script is called
+                first_name = sys.argv[1]
+                last_name = sys.argv[2]
+                # receiver_contact_info contains first_name, last_name, email, carrier, phone number
 
-            # Get arguments from when script is called
-            first_name = sys.argv[1]
-            last_name = sys.argv[2]
-            # receiver_contact_info contains first_name, last_name, email, carrier, phone number
+            # get contact info regardless of method to reach this point
             receiver_contact_info = emailer.get_receiver_contact_info(first_name, last_name)
 
-            if arg_length == 3:
+            # arg_length- if all arguments given when calling script
+            # sendMsg- if want to send a message but didnt give complete arguments during call
+            if arg_length == 3 or sendMsg == 'y':
                 emailer.send_email(receiver_contact_info)
 
             elif arg_length == 4:

@@ -116,7 +116,7 @@ class emailAgent():
         '''
         # determine if user wants to send an email message or phone text
         if 'y' in input("Do you want to send an email message? (y/n): ").lower():
-            msg = self.compose_email_msg(email_service_provider_info)
+            msg = self.compose_email_msg(receiver_contact_info)
         else:
             if 'y' in input("Do you want to send a text message if possible (y/n): ").lower():
                 msg = self.compose_text_msg(receiver_contact_info)
@@ -176,7 +176,12 @@ class emailAgent():
 
 
 
-    def compose_email_msg(self, email_service_provider_info):
+    def compose_email_msg(self, receiver_contact_info):
+        '''
+            This function provides the user with a method of choosing which email format to send and entering the desired message.
+            Args:
+                -receiver_contact_info: a dictionary containing the following information {first name, last name, email, carrier, phone number}
+        '''
         # Get a list of all possible message types
         list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
                         os.path.join(path_to_this_dir, 'messageTemplates'))]
@@ -544,8 +549,9 @@ class emailAgent():
                     print("Fetching most recent email")
 
                 # Check if mode is still in IMAP (might have changed if sent reply)
-                if self.mode == "SMTP": # if true then switch back
+                if self.mode == "SMTP": # if true then switch back and prime code to fetch
                     self.connect_to_email_server("receive")
+                    self.email_server.select('INBOX')
 
                 return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
                 raw_email = data[0][1]
@@ -563,6 +569,7 @@ class emailAgent():
                 replyBool = input("Do you want to reply to this email (y/n): ")
                 if 'y' in replyBool:
 
+                    # format of 'contactInfo'
                     contactInfo = {
                         'first_name' : '',
                         'last_name': '',
@@ -578,7 +585,7 @@ class emailAgent():
                     if contactInfo == None:
                         # signifies sender was a cell phone
                         if '@' in email_msg["From"]:
-                            # get carrier info
+                            # get phoneNum/carrier info
                             tempDict = self.phoneNumberToParts(email_msg["From"])
                             # if it was a text message then only need this piece of information
                             contactInfo['phone_num'] = tempDict['phoneNum']
@@ -625,6 +632,7 @@ class emailAgent():
             for first_names in self.contact_list[last_names].keys():
                 # check if phone number matches
                 if self.contact_list[last_names][first_names]["phone_number"].replace('-', '') == dataDict['phoneNum']:
+                    print("Matched recieved email to an existing contact!!")
                     return self.get_receiver_contact_info(first_names, last_names)
 
         # if reached this point then did not find number in contact list

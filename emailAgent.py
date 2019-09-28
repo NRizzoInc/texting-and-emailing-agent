@@ -101,8 +101,6 @@ class emailAgent():
                 self.email_server.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
                 receiver_contact_info['first_name'], receiver_contact_info['last_name']))
-        self.email_server.quit()
-        
 
     def compose_msg(self, email_service_provider_info, receiver_contact_info):
         '''
@@ -296,6 +294,7 @@ class emailAgent():
             Return:
                 - No returns, but this function does create a couple 'self' variables (self.email_server)
         '''
+
         # Get email login
         if self.use_default is False and self.loginAlreadySet == False:
             # if false then make user use their own email username and password
@@ -370,18 +369,25 @@ class emailAgent():
         return data
 
     def connectSMTP(self, server, portNum):
-        '''
-            Function responsible for logging in to SMTP server to send mail
-        '''
         print("Connecting to SMTP email server")
+
+        # if email_server is already logged to either version, log it out
+        if self.loginAlreadySet != None:
+            self.logoutEmail()
+
         self.mode = "SMTP"
         self.email_server = smtplib.SMTP(host=server, port=int(portNum))
         self.email_server.ehlo()
         self.email_server.starttls(context=self.context)
         self.email_server.ehlo()    
 
-    def connectIMAP(self, server, portNum):
+    def connectIMAP(self, server, portNum):    
         print("Connecting to IMAP email server")
+
+        # if email_server is already logged to either version, log it out
+        if self.loginAlreadySet != None:
+            self.logoutEmail()
+
         self.mode = "IMAP"
         self.email_server = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
@@ -614,7 +620,7 @@ class emailAgent():
 
         # logout of email once finished (always do this last)
         print("\nLogging out of email")
-        self.email_server.logout()
+        self.logoutEmail()
 
     def numberToContact(self, fullPhoneNum:str):
         '''
@@ -724,6 +730,15 @@ class emailAgent():
         print("\n<{0}>\n".format('-'*delineator)) # email delineator
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
+
+    
+    def logoutEmail(self):
+        '''
+            This function is responsible for having the email server close connections with the server.
+            Need to make it a function due to the fact that logging out requires different code depening on the type of server 
+        '''
+        if self.mode == "SMTP": self.email_server.quit()
+        elif self.mode == "IMAP": self.email_server.logout()
         
 
 if __name__ == "__main__":

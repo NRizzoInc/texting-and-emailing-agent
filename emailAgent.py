@@ -37,17 +37,25 @@ class emailAgent():
                 json.dump({}, writeFile) #write empty dictionary to file (creates the file)
         self.contact_list = self.load_json(self.path_to_contact_list)
 
+        # information to login
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
+        self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
+        self.mode = None # usually set to 'SMTP' or 'IMAP'
+        self.pastSMTPServerAddress = None
+        self.pastIMAPServerAddress = None
 
-        # boolean that when set to True means the program will login
-        # to a known email account wihtout extra inputs needed
-        self.use_default = False 
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
         self.my_email_address = "codinggenius9@gmail.com"
         self.password = "codingisfun1"
+        # will be set to true if non-default account is used and login entered
+        # allows user to not hav eto tpe login multiple times
+        self.loginAlreadySet = False 
+        # boolean that when set to True means the program will login
+        # to a known email account wihtout extra inputs needed
+        self.use_default = False 
 
 
         # display contents of the existing contact list
@@ -58,12 +66,21 @@ class emailAgent():
     def send_email(self, receiver_contact_info):
         '''
             Calls all other functions necessary to send an email
-            
+
+            Args:
+                -receiver_contact_info: a dictionary about the receiver of format:
+                        last_name: {
+                            first_name: {
+                                "email": "",
+                                "phone_number": "",
+                                "carrier": ""
+                            }
+                        },
         '''            
 
         email_service_provider_info = self.get_email_info("send")['smtp_server']
 
-        self.connect_to_email_server(email_service_provider_info['host_address'], "send",
+        self.connect_to_email_server("send", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
         msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
@@ -264,7 +281,7 @@ class emailAgent():
 
         return dict_to_return
 
-    def connect_to_email_server(self, host_address, purpose:str, port_num=465):
+    def connect_to_email_server(self, purpose:str, host_address=None, port_num=465):
         '''
             This function is responsible for connecting to the email server.
             Args:
@@ -275,36 +292,56 @@ class emailAgent():
                 - No returns, but this function does create a couple 'self' variables (self.email_server)
         '''
         # Get email login
-        if self.use_default is False:
+        if self.use_default is False and self.loginAlreadySet == False:
             # if false then make user use their own email username and password
             self.my_email_address = input("Enter your email address: ")
             self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+            self.loginAlreadySet = True # set to true so next time the user will not have to retype login info
         else:
             print("Using default gmail account created for this program to login to an email\n")
             # I created a dummy gmail account that this program can login to
 
-        server = host_address
-        my_port_num = port_num
+        # starts off set to None
+        if self.pastIMAPServerAddress == None and purpose == 'receive':
+            server = host_address
+            self.pastIMAPServerAddress = server
+
+        elif self.pastSMTPServerAddress == None and purpose == 'send':
+            server = host_address
+            self.pastSMTPServerAddress = server
+        
+        # cases when trying to relogin
+        elif self.pastIMAPServerAddress != None and purpose == 'receive':
+            server = self.pastIMAPServerAddress
+
+        elif self.pastSMTPServerAddress != None and purpose == 'send':
+            server = self.pastSMTPServerAddress
+
+        else:
+            raise Exception("Unhandled Case when getting server address in 'connect_to_email_server()'")
+        
+        if purpose == "send":
+            my_port_num = 587
+        elif purpose == "receive":
+            my_port_num = 993
+        else:
+            raise Exception("Unhandled Case when getting port number in 'connect_to_email_server()'")
+
 
         # Establish connection to email server using self.my_email_address and password given by user
-        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)
-        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)        
+        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)        
         if purpose == "send":
-            print("Connecting to SMTP email server")
-            self.email_server = smtplib.SMTP(host=server, port=int(my_port_num))
-            self.email_server.ehlo()
-            self.email_server.starttls(context=context)
-            self.email_server.ehlo()        
+            self.connectSMTP(server, my_port_num)
         
         elif purpose == "receive":
-            print("Connecting to IMAP email server")
-            self.email_server = imaplib.IMAP4_SSL(host=server, port=int(my_port_num), ssl_context=context)
+            self.connectIMAP(server, my_port_num)
 
 
         # Try to login to email server, if it fails then catch exception
         try:
             self.email_server.login(self.my_email_address, self.password)
             print("Successfully logged into email account!\n")
+            
         except Exception as error:
             if '535' in str(error):
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
@@ -326,6 +363,22 @@ class emailAgent():
         with open(path_to_json, 'r+') as read_file:
             data = json.load(read_file)
         return data
+
+    def connectSMTP(self, server, portNum):
+        '''
+            Function responsible for logging in to SMTP server to send mail
+        '''
+        print("Connecting to SMTP email server")
+        self.mode = "SMTP"
+        self.email_server = smtplib.SMTP(host=server, port=int(portNum))
+        self.email_server.ehlo()
+        self.email_server.starttls(context=self.context)
+        self.email_server.ehlo()    
+
+    def connectIMAP(self, server, portNum):
+        print("Connecting to IMAP email server")
+        self.mode = "IMAP"
+        self.email_server = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
     def get_email_info(self, purpose:str):
         '''
@@ -450,7 +503,7 @@ class emailAgent():
 
         email_service_provider_info = self.get_email_info("receive")['imap_server']
 
-        self.connect_to_email_server(email_service_provider_info['host_address'], "receive",
+        self.connect_to_email_server("receive", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
         # opens folder/label you want to read from
@@ -469,7 +522,7 @@ class emailAgent():
             elif filterInput == "y":
                 emailFilter = "(UNSEEN)"
             else:
-                print("Please enter a valid answer!\n")
+                raise Exception("Please enter a valid answer!\n")
         
         # get all the emails and their id #'s that match the filter
         search_code, data = self.email_server.search(None, emailFilter) 
@@ -490,6 +543,10 @@ class emailAgent():
                 if id_num == max(id_list):
                     print("Fetching most recent email")
 
+                # Check if mode is still in IMAP (might have changed if sent reply)
+                if self.mode == "SMTP": # if true then switch back
+                    self.connect_to_email_server("receive")
+
                 return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
                 raw_email = data[0][1]
 
@@ -502,6 +559,37 @@ class emailAgent():
                     "Subject": emailTouple[3],
                     "Body": emailTouple[4]
                 }
+
+                replyBool = input("Do you want to reply to this email (y/n): ")
+                if 'y' in replyBool:
+
+                    contactInfo = {
+                        'first_name' : '',
+                        'last_name': '',
+                        'email': '',
+                        'carrier': '',
+                        'phone_num' : ''
+                    }
+
+                    # send response to the information of "from" from the received email
+                    contactInfo = self.numberToContact(email_msg["From"])
+
+                    # if contactInfo is None, then sender of email not in contact list. Resort to other methods
+                    if contactInfo == None:
+                        # signifies sender was a cell phone
+                        if '@' in email_msg["From"]:
+                            # get carrier info
+                            tempDict = self.phoneNumberToParts(email_msg["From"])
+                            # if it was a text message then only need this piece of information
+                            contactInfo['phone_num'] = tempDict['phoneNum']
+                            contactInfo['carrier'] = tempDict['carrier']
+
+                        # message was from an actual email
+                        else:
+                            contactInfo['email'] = email_msg['From']
+
+
+                    self.send_email(contactInfo)
 
                 # only give prompt if this is not the last email
                 if id_num != min(id_list):
@@ -520,6 +608,56 @@ class emailAgent():
         # logout of email once finished (always do this last)
         print("\nLogging out of email")
         self.email_server.logout()
+
+    def numberToContact(self, fullPhoneNum:str):
+        '''
+            This function will attempt to match a phone number to an existing contact
+            
+            Returns:\n
+                Contact info dictionary of format: {first name, last name, email, carrier, phone number}
+                The phone number return accepts common type of seperaters or none (ex: '-')
+        '''
+        # seperate phone number into parts (phoneNum and carrier)
+        dataDict = self.phoneNumberToParts(fullPhoneNum) 
+
+        # iterate through contact list and check if phone number matches
+        for last_names in self.contact_list.keys():
+            for first_names in self.contact_list[last_names].keys():
+                # check if phone number matches
+                if self.contact_list[last_names][first_names]["phone_number"].replace('-', '') == dataDict['phoneNum']:
+                    return self.get_receiver_contact_info(first_names, last_names)
+
+        # if reached this point then did not find number in contact list
+        return None
+
+    def phoneNumberToParts(self, fullPhoneNum:str):
+        '''
+            Args:
+                -fullPhoneNum: a string of format xxxyyyzzzz@carrier.com
+
+            Returns: Dictionary of format {phoneNum, carrier}
+                -phoneNum
+                -carrier
+        '''
+
+        # only keep part of number before the '@'
+        phoneNum = fullPhoneNum[0:fullPhoneNum.index('@')]
+
+        # keep everything after the '@'
+        smsGatewayTag = fullPhoneNum[fullPhoneNum.index('@'):]
+        
+        # check if sms-gateway exists in email providers list
+        for provider in self.email_providers_info.keys():
+            # check if provider has an sms-gateway
+            if 'SMS-Gateway' in self.email_providers_info[provider]['smtp_server'].keys():
+                # check if gateway matches
+                if self.email_providers_info[provider]['smtp_server']['SMS-Gateway'].lower() == smsGatewayTag:
+                    carrier = provider
+                    return {'phoneNum':phoneNum, 'carrier':carrier}
+        
+        # if code gets here, return phoneNum but carrier is None
+        return {'phoneNum':phoneNum, 'carrier': None}
+
 
     def setDefaultState(self, newState:bool):
         ''' 
@@ -607,18 +745,18 @@ if __name__ == "__main__":
                 pprint.pprint(emailer.contact_list)
 
                 addContact = input("Do you want to add a new contact to this list(y/n): ")
-                if addContact == 'y': emailer.simpleAddContact()
+                if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()
                 
                 sendMsg = input("Do you want to send a message to one of these contacts (y/n): ")
-                if sendMsg == 'y': 
-                    # error check for invalid input
+                # error check for invalid input
+                if sendMsg == 'n': sys.exit(0)
+                else:
                     fullName = list()
                     while len(fullName) < 2:
                         fullName = input("Enter their first name followed by their last name: ").split(' ')
                    
                     first_name = fullName[0]
                     last_name = fullName[1]
-                elif sendMsg == 'n': sys.exit(0)
                     
             else:
                 # Get arguments from when script is called

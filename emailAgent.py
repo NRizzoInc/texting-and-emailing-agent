@@ -859,14 +859,11 @@ if __name__ == "__main__":
             receiver_contact_info = emailer.get_receiver_contact_info(first_name, last_name)
 
             # arg_length- if all arguments given when calling script
-            # sendMsg- if want to send a message but didnt give complete arguments during call
-            if arg_length == 3 or sendMsg == 'y':
-                emailer.send_email(receiver_contact_info)
-
-            elif arg_length == 4:
+            if arg_length == 4:
                 # if there is a third argument, then use default email account (dont need to login)
                 emailer.setDefaultState(True)
-                emailer.send_email(receiver_contact_info)
+
+            emailer.send_email(receiver_contact_info)
         
             waitForReply = input("Do you want to wait for a reply (y/n): ")
             if 'n' not in waitForReply:

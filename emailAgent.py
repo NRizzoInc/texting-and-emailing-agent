@@ -103,7 +103,7 @@ class emailAgent():
                     sms = currMsg.as_string() # need to convert message to string
                     self.email_server.sendmail(msg["From"], msg["To"], sms)
                     # add microscopic delay to ensure that messages arrive in correct order
-                    time.sleep(2/1000) # input is in seconds 
+                    time.sleep(10/1000) # input is in seconds (convert to milliseconds)
             
             else:
                 self.email_server.send_message(msg)
@@ -181,8 +181,10 @@ class emailAgent():
 
     def adjustTextMsg(self, msg:MIMEText):
         """
-            Text messages are limited to 120 characters each.
-            This function will split a long message into multiple ones.
+            Brief: 
+                Text messages are limited to 120 characters each.
+                This function will split a long message into multiple ones.
+                Keeps words together in same text.
             Args: msg (string)
             Return: a list of messages(strings) to send
         """
@@ -194,26 +196,39 @@ class emailAgent():
         totalLength = len(totalMsg)
         charLimit = 120
 
+        # message is over character limit
         if totalLength > charLimit: 
-            # read every 120 chars
             count = 0
-            while count < totalLength/charLimit:
-                tempStr = totalMsg[count*charLimit : ((count*charLimit) + charLimit)]
+            lastIndex = 0
+            toAppend = ''
 
-                # split into multiple objects
-                tempMsg = MIMEText(tempStr) # create a message object with the body
+            # split long message into multiple messages
+            while lastIndex < totalLength:
+                # check there is at least the charLimit # of chars left in string
+                if (totalLength-lastIndex > charLimit):
+
+                    # find the first space occuring prior to 120 char mark (go in reverse during search)
+                    for index, thisChar in enumerate(reversed(totalMsg[lastIndex:lastIndex+charLimit])):
+                        print("Char: {0}".format(thisChar))
+                        if (thisChar == ' '): 
+                            # new position is start + charLimit - # left shifts
+                            endPos = lastIndex + charLimit - index  
+                            toAppend = totalMsg[lastIndex:endPos]
+                            lastIndex = endPos 
+                            print("Appending: {0}".format(toAppend))
+                            break # break for loop to begin next message search
+
+                # less chars than limit, string to append equals remaining
+                else:
+                    toAppend = totalMsg[lastIndex:]
+                    lastIndex = totalLength # exit while-loop condition
+
+                tempMsg = MIMEText(toAppend) # create a message object with the body
                 tempMsg['From'] = msg['From']
                 tempMsg['To'] = msg['To']
 
-                # only add subject on first text
-                if count == 0:
-                    tempMsg['Subject'] = subject 
-                else:
-                    tempMsg['Subject'] = ''
-
                 # add to list
                 msgList.append(tempMsg)
-                count+=1
 
         # normal (send one message)
         else:

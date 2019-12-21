@@ -7,6 +7,7 @@ import sys
 import json
 import pprint
 import getpass
+import time
 import datetime
 import shutil
 # Email imports
@@ -96,8 +97,14 @@ class emailAgent():
         else:
             # method of sending email changes depending on whether it is an email of text
             if self.send_to_phone is True:
-                sms = msg.as_string() # need to convert message to string
-                self.email_server.sendmail(msg["From"], msg["To"], sms)
+                msgList = self.adjustTextMsg(msg)
+                
+                for currMsg in msgList:
+                    sms = currMsg.as_string() # need to convert message to string
+                    self.email_server.sendmail(msg["From"], msg["To"], sms)
+                    # add microscopic delay to ensure that messages arrive in correct order
+                    time.sleep(2/1000) # input is in seconds 
+            
             else:
                 self.email_server.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
@@ -157,23 +164,62 @@ class emailAgent():
         text_msg_address = "{0}@{1}".format(actual_phone_num, domain_name)
         print("Sending text message to {0}".format(text_msg_address))
         
-
         # Get content to send in text message
         body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
         body += "\n" # have to add newline char at the end of the body
-        
+        # inform rest of program that sms is being sent
+
         # setup the parameters of the message
         msg = MIMEText(body) # create a message object with the body
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
-        msg['Subject'] = "Python Text Message Application" # keep newline
-
-        # inform rest of program that sms is being sent
+        msg['Subject'] = "" # keep newline
+        
         self.send_to_phone = True
 
         return msg
 
+    def adjustTextMsg(self, msg:MIMEText):
+        """
+            Text messages are limited to 120 characters each.
+            This function will split a long message into multiple ones.
+            Args: msg (string)
+            Return: a list of messages(strings) to send
+        """
+        msgList = []
+        
+        subject = msg['Subject']
+        text = msg.get_payload()
+        totalMsg = str(subject) + str(text)
+        totalLength = len(totalMsg)
+        charLimit = 120
 
+        if totalLength > charLimit: 
+            # read every 120 chars
+            count = 0
+            while count < totalLength/charLimit:
+                tempStr = totalMsg[count*charLimit : ((count*charLimit) + charLimit)]
+
+                # split into multiple objects
+                tempMsg = MIMEText(tempStr) # create a message object with the body
+                tempMsg['From'] = msg['From']
+                tempMsg['To'] = msg['To']
+
+                # only add subject on first text
+                if count == 0:
+                    tempMsg['Subject'] = subject 
+                else:
+                    tempMsg['Subject'] = ''
+
+                # add to list
+                msgList.append(tempMsg)
+                count+=1
+
+        # normal (send one message)
+        else:
+            msgList.append(msg)
+
+        return msgList
 
     def compose_email_msg(self, receiver_contact_info):
         '''

@@ -121,11 +121,11 @@ class emailAgent():
                 * None if selected message could not be sent
         '''
         # determine if user wants to send an email message or phone text
-        if 'y' in input("Do you want to send an email message? (y/n): ").lower():
-            msg = self.compose_email_msg(receiver_contact_info)
+        if 'y' in input("Do you want to send a text message if possible (y/n): ").lower():
+            msg = self.compose_text_msg(receiver_contact_info)
         else:
-            if 'y' in input("Do you want to send a text message if possible (y/n): ").lower():
-                msg = self.compose_text_msg(receiver_contact_info)
+            if 'y' in input("Do you want to send an email message? (y/n): ").lower():
+                msg = self.compose_email_msg(receiver_contact_info)
             else:
                 msg = 'invalid' # signifies to caller that no message is being sent
 

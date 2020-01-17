@@ -4,3 +4,9 @@ contacts\.json
 \.vscode/
 
 retrievedData/cellularData.html
+
+__pycache__/
+
+build/
+
+dist/

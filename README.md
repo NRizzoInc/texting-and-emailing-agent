@@ -26,5 +26,12 @@
 
 2. To skip directly to the add contact step, simply type **python emailAgent.py update_contact**
 
+# To Run This On a Computer Without Python:
 
+1. In your terminal type: `pip install pyinstaller`
 
+2. Wait for it to finish installing and then type: `pyinstaller emailAgent.py`
+
+3. This will create a bunch of files and folders (primarily the 'dist' folder), including a .exe, which you can run on a computer that operates on a similar platform
+
+4. To run the executable, change directories to `email_messages/dist/emailAgent/`. Then simply type `emailAgent.exe` and everything will run as if it was python!!

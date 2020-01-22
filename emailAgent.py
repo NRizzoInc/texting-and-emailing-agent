@@ -15,6 +15,7 @@ import ssl
 import smtplib # to send emails- Simple Mail Transfer Protocol
 import imaplib # to receive emails- Internet Access Message Protocol
 import email
+from email.mime.application import MIMEApplication 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template # needed to send a template txt file
@@ -129,6 +130,12 @@ class emailAgent():
             else:
                 msg = 'invalid' # signifies to caller that no message is being sent
 
+        if (msg != 'invalid' and msg != None):
+            # put this here so will happen for both so long as msg object is valid
+            addAttachmentBool = input("Would you like to add an attachment (y/n): ")
+            if (addAttachmentBool != 'n'): 
+                msg = self.addAttachment(msg)
+                
         return msg
 
 
@@ -980,6 +987,33 @@ class emailAgent():
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
 
+    def addAttachment(self, currentMsg:MIMEMultipart):
+        '''
+            @brief: takes in the current MEME msg object and returns the obj with the desired attachment
+            @param: currentMsg = the current msg object with all fields handled besides the attachment
+            @return: the msg object with an attachment
+        '''
+        keepAttaching = True
+        while (keepAttaching == True):
+            fileToAttach = input("Enter the aboslute path to the file you would like to attach: ")
+
+            # check if valid
+            if (not os.path.exists(fileToAttach)):
+                print("NOT A VALID PATH!")
+            else:
+                # read the attachment and add it
+                attachmentName = os.path.basename(fileToAttach)
+                with open(fileToAttach, 'rb') as attachment:
+                    attachable = MIMEApplication(attachment.read(), Name=attachmentName)
+                
+                attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
+                currentMsg.attach(attachable)
+
+            # check if need to attach more files
+            keepAttaching = 'y' == input("Do you have more files to attach (y/n): ")
+        
+        # done adding attachments
+        return currentMsg
     
     def logoutEmail(self):
         '''

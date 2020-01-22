@@ -19,6 +19,10 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from string import Template # needed to send a template txt file
+# url imports to attach urls links
+import urllib
+from urllib import request 
+from urllib.parse import urlparse # WARNING: python3 only
 
 path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
@@ -996,26 +1000,60 @@ class emailAgent():
         '''
         keepAttaching = True
         while (keepAttaching == True):
-            fileToAttach = input("Enter the aboslute path to the file you would like to attach: ")
+            # toAttach can either be a path to a local file or a url
+            toAttach = input("Enter the aboslute path or url to the file you would like to attach: ")
 
-            # check if valid
-            if (not os.path.exists(fileToAttach)):
-                print("NOT A VALID PATH!")
-            else:
+            
+
+            # check if valid file path
+            validPath = os.path.exists(toAttach)
+            if (validPath):
                 # read the attachment and add it
-                attachmentName = os.path.basename(fileToAttach)
-                with open(fileToAttach, 'rb') as attachment:
+                attachmentName = os.path.basename(toAttach)
+                with open(toAttach, 'rb') as attachment:
                     attachable = MIMEApplication(attachment.read(), Name=attachmentName)
                 
                 attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
                 currentMsg.attach(attachable)
 
+            # check if valid url
+            elif (self.isURLValid):
+                # use an agent or else browser will block it
+                request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
+                attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
+                attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
+                currentMsg.attach(attachable)
+            else:
+                print("NOT A VALID PATH OR URL!")
+    
             # check if need to attach more files
             keepAttaching = 'y' == input("Do you have more files to attach (y/n): ")
         
         # done adding attachments
         return currentMsg
     
+    def isURLValid(self, url:str):
+        '''
+            @brief: determines if a url is valid syntactically and it exists
+            @args: url: a string containing the url
+            @return: bool (true if valid, false if invalid)
+        '''
+        try: 
+            # check if syntax of url is valid before GET requesting it (saves time)
+            result = urlparse(url)
+            syntacticallyValid = all([result.scheme, result.netloc, result.path])
+            if (not syntacticallyValid): return False
+
+            # finally check if url exists (use an agent or else browser will block)
+            request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            returnCode = urllib.request.urlopen(request).getcode()
+            if (returnCode == 200): return True # 200 return code means success!
+            else: return False
+
+        except:
+            print("NOT A VALID URL")
+            return False
+
     def logoutEmail(self):
         '''
             This function is responsible for having the email server close connections with the server.

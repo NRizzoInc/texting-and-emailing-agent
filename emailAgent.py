@@ -177,16 +177,17 @@ class emailAgent():
         # inform rest of program that sms is being sent
 
         # setup the parameters of the message
-        msg = MIMEText(body) # create a message object with the body
+        msg = MIMEMultipart() # create a message object with the body
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
         msg['Subject'] = "" # keep newline
+        msg.attach(MIMEText(body))
         
         self.send_to_phone = True
 
         return msg
 
-    def adjustTextMsg(self, msg:MIMEText):
+    def adjustTextMsg(self, msg:MIMEMultipart):
         """
             Brief: 
                 Text messages are limited to 120 characters each.

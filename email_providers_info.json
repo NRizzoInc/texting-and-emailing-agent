@@ -15,7 +15,7 @@
         "smtp_server": {    
             "host_address": "smtp.verizon.net",
             "port_num": "587",
-            "SMS-Gateways": "vtext.com"
+            "SMS-Gateways": "vzwpix.com"
         },
 
         "imap_server": {

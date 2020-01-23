@@ -1061,10 +1061,15 @@ class emailAgent():
         '''
         if self.mode == "SMTP": self.email_server.quit()
         elif self.mode == "IMAP": self.email_server.logout()
+
+    def start(self):
+        '''
+            Wrapper around run() function that jump starts the email process
+        '''
+        run()
         
 
-if __name__ == "__main__":
-
+def run():
     arg_length = len(sys.argv)
     # the order of arguments is: 
     # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
@@ -1153,6 +1158,6 @@ if __name__ == "__main__":
     print("Closing Program")
     
 
-
-
+if __name__ == "__main__":
+    run() # starts the code
 

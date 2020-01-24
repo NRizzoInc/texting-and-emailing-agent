@@ -3,10 +3,16 @@
 <head>
     <!-- Tab's Texting Icon (favicon) -->
     <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png"> 
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='button.css') }}">
     <title>{{ title }}</title>    
 </head>
 
 <body>
-  
+    <!-- Buttons: when clicked will reload their own page which triggers functions -->
+    <div class="button-wrapper">
+        <form method="POST" action="{{ links.textpage }}"> 
+            <input class='myBtn' type="submit" value="{{ buttons.textButtons.send }}"></button>
+        </form>
+    </div> <!-- End of container -->
 </body>
 </html>

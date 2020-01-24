@@ -3,7 +3,7 @@
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
-from flask import Flask, templating, render_template
+from flask import Flask, templating, render_template, request
 import socket # used to get local network exposible IP
 
 class WebApp():
@@ -19,6 +19,15 @@ class WebApp():
             "emailpage"     :   '/emailpage',
             "aboutpage"     :   '/aboutpage',
             "sidebarpage"   :   '/sidebarpage'
+        }
+        # dictionary containing the buttons and their associated values in the html
+        self.buttons = {
+            "emailButtons"  : {
+            },
+            "textButtons"   : {
+                "send"      :   "Send Text"
+            }
+            
         }
         self.debugOn = True
 
@@ -40,21 +49,24 @@ class WebApp():
             Hence, by calling this function all sites will be initialized.
         '''
         # wrap pages in generateSites function so that 'self' can be used
-        @self.app.route(self.sites['landingpage'])
+        # for each function render the sidebar so that there is a single source of truth for its design
+        @self.app.route(self.sites['landingpage'], methods=["GET", "POST"])
         def createMainPage():
-            return render_template("mainPage.html", title="Texting Application Main Page", links=self.sites) + self._renderSidebar()
+            return render_template("mainPage.html", title="Texting App Main Page", links=self.sites) + self._renderSidebar()
 
-        @self.app.route(self.sites['textpage'])
+        @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
         def createTextPage():
-            return render_template("textPage.html", title="Texting Application Texting Page", links=self.sites) + self._renderSidebar()
+            if request.method == "POST":
+                print("yay!")                 
+            return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
 
-        @self.app.route(self.sites['emailpage'])
+        @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
         def createEmailPage():
-            return render_template("emailPage.html", title="Texting Application Email Page", links=self.sites) + self._renderSidebar()
+            return render_template("emailPage.html", title="Texting App Email Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
 
-        @self.app.route(self.sites['aboutpage'])
+        @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
-            return render_template("aboutPage.html", title="Texting Application About Page", links=self.sites) + self._renderSidebar()
+            return render_template("aboutPage.html", title="Texting App About Page", links=self.sites) + self._renderSidebar()
     
     def printSites(self):
         '''

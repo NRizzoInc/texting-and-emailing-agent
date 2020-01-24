@@ -25,6 +25,8 @@ import urllib
 from urllib import request 
 from urllib.parse import urlparse # WARNING: python3 only
 
+import webApp
+
 path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
 

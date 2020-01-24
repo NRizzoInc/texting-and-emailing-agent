@@ -1,2 +1,2 @@
-__all__ = ['emailAgent']
+__all__ = ['emailAgent', 'webApp']
 import emailAgent

@@ -3,7 +3,6 @@
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
-import templates
 from flask import Flask, templating, render_template
 import socket # used to get local network exposible IP
 
@@ -13,6 +12,7 @@ class WebApp():
         self.host_port = '9999'
         self.host_address = 'https://' + self.host_ip + ':' + self.host_port +'/'
         self.app = Flask(__name__)
+        self.app.static_folder = "templates/stylesheets" # change location of where the css stylesheets are
 
         # create all sites to begin with
         self.generateSites()

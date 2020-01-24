@@ -1,9 +1,20 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>{{ title }}</title>
+    <!-- Tab's Texting Icon (favicon) -->
+    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png"> 
+    <!-- Sidebar link -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='sidebar.css') }}">
+    <title>{{ title }}</title>    
 </head>
 
 <body>
-    <div>HELLO WORLD</div>
+    <!-- Sidebar navigation -->
+    <div class="sidebar">
+        <a href="#">Texting</a>
+        <a href="#">Emailing</a>
+        <a href="#">About</a>
+    </div>
+  
 </body>
 </html>

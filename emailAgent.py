@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 '''
     The purpose of this file is to be able to send/receive emails
 '''

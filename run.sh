@@ -1,3 +1,4 @@
+#/bin/bash
 # this script enables user to run the code in this repo 
 # using the virtual environment
 THIS_FILE_DIR="$(readlink -fm $0/..)"
@@ -16,4 +17,3 @@ sys.argv[3] = '$3'
 emailer = emailAgent.emailAgent()
 emailer.start()
 """
-

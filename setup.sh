@@ -19,8 +19,8 @@ else
     python3 -m venv $virtualEnvironDir # actually create the virtual environment
     source $virtualEnvironDir/bin/activate
     pipLocation=$virtualEnvironDir/bin/pip3
-    $pipLocation install numpy
 fi
 
 # now pip necessary packages
 $pipLocation install flask
+$pipLocation install pyinstaller # to turn python to .exe

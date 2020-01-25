@@ -7,7 +7,7 @@ from flask import Flask, templating, render_template, request
 import socket # used to get local network exposible IP
 
 class WebApp():
-    def __init__(self):
+    def __init__(self, textFunction, emailFunction):
         self.host_ip = self.getIP()
         self.host_port = '9999'
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
@@ -30,6 +30,10 @@ class WebApp():
             
         }
         self.debugOn = True
+
+        #-----------SETUP FUNCTIONS TO BE CALLED BY BUTTONS-------#
+        self.textFunction = textFunction
+        self.emailFunction = emailFunction
 
         # create all sites to begin with
         self.generateSites()
@@ -56,12 +60,16 @@ class WebApp():
 
         @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
         def createTextPage():
-            if request.method == "POST":
-                print("yay!")                 
+            # upon POST requests (which occur when clicking buttons) do this...
+            if (request.method == "POST"):
+                self.textFunction()
+
             return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
 
         @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
         def createEmailPage():
+            if (request.method == "POST"):
+                self.emailFunction()
             return render_template("emailPage.html", title="Texting App Email Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
 
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
@@ -87,4 +95,6 @@ class WebApp():
 
 
 if __name__ == "__main__":
-    ui = WebApp()
+    textFn = lambda: print("texting")
+    emailFn = lambda: print("emailing")
+    ui = WebApp(textFn, emailFn)

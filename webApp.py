@@ -9,7 +9,7 @@ import socket # used to get local network exposible IP
 class WebApp():
     def __init__(self, textFunction, emailFunction):
         self.host_ip = self.getIP()
-        self.host_port = '9999'
+        self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
         self.app = Flask(__name__)
         self.app.static_folder = "templates/stylesheets" # change location of where the css stylesheets are
@@ -29,7 +29,7 @@ class WebApp():
             }
             
         }
-        self.debugOn = True
+        self.debugOn = False
 
         #-----------SETUP FUNCTIONS TO BE CALLED BY BUTTONS-------#
         self.textFunction = textFunction
@@ -75,16 +75,19 @@ class WebApp():
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
             return render_template("aboutPage.html", title="Texting App About Page", links=self.sites) + self._renderSidebar()
+
+        @self.app.route('/crash')
+        def test():
+            raise Exception()
     
     def printSites(self):
         '''
             Helper function to tell user the location of each site
         '''
-        if (self.debugOn):
-            print("\nAll the created sites are: \n")
-            for site in self.sites.keys():
-                print("{0}{1}".format(self.host_address, self.sites[site]))
-            print() # newline
+        print("\nAll the created sites are: \n")
+        for site in self.sites.keys():
+            print("{0}{1}".format(self.host_address, self.sites[site]))
+        print() # newline
 
     def _renderSidebar(self):
         '''

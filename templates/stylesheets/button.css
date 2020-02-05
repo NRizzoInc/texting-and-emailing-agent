@@ -2,7 +2,11 @@ body {
    height: 90vh; /* Ensures the button fills the entire body height*/
 }
 
-/* Add wrapper div around a button in order to center it */
+/** 
+  * Add wrapper div around a button in order to center it 
+  * DONT CHANGE THIS: it maintains the position of the button 
+  * in the center and not touching the sidebar
+  */
 .button-wrapper {
     justify-content: center;
     align-items: center;
@@ -12,20 +16,29 @@ body {
     
 }
 
-/* Modify existing button class */
+/** 
+  * Modify existing button class
+  * Change 'width' and 'height' to modify the size of the button
+  */
 .myBtn {
     background:url("https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/HB4AT3D3IMI6TMPTWIZ74WAR54.jpg&w=767") no-repeat;
     background-size: cover;
     cursor: grab;
     border: none;
+    /*Size of button*/
+    width: 40%;
+    height: 40%;
+    /* So that image on buttons dont touch sidebar and have space between themselves*/
     top: 0;
     bottom: 0;
     right: 0;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    left: 23%; /* So that image on buttons doesnt touch sidebar*/
-    text-align: center;
+    left: 23%; /*For side bar*/
+    margin: 2% ; /*between buttons*/
+    /*Button text is centered*/
+    text-align: center; 
+    /*Allows multiple buttons on same page to automatically not overlap*/
+    position: relative; 
+    display: inline-block;
 }
 
 /* When clicked by user*/

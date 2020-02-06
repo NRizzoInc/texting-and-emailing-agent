@@ -2,8 +2,7 @@
 function buttonPostRequest(pageToRequest) {
     // trigger new page and hide buttons
     $.post(pageToRequest, function onSuccess () {
-        // document.getElementsByClassName('.button-wrapper').style.visibility = 'hidden'
-        console.log(document.getElementsByClassName('button-wrapper'))
-        document.getElementsByClassName('button-wrapper')[0].style.visibility = "hidden"
+        document.getElementsByClassName('button-wrapper')[0].style.display = "none"
+        document.getElementById('Texting-Form').style.display = "block"
     })
 }

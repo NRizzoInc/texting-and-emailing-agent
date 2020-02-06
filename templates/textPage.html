@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <!-- Tab's Texting Icon (favicon) -->
-    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png"> 
+    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png">
+    <!------------------------------------Button functionality------------------------------------>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='button.css') }}">
-    <script src="{{ url_for('static', filename='button.js') }}"></script> <!--Button functions-->
-    <script src="{{ url_for('static', filename='jquery.js') }}"></script> <!--Jquery include-->
-    <title>{{ title }}</title>    
+    <script src="{{ url_for('static', filename='button.js') }}"></script>
+    <script src="{{ url_for('static', filename='jquery.js') }}"></script><!--Jquery include-->
+    <title>{{ title }}</title>
 </head>
 
 <body>
@@ -14,5 +16,9 @@
         <button class="myBtn" onclick="buttonPostRequest('{{ links.sendText }}')">Send Text</button>
         <button class="myBtn" onclick="buttonPostRequest('{{ links.receiveText }}')">Receive Text</button>
     </div> <!-- End of container -->
+    {% include "TextingForm.html" %}
+    {% include "sidebar.html" %}
+    
 </body>
+
 </html>

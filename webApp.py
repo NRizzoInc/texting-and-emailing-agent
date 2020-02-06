@@ -56,25 +56,26 @@ class WebApp():
         # for each function render the sidebar so that there is a single source of truth for its design
         @self.app.route(self.sites['landingpage'], methods=["GET", "POST"])
         def createMainPage():
-            return render_template("mainPage.html", title="Texting App Main Page", links=self.sites) + self._renderSidebar()
+            return render_template("mainPage.html", title="Texting App Main Page", links=self.sites)
 
         @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
         def createTextPage():
             # upon POST requests (which occur when clicking buttons) do this...
             if (request.method == "POST"):
-                self.textFunction()
+                # self.textFunction()
+                return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons)
 
-            return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
+            return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons)
 
         @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
         def createEmailPage():
             if (request.method == "POST"):
                 self.emailFunction()
-            return render_template("emailPage.html", title="Texting App Email Page", links=self.sites, buttons=self.buttons) + self._renderSidebar()
+            return render_template("emailPage.html", title="Texting App Email Page", links=self.sites, buttons=self.buttons)
 
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
-            return render_template("aboutPage.html", title="Texting App About Page", links=self.sites) + self._renderSidebar()
+            return render_template("aboutPage.html", title="Texting App About Page", links=self.sites)
 
         @self.app.route('/crash')
         def test():
@@ -89,11 +90,6 @@ class WebApp():
             print("{0}{1}".format(self.host_address, self.sites[site]))
         print() # newline
 
-    def _renderSidebar(self):
-        '''
-            Helper function that renders the sidebar for use by the actual sites
-        '''
-        return render_template("sidebar.html", links=self.sites)
 
 
 

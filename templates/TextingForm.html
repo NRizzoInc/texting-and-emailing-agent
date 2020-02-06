@@ -1,0 +1,45 @@
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='formInterface.css') }}">
+</head>
+
+<!--Use wrapper to hide the form until the button is clicked-->
+<div class="interface-wrapper" id="Texting-Form">
+    <form action="/action_form.php" id='Texting-Form'>
+        <div class="row">
+            <div class="col-25">
+                <label for="firstName">First Name</label>
+            </div>
+            <div class="col-75">
+                <input type="text" id="firstName" name="firstname" placeholder="Receiver first name..">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-25">
+                <label for="lastName">Last Name</label>
+            </div>
+            <div class="col-75">
+                <input type="text" id="lastName" name="lastname" placeholder="Receiver last name..">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-25">
+                <label for="emailAddress">Email Address</label>
+            </div>
+            <div class="col-75">
+                <input type="text" id="emailAddress" name="emailAddress" placeholder="Your emailAddress address (leave blank to use default sender)">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-25">
+                <label for="message">Your Message</label>
+            </div>
+            <div class="col-75">
+                <textarea id="message" name="message" placeholder="Write something.."
+                    style="height:200px"></textarea>
+            </div>
+        </div>
+        <div class="row">
+            <input type="submit" value="Send">
+        </div>
+    </form>
+</div>

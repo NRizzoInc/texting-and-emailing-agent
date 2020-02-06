@@ -6,7 +6,7 @@
 <!--Use wrapper to hide the form until the button is clicked-->
 <div class="interface-wrapper" id='Texting-Form-Wrapper'>
     <!--Use POST to make site inaccessible to protect data-->
-    <form id='Texting-Form' method="POST" action="{{ forms.textForm }}"> 
+    <form id='Texting-Form' method="POST" > <!--action="{{ forms.textForm }}"--> 
         <div class="row">
             <div class="col-25">
                 <label for="firstName">First Name</label>
@@ -42,8 +42,8 @@
         </div>
         <div class="row">
             <!--Use submit button's id in js to know when to get data-->
-            <!-- <input type="submit" value="Send" id="Text-Form-Submit-Button" onclick="parseForm('Texting-Form', '{{ forms.textForm }}' )"> -->
-            <input type="submit" value="Send" id="Text-Form-Submit-Button">
+            <input type="submit" value="Send" id="Text-Form-Submit-Button" onclick="parseForm('Texting-Form', '{{ forms.textForm }}' )">
+            <!-- <input type="submit" value="Send" id="Text-Form-Submit-Button"> -->
         </div>
     </form>
 </div>

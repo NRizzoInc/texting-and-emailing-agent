@@ -1,14 +1,17 @@
 function parseForm(formId, formLink) {
-    let form = document.getElementById(formId);
+    let formData = JSON.stringify($("#myForm").serializeArray());
+    console.log("posting!")
     $.ajax({
         url: formLink,
         type: 'POST',
-        data: {
-            email: 'email@example.com',
-            message: 'hello world!'
-        },
+        data: formData,
+        dataType: "json",   
+        contentType: "application/json",
         success: function (msg) {
-            alert(msg);
-        }         
+            console.log(msg);
+        },
+        error: function (msg) {
+            console.log(msg);
+        }
     });
 } // end of parse form function

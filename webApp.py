@@ -93,8 +93,7 @@ class WebApp():
     def generateFormResultsSites(self):
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         def createTextForm():
-            print ("hello world")
-            return ''
+            return render_template("blankpage.html")
 
 
     def printSites(self):

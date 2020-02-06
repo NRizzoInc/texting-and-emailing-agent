@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+import os, sys
+import requests, json # to get data from POST only forms
+
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
@@ -40,9 +43,11 @@ class WebApp():
         self.emailFunction = emailFunction
 
         # create all sites to begin with
+        self.initializingStatus = True
         self.generateSites()
         self.generateFormResultsSites()
         self.printSites() # will only print if debug mode is on
+        self.initializingStatus = False
 
         # start up the web app
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.debugOn)
@@ -93,7 +98,13 @@ class WebApp():
     def generateFormResultsSites(self):
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         def createTextForm():
-            return render_template("blankpage.html")
+            # if form is given data
+            if (not self.initializingStatus):
+                url = self.host_address + self.formSites['textForm']
+                pageRequest = requests.post(url)
+                print(pageRequest.text)
+
+            return render_template("basicForm.html")
 
 
     def printSites(self):

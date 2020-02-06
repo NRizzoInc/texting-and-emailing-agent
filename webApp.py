@@ -20,6 +20,10 @@ class WebApp():
             "aboutpage"     :   '/aboutpage',
             "sidebarpage"   :   '/sidebarpage'
         }
+        self.formSites = {
+            "textForm"      :   '/textForm',
+            "emailForm"      :   '/emailForm'
+        }
         # dictionary containing the buttons and their associated values in the html
         self.buttons = {
             "emailButtons"  : {
@@ -37,6 +41,7 @@ class WebApp():
 
         # create all sites to begin with
         self.generateSites()
+        self.generateFormResultsSites()
         self.printSites() # will only print if debug mode is on
 
         # start up the web app
@@ -63,15 +68,18 @@ class WebApp():
             # upon POST requests (which occur when clicking buttons) do this...
             if (request.method == "POST"):
                 # self.textFunction()
-                return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons)
+                return render_template("textPage.html", title="Texting App Texting Page", 
+                    links=self.sites, buttons=self.buttons, forms=self.formSites)
 
-            return render_template("textPage.html", title="Texting App Texting Page", links=self.sites, buttons=self.buttons)
+            return render_template("textPage.html", title="Texting App Texting Page", 
+                links=self.sites, buttons=self.buttons, forms=self.formSites)
 
         @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
         def createEmailPage():
             if (request.method == "POST"):
                 self.emailFunction()
-            return render_template("emailPage.html", title="Texting App Email Page", links=self.sites, buttons=self.buttons)
+            return render_template("emailPage.html", title="Texting App Email Page", 
+                links=self.sites, buttons=self.buttons, forms=self.formSites)
 
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
@@ -81,6 +89,14 @@ class WebApp():
         def test():
             raise Exception()
     
+    # form submissions get posted here (only accessible)
+    def generateFormResultsSites(self):
+        @self.app.route(self.formSites['textForm'], methods=['POST'])
+        def createTextForm():
+            print ("hello world")
+            return ''
+
+
     def printSites(self):
         '''
             Helper function to tell user the location of each site
@@ -89,7 +105,6 @@ class WebApp():
         for site in self.sites.keys():
             print("{0}{1}".format(self.host_address, self.sites[site]))
         print() # newline
-
 
 
 

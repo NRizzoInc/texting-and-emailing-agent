@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
 import os, sys
-import requests, json # to get data from POST only forms
+import json # to get data from POST only forms
+import urllib.request
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
@@ -101,8 +102,8 @@ class WebApp():
             # if form is given data
             if (not self.initializingStatus):
                 url = self.host_address + self.formSites['textForm']
-                pageRequest = requests.post(url)
-                print(pageRequest.text)
+                data = flask.request.get_json()
+                print("Form Data...\n{0}".format(data))
 
             return render_template("basicForm.html")
 

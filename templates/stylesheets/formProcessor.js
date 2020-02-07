@@ -1,6 +1,10 @@
 function parseForm(formId, formLink) {
-    let formData = JSON.stringify($("#myForm").serializeArray());
-    console.log("posting!")
+    // loop through form to get form key:value pairs 
+    let form = document.getElementById(formId);
+    console.log(form)
+    console.log(JSON.stringify(form['1']))
+    let formData = JSON.stringify(form);
+    console.log(formData)
     $.ajax({
         url: formLink,
         type: 'POST',
@@ -11,7 +15,7 @@ function parseForm(formId, formLink) {
             console.log(msg);
         },
         error: function (msg) {
-            console.log(msg);
+            // console.log(msg);
         }
     });
 } // end of parse form function

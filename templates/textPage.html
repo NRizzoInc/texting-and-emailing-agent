@@ -13,8 +13,8 @@
 
 <body>
     <div class="button-wrapper">
-        <button class="myBtn" onclick="buttonPostRequest('{{ links.sendText }}')">Send Text</button>
-        <button class="myBtn" onclick="buttonPostRequest('{{ links.receiveText }}')">Receive Text</button>
+        <button class="myBtn" id="text-send-button" onclick="buttonPostRequest('{{ links.sendText }}', 'text-send-button')">Send Text</button>
+        <button class="myBtn" id="text-receive-button" onclick="buttonPostRequest('{{ links.receiveText }}', 'text-receive-button')">Receive Text</button>
     </div> <!-- End of container -->
     {% include "TextingForm.html" %}
     {% include "sidebar.html" %}

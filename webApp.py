@@ -10,6 +10,7 @@ import flask
 from flask import Flask, templating, render_template, request
 import socket # used to get local network exposible IP
 
+import emailAgent # need to call functions
 class WebApp():
     def __init__(self, textFunction, emailFunction):
         self.host_ip = self.getIP()
@@ -39,10 +40,6 @@ class WebApp():
         }
         self.debugOn = False
 
-        #-----------SETUP FUNCTIONS TO BE CALLED BY BUTTONS-------#
-        self.textFunction = textFunction
-        self.emailFunction = emailFunction
-
         # create all sites to begin with
         self.initializingStatus = True
         self.generateSites()
@@ -71,12 +68,6 @@ class WebApp():
 
         @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
         def createTextPage():
-            # upon POST requests (which occur when clicking buttons) do this...
-            if (request.method == "POST"):
-                # self.textFunction()
-                return render_template("textPage.html", title="Texting App Texting Page", 
-                    links=self.sites, buttons=self.buttons, forms=self.formSites)
-
             return render_template("textPage.html", title="Texting App Texting Page", 
                 links=self.sites, buttons=self.buttons, forms=self.formSites)
 
@@ -97,15 +88,17 @@ class WebApp():
     
     # form submissions get posted here (only accessible)
     def generateFormResultsSites(self):
+        formData = {}
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         def createTextForm():
             # if form is given data
             if (not self.initializingStatus):
                 url = self.host_address + self.formSites['textForm']
-                data = flask.request.get_json()
-                print("Form Data...\n{0}".format(data))
-
+                formData = flask.request.get_json()
+                emailer = emailAgent.emailAgent(display_contacts=False)
+                
             return render_template("basicForm.html")
+        
 
 
     def printSites(self):

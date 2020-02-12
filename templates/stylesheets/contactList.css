@@ -1,0 +1,9 @@
+.contact-list {
+    justify-content: left;
+    align-items: left;
+    text-align: left; 
+    position: relative;
+    width: auto;
+    height: auto;
+    text-emphasis: bold;
+}

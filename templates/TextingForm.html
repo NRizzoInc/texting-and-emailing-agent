@@ -6,13 +6,13 @@
 <!--Use wrapper to hide the form until the button is clicked-->
 <div class="interface-wrapper" id='Texting-Form-Wrapper'>
     <!--Use POST to make site inaccessible and protect data by not adding it to url-->
-    <form id='Texting-Form' method="POST">
+    <form id='Texting-Form' name="" method="POST">
         <div class="row">
             <div class="col-25">
                 <label for="firstName">First Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="firstName" name="firstname" placeholder="Receiver first name..">
+                <input type="text" id="firstName" name="firstname" placeholder="First name...">
             </div>
         </div>
         <div class="row">
@@ -20,7 +20,7 @@
                 <label for="lastName">Last Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="lastName" name="lastname" placeholder="Receiver last name..">
+                <input type="text" id="lastName" name="lastname" placeholder="Last name...">
             </div>
         </div>
         <div class="row">
@@ -28,15 +28,15 @@
                 <label for="emailAddress">Email Address</label>
             </div>
             <div class="col-75">
-                <input type="text" id="emailAddress" name="emailAddress" placeholder="Email address (leave blank to use default sender)">
+                <input type="text" id="emailAddress" name="emailAddress" placeholder="Email address (leave blank to use default sender)...">
             </div>
         </div>
-        <div class="row">
+        <div class="row" id="password-container">
             <div class="col-25">
                 <label for="password">Password</label>
             </div>
             <div class="col-75">
-                <input type="password" id="password" name="password" placeholder="Password (leave blank if using default sender)">
+                <input type="password" id="password" name="password" placeholder="Password (leave blank if using default sender)...">
             </div>
         </div>
         <div class="row" id="message-container">
@@ -44,8 +44,25 @@
                 <label for="message">Your Message</label>
             </div>
             <div class="col-75">
-                <textarea id="message" name="message" placeholder="Write something.."
-                    style="height:200px"></textarea>
+                <textarea id="message" name="message" placeholder="Write something..."
+                style="height:200px"></textarea>
+            </div>
+        </div>
+        <!-- Fields only needed for adding a new contact -->
+        <div class="row" id="phone-number-container">
+            <div class="col-25">
+                <label for="phoneNumber">Phone Number</label>
+            </div>
+            <div class="col-75">
+                <input type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number...">
+            </div>
+        </div>
+        <div class="row" id="carrier-container">
+            <div class="col-25">
+                <label for="carrier">Phone carrier</label>
+            </div>
+            <div class="col-75">
+                <input type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)">
             </div>
         </div>
         <div class="row">

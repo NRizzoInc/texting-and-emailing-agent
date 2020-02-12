@@ -73,8 +73,12 @@ class emailAgent():
 
         # display contents of the existing contact list
         if display_contacts is True:    
-            print("The current contact list is:\n")
-            pprint.pprint(self.contactList)
+            self.webAppPrintWrapper("The current contact list is:\n")
+            printableContactList = pprint.pformat(self.contactList)
+            self.webAppPrintWrapper(printableContactList)
+
+    def updateContactList(self):
+        self.contactList = self.load_json(self.path_to_contactList)
 
     def send_email(self, receiver_contact_info):
         '''
@@ -947,6 +951,14 @@ class emailAgent():
         '''
         self.use_default = newState
 
+    
+    def getDefaultState(self):
+        ''' 
+            This function is responsible for getting the 'self' variable "use_default" 
+        '''
+        return self.use_default 
+
+
     def process_raw_email(self, raw_email):
         '''
             This function returns the body of the raw email.
@@ -1071,6 +1083,12 @@ class emailAgent():
         self.printedString = ""
         return tempStr
 
+    # prints the contact list and returns the printed string nicely printed
+    def printContactListPretty(self, printToTerminal=True):
+        formatedContactList = pprint.pformat(self.contactList)
+        if printToTerminal:
+           print(formatedContactList)
+        return formatedContactList
 
     def logoutEmail(self):
         '''
@@ -1119,7 +1137,7 @@ def run():
             print("\nInvalid number of arguments entered! \
                     \nProvide first and last name seperated by spaces when running this script! \
                     \n\nThe existing contact list includes: ")
-            pprint.pprint(emailer.contactList)
+            self.printContactListPretty()
 
             addContact = input("Do you want to add a new contact to this list(y/n): ")
             if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()

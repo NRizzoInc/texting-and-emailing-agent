@@ -6,9 +6,27 @@ function parseForm(formId, formLink) {
     let inputs = [];
     inputs.push(inputTags);
     inputs.push(textTags);
-    console.log(inputs)
+    
+    // determine if sending or receiving message
+    let task;
+    console.log("task: " + form.getAttribute("name"))
+    if (form.getAttribute("name") == "sending") {
+        task = form.getAttribute("name") 
+    } 
+    else if (form.getAttribute("name") == "receiving") {
+        task = form.getAttribute("name") 
+    }
+    else if (form.getAttribute("name") == "adding-contact") {
+        task = form.getAttribute("name") 
+    } 
+    else {
+        task = "ERROR"
+        console.error('UNKNOWN MODE')
+    }
     
     let formData = {}; // declare json
+    formData['task'] = task;
+    // get all inputs to form
     for (let tag of inputs) { // iterate through all possible tags
         for (let key of tag) { // iterate through all matches of that tag
             if (key.id != "Submit-Button") {
@@ -19,7 +37,6 @@ function parseForm(formId, formLink) {
         }
     }
     formData = JSON.stringify(formData)
-    console.log(formData)
 
     // POST data to website
     $.ajax({

@@ -13,6 +13,7 @@ import socket # used to get local network exposible IP
 import emailAgent # need to call functions
 class WebApp():
     def __init__(self, textFunction, emailFunction):
+        self.emailAgent = emailAgent.emailAgent(display_contacts=True)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
@@ -28,15 +29,6 @@ class WebApp():
         self.formSites = {
             "textForm"      :   '/textForm',
             "emailForm"      :   '/emailForm'
-        }
-        # dictionary containing the buttons and their associated values in the html
-        self.buttons = {
-            "emailButtons"  : {
-            },
-            "textButtons"   : {
-                "send"      :   "Send Text"
-            }
-            
         }
         self.debugOn = False
 
@@ -68,15 +60,16 @@ class WebApp():
 
         @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
         def createTextPage():
+            contactList = self.emailAgent.printContactListPretty(printToTerminal=False)
             return render_template("textPage.html", title="Texting App Texting Page", 
-                links=self.sites, buttons=self.buttons, forms=self.formSites)
+                links=self.sites, forms=self.formSites, contacts=contactList)
 
         @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
         def createEmailPage():
-            if (request.method == "POST"):
-                self.emailFunction()
+            self.emailAgent.updateContactList()
+            contactList = self.emailAgent.printContactListPretty(printToTerminal=False)
             return render_template("emailPage.html", title="Texting App Email Page", 
-                links=self.sites, buttons=self.buttons, forms=self.formSites)
+                links=self.sites, forms=self.formSites, contacts=contactList)
 
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
@@ -95,8 +88,37 @@ class WebApp():
             if (not self.initializingStatus):
                 url = self.host_address + self.formSites['textForm']
                 formData = flask.request.get_json()
-                emailer = emailAgent.emailAgent(display_contacts=False)
+                # collect all form information
+                firstName = formData['firstName']
+                lastName = formData['lastName']
+
+                # login info error-checking
+                try:
+                    email = formData['emailAddress']
+                    password = formData['password']
+                except Exception as e:
+                    # if there is an error just use the default sender/receiver
+                    self.emailAgent.setDefaultState(True)
+
+                # check if receive if sending/receiving message form
+                if (formData['task'] == "sending"):
+                    message = formData['message']
+                    print("IMPLEMENT SEND")
+                    # self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
+                    # receiver_contact_info = emailer.get_receiver_contact_info(firstName, lastName)
+                    # self.emailAgent.send_email()
                 
+                elif (formData['task'] == "receiving"):
+                    print("IMPLEMENT RECEIVE")
+                    # toPrint = self.emailAgent.getPrintedString()
+                    # print(toPrint)
+                
+                elif (formData['task'] == "adding-contact"):
+                    carrier = formData['carrier']
+                    phoneNumber = formData['phoneNumber']
+                    self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
+                else:
+                    raise Exception("UNKNOWN TASK")
             return render_template("basicForm.html")
         
 

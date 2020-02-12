@@ -11,7 +11,7 @@
 
 <body>
     <div class="button-wrapper">
-        <button class="myBtn" onclick="buttonPostRequest('{{ links.emailpage }}')">{{ buttons.textButtons.send }}</button>
+        <button class="myBtn" id="text-send-button" onclick="buttonPostRequest('{{ links.emailpage }}', 'email-send-button')">Send Email</button>
     </div> <!-- End of container -->
     {% include "sidebar.html" %}
 </body>

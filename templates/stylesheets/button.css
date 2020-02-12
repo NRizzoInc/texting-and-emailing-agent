@@ -13,6 +13,7 @@ body {
     width: 80%;
     height: 100%;
     position: relative;
+    left: 20%; /*For side bar*/
     
 }
 
@@ -26,19 +27,19 @@ body {
     cursor: grab;
     border: none;
     /*Size of button*/
-    width: 40%;
-    height: 40%;
+    width: 20%;
+    height: 20%;
     /* So that image on buttons dont touch sidebar and have space between themselves*/
     top: 0;
     bottom: 0;
     right: 0;
-    left: 23%; /*For side bar*/
-    margin: 2% ; /*between buttons*/
+    margin: 2%; /*between buttons*/
     /*Button text is centered*/
     text-align: center; 
     /*Allows multiple buttons on same page to automatically not overlap*/
     position: relative; 
     display: inline-block;
+    text-emphasis: bold;
 }
 
 /* When clicked by user*/

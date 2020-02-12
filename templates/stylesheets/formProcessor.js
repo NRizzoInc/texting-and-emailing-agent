@@ -12,7 +12,7 @@ function parseForm(formId, formLink) {
     for (let tag of inputs) { // iterate through all possible tags
         for (let key of tag) { // iterate through all matches of that tag
             if (key.id != "Submit-Button") {
-                console.log("Id: " + key.id + "\nValue: " + key.value)
+                // console.log("Id: " + key.id + "\nValue: " + key.value)
                 let value = document.getElementById(key.id).value
                 formData[key.id] = value
             }

@@ -67,6 +67,9 @@ class emailAgent():
         # to a known email account wihtout extra inputs needed
         self.use_default = False 
 
+        # this var will get be filled with content printed to terminal
+        # retreive information with getPrintedString() such that it gets cleared
+        self.printedString = "" 
 
         # display contents of the existing contact list
         if display_contacts is True:    
@@ -722,7 +725,7 @@ class emailAgent():
         
         num_emails = 0 # initialize to zero, actual calcs done in while loop
         search_code = 'OK'
-        print("waiting for new message...\n")
+        self.webAppPrintWrapper("waiting for new message...\n")
         
         while num_emails < 1 and search_code == 'OK':
             # Defaults to only look for unread emails
@@ -731,7 +734,7 @@ class emailAgent():
             num_emails = len(data[0].decode())
         
         # if this point is reached, new email detected and can end function so program can continue!
-        print("New email message detected!")       
+        self.webAppPrintWrapper("New email message detected!")       
 
 
     def receive_email(self, startedBySendingEmail=False):
@@ -772,7 +775,7 @@ class emailAgent():
 
             # opens folder/label you want to read from
             self.email_server.select('INBOX')
-            print("Successfully Opened Inbox")
+            self.webAppPrintWrapper("Successfully Opened Inbox")
             
             # get all the emails and their id #'s that match the filter
             search_code, data = self.email_server.search(None, emailFilter) 
@@ -788,10 +791,10 @@ class emailAgent():
 
                 # fetch the emails in order of most recent to least recent
                 # most recent email has the highest id number
-                print("id_list: {}".format(id_list))
+                self.webAppPrintWrapper("id_list: {}".format(id_list))
                 for id_num in id_list:
                     if id_num == max(id_list):
-                        print("Fetching most recent email")
+                        self.webAppPrintWrapper("Fetching most recent email")
 
                     # Check if mode is still in IMAP (might have changed if sent reply)
                     if self.mode == "SMTP": # if true then switch back and prime code to fetch
@@ -865,10 +868,10 @@ class emailAgent():
                         if "n" in next_email:
                             break
                     else:
-                        print("That was the last email!")
+                        self.webAppPrintWrapper("That was the last email!")
 
             elif num_emails == 0:
-                print("No new emails in the inbox!")
+                self.webAppPrintWrapper("No new emails in the inbox!")
                 # Ask if they want to wait for a reply so long as user didnt start off by sending an email
                 if startedBySendingEmail == False:
                     waitForMsg = input("\nDo you want to wait for a new message (yes/no): ")
@@ -880,7 +883,7 @@ class emailAgent():
                     keepCheckingInbox = True # allows function to look at emails to repeat
 
             else:
-                print("Invalid return code from inbox!")
+                self.webAppPrintWrapper("Invalid return code from inbox!")
 
             # this var should only be set to True the first time it goes through if input starts as True.
             startedBySendingEmail = False
@@ -982,7 +985,7 @@ class emailAgent():
         delineator = columns - 2 # have to account for '<' and '>' chars on either end 
         print("\n<{0}>\n".format('-'*delineator)) 
 
-        print("""Email:\n
+        self.webAppPrintWrapper("""Email:\n
         To: {0}
         From: {1}
         DateTime: {2}
@@ -991,7 +994,7 @@ class emailAgent():
         Body: {4}
         """.format(email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body))
 
-        print("\n<{0}>\n".format('-'*delineator)) # email delineator
+        self.webAppPrintWrapper("\n<{0}>\n".format('-'*delineator)) # email delineator
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
 
@@ -1056,6 +1059,18 @@ class emailAgent():
         except:
             print("NOT A VALID URL")
             return False
+    
+    # this functions purpose is to take a string argument (toPrint) 
+    # and both print it to terminal and store it so it can be accessed by "getPrintedString()"
+    def webAppPrintWrapper(self, toPrint:str): 
+        print(toPrint)
+        self.printedString += toPrint + "\n" # have to add newline bc normally automatically there
+
+    def getPrintedString(self):
+        tempStr = self.printedString
+        self.printedString = ""
+        return tempStr
+
 
     def logoutEmail(self):
         '''
@@ -1150,7 +1165,6 @@ def run():
         else:
             emailer.setDefaultState(False)
             emailer.receive_email()
-
     
     else:
         print("Please Enter a Valid Option!")

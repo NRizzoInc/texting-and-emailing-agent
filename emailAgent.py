@@ -77,6 +77,10 @@ class emailAgent():
         # implement this class not using the command line
         self.commandLine = commandLine
 
+        # work around for sending text messages with char limit (wait to add content)
+        self.attachmentsList = []
+        self.textMsgToSend = ''
+
         # display contents of the existing contact list
         if display_contacts is True:    
             self.webAppPrintWrapper("The current contact list is:\n")
@@ -128,12 +132,19 @@ class emailAgent():
             if self.send_to_phone is True:
                 msgList = self.adjustTextMsg(msg)
                 
+                # send pure text first
                 for currMsg in msgList:
                     sms = currMsg.as_string() # need to convert message to string
                     self.email_server.sendmail(msg["From"], msg["To"], sms)
                     # add microscopic delay to ensure that messages arrive in correct order
                     time.sleep(10/1000) # input is in seconds (convert to milliseconds)
-            
+
+                # send attachments last
+                for attachments in self.attachmentsList:
+                    sms = attachments.as_string()
+                    self.email_server.sendmail(msg["From"], msg["To"], sms)
+                self.attachmentsList = [] # reset list
+
             else:
                 self.email_server.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
@@ -174,14 +185,10 @@ class emailAgent():
             
             # check if text payload is empty besides newline (enter to submit)
             for part in msg.walk():
-                if part.get_content_type() == 'text/plain':
-                    messageContent = part.get_payload()
-                    part.set_payload(messageContent.replace(toAttach, ''))
-
+                if part.get_content_type() == 'text/plain':                
                     if (part.get_payload().isspace()):
                         # if so, remove the text payload
-                        part.set_payload('')
-
+                        part.set_payload(None)
         return msg
 
 
@@ -227,7 +234,7 @@ class emailAgent():
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
         msg['Subject'] = "" # keep newline
-        msg.attach(MIMEText(body))
+        self.textMsgToSend = body # dont add body yet bc text message
         
         self.send_to_phone = True
 
@@ -235,17 +242,17 @@ class emailAgent():
 
     def adjustTextMsg(self, msg:MIMEMultipart):
         """
-            Brief: 
+            @Brief: 
                 Text messages are limited to 120 characters each.
                 This function will split a long message into multiple ones.
                 Keeps words together in same text.
-            Args: msg (string)
+            @Args: msg (string)
             Return: a list of messages(strings) to send
         """
         msgList = []
         
+        text = self.textMsgToSend
         subject = msg['Subject']
-        text = msg.get_payload()
         totalMsg = str(subject) + str(text)
         totalLength = len(totalMsg)
         charLimit = 120
@@ -263,7 +270,6 @@ class emailAgent():
 
                     # find the first space occuring prior to 120 char mark (go in reverse during search)
                     for index, thisChar in enumerate(reversed(totalMsg[lastIndex:lastIndex+charLimit])):
-                        print("Char: {0}".format(thisChar))
                         if (thisChar == ' '): 
                             # new position is start + charLimit - # left shifts
                             endPos = lastIndex + charLimit - index  
@@ -277,16 +283,14 @@ class emailAgent():
                     toAppend = totalMsg[lastIndex:]
                     lastIndex = totalLength # exit while-loop condition
 
-                tempMsg = MIMEText(toAppend) # create a message object with the body
-                tempMsg['From'] = msg['From']
-                tempMsg['To'] = msg['To']
+                tempMsg = MIMEText(toAppend.strip()) # create a message object with the body
 
                 # add to list
                 msgList.append(tempMsg)
 
         # normal (send one message)
-        else:
-            msgList.append(msg)
+        elif (not text.isspace()):
+            msgList.append(MIMEText(text.strip()))      
 
         return msgList
 
@@ -1049,10 +1053,6 @@ class emailAgent():
             @param: msg = the current msg object with all fields handled besides the attachment
             @return: the msg object with the attachments
         '''
-        messageContent = ''
-        for part in msg.walk():
-            if part.get_content_type() == 'text/plain':
-                messageContent = part.get_payload()
 
         attachmentList = []
         # check for file paths (starts with /, C:\, or D:\)- more thorough checks done later
@@ -1063,10 +1063,13 @@ class emailAgent():
             regexPaths = r"([/|~/][^.]+..[^\s]+)" # <~/ or /><words>.<extension><space>
         else:
             raise Exception( + " is currently unsupported")
-        attachmentFilePaths = re.findall(regexPaths, messageContent)
+        attachmentFilePaths = re.findall(regexPaths, self.textMsgToSend)
         attachmentList.extend(attachmentFilePaths)
         
         # check for urls
+        regexUrl = r"(http[s]?://[^\s]+)" # <http(s)://<until space or newline-not url valid>
+        attachmentUrls = re.findall(regexUrl, self.textMsgToSend)
+        attachmentList.extend(attachmentUrls)
 
         # add attachments that were found
         print("Checking if the following items are valid:\n{0}".format(attachmentList))
@@ -1091,8 +1094,7 @@ class emailAgent():
                 attachable = MIMEApplication(attachment.read(), Name=attachmentName)
             
             attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
-            currentMsg.attach(attachable)
-            print("found file attachment!")
+            self.attachmentsList.append(attachable)
 
         # check if valid url
         isValidUrl = self.isURLValid(toAttach)
@@ -1101,9 +1103,11 @@ class emailAgent():
             request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
             attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
             attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
-            currentMsg.attach(attachable)
-            print("found url attachment!")
+            self.attachmentsList.append(attachable)
            
+        if (isValidPath or isValidUrl):
+            # remove text from payload that was attachment
+            self.textMsgToSend = self.textMsgToSend.replace(toAttach, '', 1)
         else:
             print("NOT A VALID PATH OR URL!")
 

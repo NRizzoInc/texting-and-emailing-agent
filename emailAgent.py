@@ -171,6 +171,16 @@ class emailAgent():
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
             msg = self.scanForAttachments(msg)
+            
+            # check if text payload is empty besides newline (enter to submit)
+            for part in msg.walk():
+                if part.get_content_type() == 'text/plain':
+                    messageContent = part.get_payload()
+                    part.set_payload(messageContent.replace(toAttach, ''))
+
+                    if (part.get_payload().isspace()):
+                        # if so, remove the text payload
+                        part.set_payload('')
 
         return msg
 
@@ -1094,12 +1104,6 @@ class emailAgent():
             currentMsg.attach(attachable)
             print("found url attachment!")
            
-        # if it was valid, then remove from actual message
-        if (isValidPath or isValidUrl):
-            for part in currentMsg.walk():
-                if part.get_content_type() == 'text/plain':
-                    messageContent = part.get_payload()
-                    part.set_payload(messageContent.replace(toAttach, ''))
         else:
             print("NOT A VALID PATH OR URL!")
 

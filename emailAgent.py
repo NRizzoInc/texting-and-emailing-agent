@@ -11,6 +11,8 @@ import getpass
 import time
 import datetime
 import shutil
+import re
+import platform
 # Email imports
 import ssl
 import smtplib # to send emails- Simple Mail Transfer Protocol
@@ -32,7 +34,7 @@ sys.path.append(path_to_this_dir)
 
 
 class emailAgent():
-    def __init__(self, display_contacts=True):
+    def __init__(self, display_contacts=True, commandLine=False):
         '''
             This class is responsible for sending emails 
         '''
@@ -71,6 +73,10 @@ class emailAgent():
         # retreive information with getPrintedString() such that it gets cleared
         self.printedString = "" 
 
+        # this variable is neccesary for the webApp and anything that wants to 
+        # implement this class not using the command line
+        self.commandLine = commandLine
+
         # display contents of the existing contact list
         if display_contacts is True:    
             self.webAppPrintWrapper("The current contact list is:\n")
@@ -81,9 +87,9 @@ class emailAgent():
     def getContactList(self):
         return self.load_json(self.path_to_contactList)
 
-    def send_email(self, receiver_contact_info):
+    def sendMsg(self, receiver_contact_info, sendMethod:str=''):
         '''
-            Calls all other functions necessary to send an email
+            Calls all other functions necessary to send an a message (either through text or email)
 
             Args:
                 -receiver_contact_info: a dictionary about the receiver of format:
@@ -94,14 +100,21 @@ class emailAgent():
                                 "carrier": ""
                             }
                         },
+                - sendMethod: a string that should either be 'email' or 'text'
         '''            
+
+        # first check if valid "sendMethod" is received
+        if sendMethod != '': pass
+        elif sendMethod != 'email': sendTextBool = False
+        elif sendMethod != 'text': sendTextBool = True
+        else: raise Exception("Invalid sendMethod param passed to function!")
 
         email_service_provider_info = self.get_email_info("send")['smtp_server']
 
         self.connect_to_email_server("send", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
-        msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
+        msg = self.compose_msg(email_service_provider_info, receiver_contact_info, sendingText=sendTextBool)
         
         # send the message via the server set up earlier.
         if msg == None: # will only be None if can't send email or text message
@@ -126,31 +139,39 @@ class emailAgent():
             print("Successfully sent the email/text to {0} {1}".format(
                 receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
-    def compose_msg(self, email_service_provider_info, receiver_contact_info):
+    def compose_msg(self, email_service_provider_info, receiver_contact_info, sendingText:bool):
         '''
             This function is responsible for composing the email message that get sent out
-            \nReturn:
+            - Args:
+                * sendingText a bool that tells program if it should be sending a text message
 
-            -Returns:
+            - Returns:
                 * The sendable message 
                 * 'invalid' if no type of message was chosen to be send
                 * None if selected message could not be sent
         '''
-        # determine if user wants to send an email message or phone text
-        if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
-            msg = self.compose_text_msg(receiver_contact_info)
-        else:
-            if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
-                msg = self.compose_email_msg(receiver_contact_info)
+        if self.commandLine:
+            # determine if user wants to send an email message or phone text
+            if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
+                msg = self.compose_text_msg(receiver_contact_info)
             else:
-                msg = 'invalid' # signifies to caller that no message is being sent
+                if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
+                    msg = self.compose_email_msg(receiver_contact_info)
+                else:
+                    msg = 'invalid' # signifies to caller that no message is being sent
 
+        # not sending through command line
+        else:
+            if sendingText:
+                msg = self.compose_text_msg(receiver_contact_info)
+            else:
+                msg = self.compose_email_msg(receiver_contact_info)
+            
+
+        # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            # put this here so will happen for both so long as msg object is valid
-            addAttachmentBool = input("Would you like to add an attachment (y/n): ")
-            if (addAttachmentBool != 'n'): 
-                msg = self.addAttachment(msg)
-                
+            msg = self.scanForAttachments(msg)
+
         return msg
 
 
@@ -854,7 +875,7 @@ class emailAgent():
                                 contactInfo['email'] = email_msg['From']
 
 
-                        self.send_email(contactInfo)
+                        self.sendMsg(contactInfo)
 
                     # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
                     if startedBySendingEmail == False:
@@ -1011,43 +1032,77 @@ class emailAgent():
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
 
-    def addAttachment(self, currentMsg:MIMEMultipart):
+    def scanForAttachments(self, msg:MIMEMultipart):
         '''
-            @brief: takes in the current MEME msg object and returns the obj with the desired attachment
-            @param: currentMsg = the current msg object with all fields handled besides the attachment
-            @return: the msg object with an attachment
+            @brief: takes in the current MEME msg object, scans for attachments that it can add on, 
+                and returns the obj with the desired attachment
+            @param: msg = the current msg object with all fields handled besides the attachment
+            @return: the msg object with the attachments
         '''
-        keepAttaching = True
-        while (keepAttaching == True):
-            # toAttach can either be a path to a local file or a url
-            toAttach = input("Enter the aboslute path or url to the file you would like to attach: ")
+        messageContent = ''
+        for part in msg.walk():
+            if part.get_content_type() == 'text/plain':
+                messageContent = part.get_payload()
 
-            
-
-            # check if valid file path
-            validPath = os.path.exists(toAttach)
-            if (validPath):
-                # read the attachment and add it
-                attachmentName = os.path.basename(toAttach)
-                with open(toAttach, 'rb') as attachment:
-                    attachable = MIMEApplication(attachment.read(), Name=attachmentName)
-                
-                attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
-                currentMsg.attach(attachable)
-
-            # check if valid url
-            elif (self.isURLValid):
-                # use an agent or else browser will block it
-                request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
-                attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
-                attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
-                currentMsg.attach(attachable)
-            else:
-                print("NOT A VALID PATH OR URL!")
-    
-            # check if need to attach more files
-            keepAttaching = 'y' == input("Do you have more files to attach (y/n): ")
+        attachmentList = []
+        # check for file paths (starts with /, C:\, or D:\)- more thorough checks done later
+        myPlatform = platform.system()
+        if myPlatform == "Windows":
+            regexPaths = r"([a-z, A-Z]:\\[^.]+.[^\s]+)" # <drive-letter>:\<words>.<extension><space>
+        elif myPlatform == "Linux":
+            regexPaths = r"([/|~/][^.]+..[^\s]+)" # <~/ or /><words>.<extension><space>
+        else:
+            raise Exception( + " is currently unsupported")
+        attachmentFilePaths = re.findall(regexPaths, messageContent)
+        attachmentList.extend(attachmentFilePaths)
         
+        # check for urls
+
+        # add attachments that were found
+        print("Checking if the following items are valid:\n{0}".format(attachmentList))
+        for toAttach in attachmentList:
+            msg = self.addAttachment(msg, toAttach)
+
+        return msg
+    
+    def addAttachment(self, currentMsg:MIMEMultipart, toAttach:str):
+        '''
+            @breif: adds new attachment to existing message object
+            @param: currentMsg: the current msg object with all fields handled besides the attachment
+            @param: toAttach: a string that can either be a path to a local file or a url 
+            
+        '''
+        # check if valid file path
+        isValidPath = os.path.exists(toAttach)
+        if (isValidPath):
+            # read the attachment and add it
+            attachmentName = os.path.basename(toAttach)
+            with open(toAttach, 'rb') as attachment:
+                attachable = MIMEApplication(attachment.read(), Name=attachmentName)
+            
+            attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
+            currentMsg.attach(attachable)
+            print("found file attachment!")
+
+        # check if valid url
+        isValidUrl = self.isURLValid(toAttach)
+        if (isValidUrl):
+            # use an agent or else browser will block it
+            request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
+            attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
+            attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
+            currentMsg.attach(attachable)
+            print("found url attachment!")
+           
+        # if it was valid, then remove from actual message
+        if (isValidPath or isValidUrl):
+            for part in currentMsg.walk():
+                if part.get_content_type() == 'text/plain':
+                    messageContent = part.get_payload()
+                    part.set_payload(messageContent.replace(toAttach, ''))
+        else:
+            print("NOT A VALID PATH OR URL!")
+
         # done adding attachments
         return currentMsg
     
@@ -1117,17 +1172,17 @@ def run():
 
     # use this phrase to easily add more contacts to the contact list
     if 'add_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True)
+        emailer = emailAgent(display_contacts=True, commandLine=True)
         emailer.simpleAddContact()
         sys.exit()
     
     if 'update_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True)
+        emailer = emailAgent(display_contacts=True, commandLine=True)
         emailer.updateContactInfo()
         sys.exit()
 
     # Create a class obj for this file
-    emailer = emailAgent(display_contacts=False)
+    emailer = emailAgent(display_contacts=False, commandLine=True)
 
     # determine what the user wants to use the emailing agent for
     service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
@@ -1169,7 +1224,7 @@ def run():
             # if there is a third argument, then use default email account (dont need to login)
             emailer.setDefaultState(True)
 
-        emailer.send_email(receiver_contact_info)
+        emailer.sendMsg(receiver_contact_info)
     
         waitForReply = input("Do you want to wait for a reply (y/n): ")
         if 'n' not in waitForReply:

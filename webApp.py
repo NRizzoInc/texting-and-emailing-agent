@@ -104,9 +104,9 @@ class WebApp():
                 if (formData['task'] == "sending"):
                     message = formData['message']
                     print("IMPLEMENT SEND")
-                    # self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
-                    # receiver_contact_info = emailer.get_receiver_contact_info(firstName, lastName)
-                    # self.emailAgent.send_email()
+                    receiver_contact_info = emailer.get_receiver_contact_info(firstName, lastName)
+                    
+                    self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text')
                 
                 elif (formData['task'] == "receiving"):
                     print("IMPLEMENT RECEIVE")

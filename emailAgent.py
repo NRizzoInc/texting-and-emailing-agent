@@ -77,8 +77,9 @@ class emailAgent():
             printableContactList = pprint.pformat(self.contactList)
             self.webAppPrintWrapper(printableContactList)
 
-    def updateContactList(self):
-        self.contactList = self.load_json(self.path_to_contactList)
+    # returns the contact list as it is currently in the contact list file
+    def getContactList(self):
+        return self.load_json(self.path_to_contactList)
 
     def send_email(self, receiver_contact_info):
         '''
@@ -1085,6 +1086,7 @@ class emailAgent():
 
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
+        self.contactList = self.getContactList()
         formatedContactList = pprint.pformat(self.contactList)
         if printToTerminal:
            print(formatedContactList)

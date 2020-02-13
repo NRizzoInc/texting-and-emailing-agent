@@ -7,7 +7,7 @@ import urllib.request
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
-from flask import Flask, templating, render_template, request
+from flask import Flask, templating, render_template, request, redirect
 import socket # used to get local network exposible IP
 
 import emailAgent # need to call functions
@@ -119,6 +119,11 @@ class WebApp():
                     self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
                 else:
                     raise Exception("UNKNOWN TASK")
+
+                # return to original site
+                return redirect(self.host_address + self.sites['textpage'])
+            
+            # if dont return elsewhere, use blank page
             return render_template("basicForm.html")
         
 

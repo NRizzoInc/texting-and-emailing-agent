@@ -3,6 +3,9 @@
 import os, sys
 import json # to get data from POST only forms
 import urllib.request
+import re
+import platform
+import subprocess
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
@@ -43,9 +46,19 @@ class WebApp():
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.debugOn)
     
     def getIP(self):
-        hostname = socket.gethostname()
-        IPAddr = socket.gethostbyname(hostname)
-        return IPAddr
+        myPlatform = platform.system()
+        if myPlatform == "Windows":
+            hostname = socket.gethostname()
+            IPAddr = socket.gethostbyname(hostname)
+            return IPAddr
+        elif myPlatform == "Linux":
+            ipExpr = r'inet ([^.]+.[^.]+.[^.]+.[^\s]+)'
+            output = subprocess.check_output("ifconfig").decode()
+            matches = re.findall(ipExpr, output)
+            for ip in matches:
+                print("Found ip: {0}".format(ip))
+                return ip
+
 
     def generateSites(self):
         '''

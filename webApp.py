@@ -109,6 +109,11 @@ class WebApp():
                 try:
                     email = formData['emailAddress']
                     password = formData['password']
+                    if (len(email) == 0 or len(password) == 0):
+                        self.emailAgent.setDefaultState(True)
+                    else:
+                        # if no errors and not empty then okay to use non default accoount
+                        self.emailAgent.setDefaultState(False) 
                 except Exception as e:
                     # if there is an error just use the default sender/receiver
                     self.emailAgent.setDefaultState(True)
@@ -116,10 +121,9 @@ class WebApp():
                 # check if receive if sending/receiving message form
                 if (formData['task'] == "sending"):
                     message = formData['message']
-                    print("IMPLEMENT SEND")
-                    receiver_contact_info = emailer.get_receiver_contact_info(firstName, lastName)
+                    receiver_contact_info = self.emailAgent.get_receiver_contact_info(firstName, lastName)
                     
-                    self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text')
+                    self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text', msgToSend=message)
                 
                 elif (formData['task'] == "receiving"):
                     print("IMPLEMENT RECEIVE")

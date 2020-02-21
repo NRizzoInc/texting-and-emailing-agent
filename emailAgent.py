@@ -91,7 +91,7 @@ class emailAgent():
     def getContactList(self):
         return self.load_json(self.path_to_contactList)
 
-    def sendMsg(self, receiver_contact_info, sendMethod:str=''):
+    def sendMsg(self, receiver_contact_info, sendMethod:str='', msgToSend:str=''):
         '''
             Calls all other functions necessary to send an a message (either through text or email)
 
@@ -105,12 +105,13 @@ class emailAgent():
                             }
                         },
                 - sendMethod: a string that should either be 'email' or 'text'
+                - msgToSend: a string that contains the message that is desired to be sent
         '''            
 
         # first check if valid "sendMethod" is received
-        if sendMethod != '': pass
-        elif sendMethod != 'email': sendTextBool = False
-        elif sendMethod != 'text': sendTextBool = True
+        if sendMethod == '': pass
+        elif sendMethod == 'email': sendTextBool = False
+        elif sendMethod == 'text': sendTextBool = True
         else: raise Exception("Invalid sendMethod param passed to function!")
 
         email_service_provider_info = self.get_email_info("send")['smtp_server']
@@ -118,7 +119,10 @@ class emailAgent():
         self.connect_to_email_server("send", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
-        msg = self.compose_msg(email_service_provider_info, receiver_contact_info, sendingText=sendTextBool)
+        if self.commandLine:
+            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, msgToSend=msgToSend)
+        else:
+            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, sendingText=sendTextBool, msgToSend=msgToSend)
         
         # send the message via the server set up earlier.
         if msg == None: # will only be None if can't send email or text message
@@ -150,11 +154,12 @@ class emailAgent():
             print("Successfully sent the email/text to {0} {1}".format(
                 receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
-    def compose_msg(self, email_service_provider_info, receiver_contact_info, sendingText:bool):
+    def compose_msg(self, email_service_provider_info, receiver_contact_info, sendingText:bool=False, msgToSend:str=''):
         '''
             This function is responsible for composing the email message that get sent out
             - Args:
-                * sendingText a bool that tells program if it should be sending a text message
+                * sendingText: a bool that tells program if it should be sending a text message
+                * msgToSend: a string containing the desired message to be sent
 
             - Returns:
                 * The sendable message 
@@ -174,9 +179,9 @@ class emailAgent():
         # not sending through command line
         else:
             if sendingText:
-                msg = self.compose_text_msg(receiver_contact_info)
+                msg = self.compose_text_msg(receiver_contact_info, msgToSend)
             else:
-                msg = self.compose_email_msg(receiver_contact_info)
+                msg = self.compose_email_msg(receiver_contact_info, msgToSend)
             
 
         # check if user added an attachment (either link or path to file) in message
@@ -192,7 +197,13 @@ class emailAgent():
         return msg
 
 
-    def compose_text_msg(self, receiver_contact_info):
+    def compose_text_msg(self, receiver_contact_info, msgToSend:str=''):
+        '''
+            @Args:
+                - receiver_contact_info: a dictionary containing the following information 
+                    {first name, last name, email, carrier, phone number}
+                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
+        '''
         receiver_carrier = receiver_contact_info['carrier'].lower()        
 
         # Check if this email provider allows emails to be sent to phone numbers
@@ -225,9 +236,13 @@ class emailAgent():
         print("Sending text message to {0}".format(text_msg_address))
         
         # Get content to send in text message
-        body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
-        body += "\n" # have to add newline char at the end of the body
-        # inform rest of program that sms is being sent
+        if self.commandLine:
+            body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
+        # not using command line
+        else: 
+            body = msgToSend
+        # body += "\n" # have to add newline char at the end of the body
+
 
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object with the body
@@ -294,53 +309,60 @@ class emailAgent():
 
         return msgList
 
-    def compose_email_msg(self, receiver_contact_info):
+    def compose_email_msg(self, receiver_contact_info, msgToSend:str=''):
         '''
             This function provides the user with a method of choosing which email format to send and entering the desired message.
-            Args:
-                -receiver_contact_info: a dictionary containing the following information {first name, last name, email, carrier, phone number}
+            @Args:
+                - receiver_contact_info: a dictionary containing the following information 
+                    {first name, last name, email, carrier, phone number}
+                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
         '''
-        # Get a list of all possible message types
-        list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
-                        os.path.join(path_to_this_dir, 'messageTemplates'))]
-        contents = ''
-        
-        type_of_msg = 'default' 
-        path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
+        if self.commandLine:
+            # Get a list of all possible message types
+            list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
+                            os.path.join(path_to_this_dir, 'messageTemplates'))]
+            contents = ''
+            
+            type_of_msg = 'default' 
+            path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
 
-        with open(path_to_msg_template) as read_file:
-            contents = read_file.read()
-
-        for msg_type in list_of_msg_types:
-            path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
             with open(path_to_msg_template) as read_file:
-                msg_contents = read_file.read()
-            print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
-            if 'y' in input("Would you like to send this message type? (y/n): ").lower():
-                type_of_msg = msg_type   
-                contents = msg_contents 
-                break
+                contents = read_file.read()
+
+            for msg_type in list_of_msg_types:
+                path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
+                with open(path_to_msg_template) as read_file:
+                    msg_contents = read_file.read()
+                print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
+                if 'y' in input("Would you like to send this message type? (y/n): ").lower():
+                    type_of_msg = msg_type   
+                    contents = msg_contents 
+                    break
 
 
-        # create the body of the email to send
-        # read in the content of the text file to send as the body of the email
+            # create the body of the email to send
+            # read in the content of the text file to send as the body of the email
 
-        # TODO create other elif statements for different cases
-        if type_of_msg == "test_msg":
-            receiver = str(receiver_contact_info['first_name'])
-            sendable_msg = self.read_template(path_to_msg_template).substitute(
-                receiver_name=receiver, sender_name=self.my_email_address) 
+            # TODO create other elif statements for different cases
+            if type_of_msg == "test_msg":
+                receiver = str(receiver_contact_info['first_name'])
+                sendable_msg = self.read_template(path_to_msg_template).substitute(
+                    receiver_name=receiver, sender_name=self.my_email_address) 
 
-        elif type_of_msg == 'input_content':
-            my_input = input("Input what you would like to send in the body of the email: ")
-            sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
-        
-        # Default to default file 
+            elif type_of_msg == 'input_content':
+                my_input = input("Input what you would like to send in the body of the email: ")
+                sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
+            
+            # Default to default file 
+            else:
+                sendable_msg = contents
+
+            # print("Sending message:\n{0}".format(sendable_msg))
+
+        # not using command line
         else:
-            sendable_msg = contents
-
-        print("Sending message:\n{0}".format(sendable_msg))
-
+            sendable_msg = msgToSend
+            
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object
         msg['From'] = self.my_email_address
@@ -545,6 +567,8 @@ class emailAgent():
 
         found_valid_email_provider = False
         email_service_provider_info = {}
+
+        print("default state: {0}\nLogin already set{1}".format(self.use_default, self.loginAlreadySet))
 
         while found_valid_email_provider is False and self.use_default is False:
             print("The available list of providers you can login to is: \n{0} \

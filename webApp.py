@@ -3,6 +3,9 @@
 import os, sys
 import json # to get data from POST only forms
 import urllib.request
+import re
+import platform
+import subprocess
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
@@ -43,9 +46,19 @@ class WebApp():
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.debugOn)
     
     def getIP(self):
-        hostname = socket.gethostname()
-        IPAddr = socket.gethostbyname(hostname)
-        return IPAddr
+        myPlatform = platform.system()
+        if myPlatform == "Windows":
+            hostname = socket.gethostname()
+            IPAddr = socket.gethostbyname(hostname)
+            return IPAddr
+        elif myPlatform == "Linux":
+            ipExpr = r'inet ([^.]+.[^.]+.[^.]+.[^\s]+)'
+            output = subprocess.check_output("ifconfig").decode()
+            matches = re.findall(ipExpr, output)
+            for ip in matches:
+                print("Found ip: {0}".format(ip))
+                return ip
+
 
     def generateSites(self):
         '''
@@ -96,6 +109,11 @@ class WebApp():
                 try:
                     email = formData['emailAddress']
                     password = formData['password']
+                    if (len(email) == 0 or len(password) == 0):
+                        self.emailAgent.setDefaultState(True)
+                    else:
+                        # if no errors and not empty then okay to use non default accoount
+                        self.emailAgent.setDefaultState(False) 
                 except Exception as e:
                     # if there is an error just use the default sender/receiver
                     self.emailAgent.setDefaultState(True)
@@ -103,10 +121,9 @@ class WebApp():
                 # check if receive if sending/receiving message form
                 if (formData['task'] == "sending"):
                     message = formData['message']
-                    print("IMPLEMENT SEND")
-                    # self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
-                    # receiver_contact_info = emailer.get_receiver_contact_info(firstName, lastName)
-                    # self.emailAgent.send_email()
+                    receiver_contact_info = self.emailAgent.get_receiver_contact_info(firstName, lastName)
+                    
+                    self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text', msgToSend=message)
                 
                 elif (formData['task'] == "receiving"):
                     print("IMPLEMENT RECEIVE")

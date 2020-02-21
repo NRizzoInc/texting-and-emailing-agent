@@ -11,6 +11,8 @@ import getpass
 import time
 import datetime
 import shutil
+import re
+import platform
 # Email imports
 import ssl
 import smtplib # to send emails- Simple Mail Transfer Protocol
@@ -32,7 +34,7 @@ sys.path.append(path_to_this_dir)
 
 
 class emailAgent():
-    def __init__(self, display_contacts=True):
+    def __init__(self, display_contacts=True, commandLine=False):
         '''
             This class is responsible for sending emails 
         '''
@@ -71,6 +73,14 @@ class emailAgent():
         # retreive information with getPrintedString() such that it gets cleared
         self.printedString = "" 
 
+        # this variable is neccesary for the webApp and anything that wants to 
+        # implement this class not using the command line
+        self.commandLine = commandLine
+
+        # work around for sending text messages with char limit (wait to add content)
+        self.attachmentsList = []
+        self.textMsgToSend = ''
+
         # display contents of the existing contact list
         if display_contacts is True:    
             self.webAppPrintWrapper("The current contact list is:\n")
@@ -81,9 +91,9 @@ class emailAgent():
     def getContactList(self):
         return self.load_json(self.path_to_contactList)
 
-    def send_email(self, receiver_contact_info):
+    def sendMsg(self, receiver_contact_info, sendMethod:str='', msgToSend:str=''):
         '''
-            Calls all other functions necessary to send an email
+            Calls all other functions necessary to send an a message (either through text or email)
 
             Args:
                 -receiver_contact_info: a dictionary about the receiver of format:
@@ -94,14 +104,25 @@ class emailAgent():
                                 "carrier": ""
                             }
                         },
+                - sendMethod: a string that should either be 'email' or 'text'
+                - msgToSend: a string that contains the message that is desired to be sent
         '''            
+
+        # first check if valid "sendMethod" is received
+        if sendMethod == '': pass
+        elif sendMethod == 'email': sendTextBool = False
+        elif sendMethod == 'text': sendTextBool = True
+        else: raise Exception("Invalid sendMethod param passed to function!")
 
         email_service_provider_info = self.get_email_info("send")['smtp_server']
 
         self.connect_to_email_server("send", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
-        msg = self.compose_msg(email_service_provider_info, receiver_contact_info)
+        if self.commandLine:
+            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, msgToSend=msgToSend)
+        else:
+            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, sendingText=sendTextBool, msgToSend=msgToSend)
         
         # send the message via the server set up earlier.
         if msg == None: # will only be None if can't send email or text message
@@ -115,46 +136,74 @@ class emailAgent():
             if self.send_to_phone is True:
                 msgList = self.adjustTextMsg(msg)
                 
+                # send pure text first
                 for currMsg in msgList:
                     sms = currMsg.as_string() # need to convert message to string
                     self.email_server.sendmail(msg["From"], msg["To"], sms)
                     # add microscopic delay to ensure that messages arrive in correct order
                     time.sleep(10/1000) # input is in seconds (convert to milliseconds)
-            
+
+                # send attachments last
+                for attachments in self.attachmentsList:
+                    sms = attachments.as_string()
+                    self.email_server.sendmail(msg["From"], msg["To"], sms)
+                self.attachmentsList = [] # reset list
+
             else:
                 self.email_server.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
                 receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
-    def compose_msg(self, email_service_provider_info, receiver_contact_info):
+    def compose_msg(self, email_service_provider_info, receiver_contact_info, sendingText:bool=False, msgToSend:str=''):
         '''
             This function is responsible for composing the email message that get sent out
-            \nReturn:
+            - Args:
+                * sendingText: a bool that tells program if it should be sending a text message
+                * msgToSend: a string containing the desired message to be sent
 
-            -Returns:
+            - Returns:
                 * The sendable message 
                 * 'invalid' if no type of message was chosen to be send
                 * None if selected message could not be sent
         '''
-        # determine if user wants to send an email message or phone text
-        if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
-            msg = self.compose_text_msg(receiver_contact_info)
-        else:
-            if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
-                msg = self.compose_email_msg(receiver_contact_info)
+        if self.commandLine:
+            # determine if user wants to send an email message or phone text
+            if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
+                msg = self.compose_text_msg(receiver_contact_info)
             else:
-                msg = 'invalid' # signifies to caller that no message is being sent
+                if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
+                    msg = self.compose_email_msg(receiver_contact_info)
+                else:
+                    msg = 'invalid' # signifies to caller that no message is being sent
 
+        # not sending through command line
+        else:
+            if sendingText:
+                msg = self.compose_text_msg(receiver_contact_info, msgToSend)
+            else:
+                msg = self.compose_email_msg(receiver_contact_info, msgToSend)
+            
+
+        # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            # put this here so will happen for both so long as msg object is valid
-            addAttachmentBool = input("Would you like to add an attachment (y/n): ")
-            if (addAttachmentBool != 'n'): 
-                msg = self.addAttachment(msg)
-                
+            msg = self.scanForAttachments(msg)
+            
+            # check if text payload is empty besides newline (enter to submit)
+            for part in msg.walk():
+                if part.get_content_type() == 'text/plain':                
+                    if (part.get_payload().isspace()):
+                        # if so, remove the text payload
+                        part.set_payload(None)
         return msg
 
 
-    def compose_text_msg(self, receiver_contact_info):
+    def compose_text_msg(self, receiver_contact_info, msgToSend:str=''):
+        '''
+            @Args:
+                - receiver_contact_info: a dictionary containing the following information 
+                    {first name, last name, email, carrier, phone number}
+                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
+        '''
         receiver_carrier = receiver_contact_info['carrier'].lower()        
 
         # Check if this email provider allows emails to be sent to phone numbers
@@ -187,16 +236,20 @@ class emailAgent():
         print("Sending text message to {0}".format(text_msg_address))
         
         # Get content to send in text message
-        body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
-        body += "\n" # have to add newline char at the end of the body
-        # inform rest of program that sms is being sent
+        if self.commandLine:
+            body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
+        # not using command line
+        else: 
+            body = msgToSend
+        # body += "\n" # have to add newline char at the end of the body
+
 
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object with the body
         msg['From'] = self.my_email_address
         msg['To'] = text_msg_address
         msg['Subject'] = "" # keep newline
-        msg.attach(MIMEText(body))
+        self.textMsgToSend = body # dont add body yet bc text message
         
         self.send_to_phone = True
 
@@ -204,17 +257,17 @@ class emailAgent():
 
     def adjustTextMsg(self, msg:MIMEMultipart):
         """
-            Brief: 
+            @Brief: 
                 Text messages are limited to 120 characters each.
                 This function will split a long message into multiple ones.
                 Keeps words together in same text.
-            Args: msg (string)
+            @Args: msg (string)
             Return: a list of messages(strings) to send
         """
         msgList = []
         
+        text = self.textMsgToSend
         subject = msg['Subject']
-        text = msg.get_payload()
         totalMsg = str(subject) + str(text)
         totalLength = len(totalMsg)
         charLimit = 120
@@ -232,7 +285,6 @@ class emailAgent():
 
                     # find the first space occuring prior to 120 char mark (go in reverse during search)
                     for index, thisChar in enumerate(reversed(totalMsg[lastIndex:lastIndex+charLimit])):
-                        print("Char: {0}".format(thisChar))
                         if (thisChar == ' '): 
                             # new position is start + charLimit - # left shifts
                             endPos = lastIndex + charLimit - index  
@@ -246,66 +298,71 @@ class emailAgent():
                     toAppend = totalMsg[lastIndex:]
                     lastIndex = totalLength # exit while-loop condition
 
-                tempMsg = MIMEText(toAppend) # create a message object with the body
-                tempMsg['From'] = msg['From']
-                tempMsg['To'] = msg['To']
+                tempMsg = MIMEText(toAppend.strip()) # create a message object with the body
 
                 # add to list
                 msgList.append(tempMsg)
 
         # normal (send one message)
-        else:
-            msgList.append(msg)
+        elif (not text.isspace()):
+            msgList.append(MIMEText(text.strip()))      
 
         return msgList
 
-    def compose_email_msg(self, receiver_contact_info):
+    def compose_email_msg(self, receiver_contact_info, msgToSend:str=''):
         '''
             This function provides the user with a method of choosing which email format to send and entering the desired message.
-            Args:
-                -receiver_contact_info: a dictionary containing the following information {first name, last name, email, carrier, phone number}
+            @Args:
+                - receiver_contact_info: a dictionary containing the following information 
+                    {first name, last name, email, carrier, phone number}
+                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
         '''
-        # Get a list of all possible message types
-        list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
-                        os.path.join(path_to_this_dir, 'messageTemplates'))]
-        contents = ''
-        
-        type_of_msg = 'default' 
-        path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
+        if self.commandLine:
+            # Get a list of all possible message types
+            list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
+                            os.path.join(path_to_this_dir, 'messageTemplates'))]
+            contents = ''
+            
+            type_of_msg = 'default' 
+            path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
 
-        with open(path_to_msg_template) as read_file:
-            contents = read_file.read()
-
-        for msg_type in list_of_msg_types:
-            path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
             with open(path_to_msg_template) as read_file:
-                msg_contents = read_file.read()
-            print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
-            if 'y' in input("Would you like to send this message type? (y/n): ").lower():
-                type_of_msg = msg_type   
-                contents = msg_contents 
-                break
+                contents = read_file.read()
+
+            for msg_type in list_of_msg_types:
+                path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
+                with open(path_to_msg_template) as read_file:
+                    msg_contents = read_file.read()
+                print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
+                if 'y' in input("Would you like to send this message type? (y/n): ").lower():
+                    type_of_msg = msg_type   
+                    contents = msg_contents 
+                    break
 
 
-        # create the body of the email to send
-        # read in the content of the text file to send as the body of the email
+            # create the body of the email to send
+            # read in the content of the text file to send as the body of the email
 
-        # TODO create other elif statements for different cases
-        if type_of_msg == "test_msg":
-            receiver = str(receiver_contact_info['first_name'])
-            sendable_msg = self.read_template(path_to_msg_template).substitute(
-                receiver_name=receiver, sender_name=self.my_email_address) 
+            # TODO create other elif statements for different cases
+            if type_of_msg == "test_msg":
+                receiver = str(receiver_contact_info['first_name'])
+                sendable_msg = self.read_template(path_to_msg_template).substitute(
+                    receiver_name=receiver, sender_name=self.my_email_address) 
 
-        elif type_of_msg == 'input_content':
-            my_input = input("Input what you would like to send in the body of the email: ")
-            sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
-        
-        # Default to default file 
+            elif type_of_msg == 'input_content':
+                my_input = input("Input what you would like to send in the body of the email: ")
+                sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
+            
+            # Default to default file 
+            else:
+                sendable_msg = contents
+
+            # print("Sending message:\n{0}".format(sendable_msg))
+
+        # not using command line
         else:
-            sendable_msg = contents
-
-        print("Sending message:\n{0}".format(sendable_msg))
-
+            sendable_msg = msgToSend
+            
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object
         msg['From'] = self.my_email_address
@@ -510,6 +567,8 @@ class emailAgent():
 
         found_valid_email_provider = False
         email_service_provider_info = {}
+
+        print("default state: {0}\nLogin already set{1}".format(self.use_default, self.loginAlreadySet))
 
         while found_valid_email_provider is False and self.use_default is False:
             print("The available list of providers you can login to is: \n{0} \
@@ -854,7 +913,7 @@ class emailAgent():
                                 contactInfo['email'] = email_msg['From']
 
 
-                        self.send_email(contactInfo)
+                        self.sendMsg(contactInfo)
 
                     # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
                     if startedBySendingEmail == False:
@@ -1011,43 +1070,71 @@ class emailAgent():
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
 
-    def addAttachment(self, currentMsg:MIMEMultipart):
+    def scanForAttachments(self, msg:MIMEMultipart):
         '''
-            @brief: takes in the current MEME msg object and returns the obj with the desired attachment
-            @param: currentMsg = the current msg object with all fields handled besides the attachment
-            @return: the msg object with an attachment
+            @brief: takes in the current MEME msg object, scans for attachments that it can add on, 
+                and returns the obj with the desired attachment
+            @param: msg = the current msg object with all fields handled besides the attachment
+            @return: the msg object with the attachments
         '''
-        keepAttaching = True
-        while (keepAttaching == True):
-            # toAttach can either be a path to a local file or a url
-            toAttach = input("Enter the aboslute path or url to the file you would like to attach: ")
 
-            
-
-            # check if valid file path
-            validPath = os.path.exists(toAttach)
-            if (validPath):
-                # read the attachment and add it
-                attachmentName = os.path.basename(toAttach)
-                with open(toAttach, 'rb') as attachment:
-                    attachable = MIMEApplication(attachment.read(), Name=attachmentName)
-                
-                attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
-                currentMsg.attach(attachable)
-
-            # check if valid url
-            elif (self.isURLValid):
-                # use an agent or else browser will block it
-                request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
-                attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
-                attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
-                currentMsg.attach(attachable)
-            else:
-                print("NOT A VALID PATH OR URL!")
-    
-            # check if need to attach more files
-            keepAttaching = 'y' == input("Do you have more files to attach (y/n): ")
+        attachmentList = []
+        # check for file paths (starts with /, C:\, or D:\)- more thorough checks done later
+        myPlatform = platform.system()
+        if myPlatform == "Windows":
+            regexPaths = r"([a-z, A-Z]:\\[^.]+.[^\s]+)" # <drive-letter>:\<words>.<extension><space>
+        elif myPlatform == "Linux":
+            regexPaths = r"([/|~/][^.]+..[^\s]+)" # <~/ or /><words>.<extension><space>
+        else:
+            raise Exception( + " is currently unsupported")
+        attachmentFilePaths = re.findall(regexPaths, self.textMsgToSend)
+        attachmentList.extend(attachmentFilePaths)
         
+        # check for urls
+        regexUrl = r"(http[s]?://[^\s]+)" # <http(s)://<until space or newline-not url valid>
+        attachmentUrls = re.findall(regexUrl, self.textMsgToSend)
+        attachmentList.extend(attachmentUrls)
+
+        # add attachments that were found
+        print("Checking if the following items are valid:\n{0}".format(attachmentList))
+        for toAttach in attachmentList:
+            msg = self.addAttachment(msg, toAttach)
+
+        return msg
+    
+    def addAttachment(self, currentMsg:MIMEMultipart, toAttach:str):
+        '''
+            @breif: adds new attachment to existing message object
+            @param: currentMsg: the current msg object with all fields handled besides the attachment
+            @param: toAttach: a string that can either be a path to a local file or a url 
+            
+        '''
+        # check if valid file path
+        isValidPath = os.path.exists(toAttach)
+        if (isValidPath):
+            # read the attachment and add it
+            attachmentName = os.path.basename(toAttach)
+            with open(toAttach, 'rb') as attachment:
+                attachable = MIMEApplication(attachment.read(), Name=attachmentName)
+            
+            attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
+            self.attachmentsList.append(attachable)
+
+        # check if valid url
+        isValidUrl = self.isURLValid(toAttach)
+        if (isValidUrl):
+            # use an agent or else browser will block it
+            request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
+            attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
+            attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
+            self.attachmentsList.append(attachable)
+           
+        if (isValidPath or isValidUrl):
+            # remove text from payload that was attachment
+            self.textMsgToSend = self.textMsgToSend.replace(toAttach, '', 1)
+        else:
+            print("NOT A VALID PATH OR URL!")
+
         # done adding attachments
         return currentMsg
     
@@ -1117,17 +1204,17 @@ def run():
 
     # use this phrase to easily add more contacts to the contact list
     if 'add_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True)
+        emailer = emailAgent(display_contacts=True, commandLine=True)
         emailer.simpleAddContact()
         sys.exit()
     
     if 'update_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True)
+        emailer = emailAgent(display_contacts=True, commandLine=True)
         emailer.updateContactInfo()
         sys.exit()
 
     # Create a class obj for this file
-    emailer = emailAgent(display_contacts=False)
+    emailer = emailAgent(display_contacts=False, commandLine=True)
 
     # determine what the user wants to use the emailing agent for
     service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
@@ -1169,7 +1256,7 @@ def run():
             # if there is a third argument, then use default email account (dont need to login)
             emailer.setDefaultState(True)
 
-        emailer.send_email(receiver_contact_info)
+        emailer.sendMsg(receiver_contact_info)
     
         waitForReply = input("Do you want to wait for a reply (y/n): ")
         if 'n' not in waitForReply:

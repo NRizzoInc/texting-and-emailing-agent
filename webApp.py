@@ -127,8 +127,9 @@ class WebApp():
                 
                 elif (formData['task'] == "receiving"):
                     print("IMPLEMENT RECEIVE")
-                    # toPrint = self.emailAgent.getPrintedString()
-                    # print(toPrint)
+                    self.emailAgent.receive_email(onlyUnread=True)
+                    toPrint = self.emailAgent.getPrintedString()
+                    print(toPrint)
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']

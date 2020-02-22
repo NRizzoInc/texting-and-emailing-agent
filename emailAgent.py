@@ -806,11 +806,12 @@ class emailAgent():
         self.webAppPrintWrapper("New email message detected!")       
 
 
-    def receive_email(self, startedBySendingEmail=False):
+    def receive_email(self, startedBySendingEmail=False, onlyUnread:bool=True):
         '''
-            Args:
+            @Args:
                 -startedBySendingEmail:
                     True if started off by sending email and want to wait for users reponse
+                -onlyUnread: when set to true, no command line input needed to tell which messages to read
         '''
 
         email_service_provider_info = self.get_email_info("receive")['imap_server']
@@ -818,7 +819,7 @@ class emailAgent():
         self.connect_to_email_server("receive", host_address=email_service_provider_info['host_address'],
             port_num=email_service_provider_info['port_num'])
 
-        if startedBySendingEmail == False:
+        if startedBySendingEmail == False or onlyUnread:
             # input error checking
             filterInput = ""
             while filterInput != "n" and filterInput != "y":
@@ -860,7 +861,7 @@ class emailAgent():
 
                 # fetch the emails in order of most recent to least recent
                 # most recent email has the highest id number
-                self.webAppPrintWrapper("id_list: {}".format(id_list))
+                self.`webAppPrintWrapper`("id_list: {}".format(id_list))
                 for id_num in id_list:
                     if id_num == max(id_list):
                         self.webAppPrintWrapper("Fetching most recent email")

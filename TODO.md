@@ -15,6 +15,8 @@
 - [ ] Make contacts private (also prevents duplicate names)
   - [ ] Add different users
   - [ ] each person creates there own account (adds to accounts.json file)
+  - [ ] create new form just for adding contacts (placeholders need to say "their..." instead of "your...")
 - [ ] contact list drop down menu in "first/last name" input box
   - [ ] If possible use dropdown & text enter at same time
 - [ ] Add "Can't find your contact, add them!" button when sending
+- [ ] Add drop down menu for sms providers

@@ -15,7 +15,7 @@ import socket # used to get local network exposible IP
 
 import emailAgent # need to call functions
 class WebApp():
-    def __init__(self, textFunction, emailFunction):
+    def __init__(self):
         self.emailAgent = emailAgent.emailAgent(display_contacts=True)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
@@ -157,6 +157,4 @@ class WebApp():
 
 
 if __name__ == "__main__":
-    textFn = lambda: print("texting")
-    emailFn = lambda: print("emailing")
-    ui = WebApp(textFn, emailFn)
+    ui = WebApp()

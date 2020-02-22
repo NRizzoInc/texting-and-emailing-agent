@@ -39,7 +39,7 @@ class emailAgent():
         '''
             This class is responsible for sending emails 
         '''
-        self.messageTemplates_dir = os.path.join(path_to_this_dir, "messageTemplates")
+        self.messageTemplates_dir = os.path.join(path_to_this_dir, "/templates/messageTemplates")
         self.path_to_contactList = os.path.join(path_to_this_dir, "contacts.json")
 
 
@@ -130,7 +130,7 @@ class emailAgent():
             print("Could not send an email or text message")
             
         elif msg == "invalid":
-            print("No valid method of sending a message was chosen")
+            raise Exception("No valid method of sending a message was chosen!")
 
         else:
             # method of sending email changes depending on whether it is an email of text
@@ -325,8 +325,7 @@ class emailAgent():
         '''
         if self.commandLine:
             # Get a list of all possible message types
-            list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(
-                            os.path.join(path_to_this_dir, 'messageTemplates'))]
+            list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(self.messageTemplates_dir)]
             contents = ''
             
             type_of_msg = 'default' 
@@ -1232,6 +1231,11 @@ def run():
     # Create a class obj for this file
     emailer = emailAgent(display_contacts=False, commandLine=True)
 
+    if 'default' in ''.join(sys.argv):
+        emailer.setDefaultState(True)
+    else:
+        emailer.setDefaultState(False)
+
     # determine what the user wants to use the emailing agent for
     service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
 
@@ -1239,10 +1243,12 @@ def run():
 
         # First check that enough arguments were provided (if not do it manually)
         if arg_length < 3: 
-            print("\nInvalid number of arguments entered! \
-                    \nProvide first and last name seperated by spaces when running this script! \
-                    \n\nThe existing contact list includes: ")
-            self.printContactListPretty()
+            print("""\
+                \nInvalid number of arguments entered! \
+                \nProvide first and last name seperated by spaces when running this script!""")
+
+            emailer.webAppPrintWrapper("\nThe existing contact list includes:")
+            emailer.printContactListPretty()
 
             addContact = input("Do you want to add a new contact to this list(y/n): ")
             if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()
@@ -1279,16 +1285,9 @@ def run():
             emailer.receive_email(startedBySendingEmail=True)
 
     elif "get" in service_type:
-
         # Entering something in the second argument signifies that you want to use the default login
-        if arg_length == 2:
-            emailer.setDefaultState(True)
-            emailer.receive_email()
-        
-        else:
-            emailer.setDefaultState(False)
-            emailer.receive_email()
-    
+        emailer.receive_email()
+            
     else:
         print("Please Enter a Valid Option!")
 

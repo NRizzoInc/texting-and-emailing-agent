@@ -23,7 +23,7 @@
             "port_num": "993"
         }        
     },
-
+    
     "Outlook":{
         "smtp_server": {
             "host_address": "smtp-mail.outlook.com",
@@ -39,7 +39,8 @@
     "Gmail":{
         "smtp_server": {
             "host_address": "smtp.gmail.com",
-            "port_num": "587"
+            "port_num": "587",
+            "SMS-Gateways": "msg.fi.google.com"
         },
 
         "imap_server": {
@@ -88,32 +89,32 @@
 
     "Comcast":{
         "smtp_server": {
-            "host_address": "Smtp.comcast.net",
+            "host_address": "smtp.comcast.net",
             "port_num": "587"
         },
 
         "imap_server": {
-            "host_address": "",
+            "host_address": "imap.comcast.net",
             "port_num": "993"
         }
     },
 
     "Virgin":{
         "smtp_server": {
-            "host_address": "Smtp.virgin.net",
+            "host_address": "smtp.virginmedia.com",
             "port_num": "587",
             "SMS-Gateways": "vmobl.com"
         },
 
         "imap_server": {
-            "host_address": "",
+            "host_address": "imap.virginmedia.com",
             "port_num": "993"
         }
     },
 
     "Yahoo":{
         "smtp_server": {
-            "host_address": "Mail.yahoo.com",
+            "host_address": "smtp.mail.yahoo.com",
             "port_num": "587"
         },
 
@@ -125,13 +126,13 @@
 
     "T-Mobile":{
         "smtp_server": {
-            "host_address": "t-mobile.com",
-            "port_num": "587",
+            "host_address": "securesmtp.t-online.de",
+            "port_num": "465",
             "SMS-Gateways": "tmomail.net"    
         },
 
         "imap_server": {
-            "host_address": "",
+            "host_address": "secureimap.t-online.de",
             "port_num": "993"
         }
     },
@@ -144,7 +145,7 @@
         },
 
         "imap_server": {
-            "host_address": "",
+            "host_address": "imap.sprintpcs.com",
             "port_num": "993"
         }
     }

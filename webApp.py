@@ -120,14 +120,16 @@ class WebApp():
 
                 # check if receive if sending/receiving message form
                 if (formData['task'] == "sending"):
+                    print("Sending Text")
                     message = formData['message']
                     receiver_contact_info = self.emailAgent.get_receiver_contact_info(firstName, lastName)
                     
                     self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text', msgToSend=message)
                 
                 elif (formData['task'] == "receiving"):
-                    print("IMPLEMENT RECEIVE")
-                    self.emailAgent.receive_email(onlyUnread=True)
+                    print("Receiving Text")
+                    self.emailAgent.receive_email(onlyUnread=False)
+                    # self.emailAgent.receive_email(onlyUnread=True) TODO: uncomment this (need false for testing)
                     toPrint = self.emailAgent.getPrintedString()
                     print(toPrint)
                 

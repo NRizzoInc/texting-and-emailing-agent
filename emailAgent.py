@@ -35,11 +35,11 @@ sys.path.append(path_to_this_dir)
 
 
 class emailAgent():
-    def __init__(self, display_contacts=True, commandLine=False):
+    def __init__(self, display_contacts=True, commandLine=False, useDefault=False):
         '''
             This class is responsible for sending emails 
         '''
-        self.messageTemplates_dir = os.path.join(path_to_this_dir, "/templates/messageTemplates")
+        self.messageTemplates_dir = os.path.join(path_to_this_dir, "templates", "messageTemplates")
         self.path_to_contactList = os.path.join(path_to_this_dir, "contacts.json")
 
 
@@ -53,11 +53,9 @@ class emailAgent():
         self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
         self.send_to_phone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
-        self.mode = None # usually set to 'SMTP' or 'IMAP'
-        self.pastSMTPServerAddress = None
-        self.pastIMAPServerAddress = None
-        self.pastSMTPPort = None
-        self.pastIMAPPort = None
+        self.SMTPClient = smtplib.SMTP
+        self.IMAPClient = imaplib.IMAP4 
+        self.connectedToServers = False
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
@@ -68,7 +66,7 @@ class emailAgent():
         self.loginAlreadySet = False 
         # boolean that when set to True means the program will login
         # to a known email account wihtout extra inputs needed
-        self.use_default = False 
+        self.use_default = useDefault 
 
         # this var will get be filled with content printed to terminal
         # retreive information with getPrintedString() such that it gets cleared
@@ -109,21 +107,20 @@ class emailAgent():
                 - msgToSend: a string that contains the message that is desired to be sent
         '''            
 
-        # first check if valid "sendMethod" is received
+        # first check if connected to email servers, if not connect
+        if not self.connectedToServers:
+            self.connect_to_email_servers()
+
+        # second check if valid "sendMethod" is received
         if sendMethod == '': pass
         elif sendMethod == 'email': sendTextBool = False
         elif sendMethod == 'text': sendTextBool = True
         else: raise Exception("Invalid sendMethod param passed to function!")
 
-        email_service_provider_info = self.get_email_info("send")['smtp_server']
-
-        self.connect_to_email_server("send", host_address=email_service_provider_info['host_address'],
-            port_num=email_service_provider_info['port_num'])
-
         if self.commandLine:
-            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, msgToSend=msgToSend)
+            msg = self.compose_msg(receiver_contact_info, msgToSend=msgToSend)
         else:
-            msg = self.compose_msg(email_service_provider_info, receiver_contact_info, sendingText=sendTextBool, msgToSend=msgToSend)
+            msg = self.compose_msg(receiver_contact_info, sendingText=sendTextBool, msgToSend=msgToSend)
         
         # send the message via the server set up earlier.
         if msg == None: # will only be None if can't send email or text message
@@ -152,15 +149,15 @@ class emailAgent():
                 # send attachments last
                 for attachments in self.attachmentsList:
                     sms = attachments.as_string()
-                    self.email_server.sendmail(msg["From"], msg["To"], sms)
+                    self.SMTPClient.sendmail(msg["From"], msg["To"], sms)
                 self.attachmentsList = [] # reset list
 
             else:
-                self.email_server.send_message(msg)
+                self.SMTPClient.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
                 receiver_contact_info['first_name'], receiver_contact_info['last_name']))
 
-    def compose_msg(self, email_service_provider_info, receiver_contact_info, sendingText:bool=False, msgToSend:str=''):
+    def compose_msg(self, receiver_contact_info, sendingText:bool=False, msgToSend:str=''):
         '''
             This function is responsible for composing the email message that get sent out
             - Args:
@@ -431,7 +428,7 @@ class emailAgent():
 
         return dict_to_return
 
-    def connect_to_email_server(self, purpose:str, host_address=None, port_num=465):
+    def connect_to_email_servers(self):
         '''
             This function is responsible for connecting to the email server.
             Args:
@@ -439,7 +436,7 @@ class emailAgent():
                 - purpose: A str that is either "send" or "receive" which is needed to determine which protocol to use
                 - port_num: contains information about the port # of email server (defaults to 465)
             Return:
-                - No returns, but this function does create a couple 'self' variables (self.email_server)
+                - No returns, but this function does create a couple 'self' variables
         '''
 
         # Get email login
@@ -452,47 +449,26 @@ class emailAgent():
             print("Using default gmail account created for this program to login to an email\n")
             # I created a dummy gmail account that this program can login to
 
-        # starts off set to None
-        if self.pastIMAPServerAddress == None and purpose == 'receive':
-            server = host_address
-            self.pastIMAPServerAddress = server
-            self.pastIMAPPort = port_num
-
-        elif self.pastSMTPServerAddress == None and purpose == 'send':
-            server = host_address
-            self.pastSMTPServerAddress = server
-            self.pastSMTPPort = port_num
         
-        # cases when trying to relogin
-        elif self.pastIMAPServerAddress != None and purpose == 'receive':
-            server = self.pastIMAPServerAddress
+        email_service_provider_info = self.get_email_info()
+        smtpInfo = email_service_provider_info["smtp_server"]
+        imapInfo = email_service_provider_info["imap_server"]
 
-        elif self.pastSMTPServerAddress != None and purpose == 'send':
-            server = self.pastSMTPServerAddress
+        imapHostAddr = imapInfo['host_address']
+        smtpHostAddr = smtpInfo['host_address']
+        imapPort = imapInfo['port_num']
+        smtpPort = smtpInfo['port_num']
 
-        else:
-            raise Exception("Unhandled Case when getting server address in 'connect_to_email_server()'")
-        
-        if purpose == "send":
-            my_port_num = 587
-        elif purpose == "receive":
-            my_port_num = 993
-        else:
-            raise Exception("Unhandled Case when getting port number in 'connect_to_email_server()'")
-
-
-        # Establish connection to email server using self.my_email_address and password given by user
+        # Establish connection to both email servers using self.my_email_address and password given by user
         # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)        
-        if purpose == "send":
-            self.connectSMTP(server, my_port_num)
-        
-        elif purpose == "receive":
-            self.connectIMAP(server, my_port_num)
-
+        self.connectSMTP(smtpHostAddr, smtpPort)        
+        self.connectIMAP(imapHostAddr, imapPort)
 
         # Try to login to email server, if it fails then catch exception
         try:
-            self.email_server.login(self.my_email_address, self.password)
+            self.SMTPClient.login(self.my_email_address, self.password)
+            self.IMAPClient.login(self.my_email_address, self.password)
+            self.connectedToServers = True
             print("Successfully logged into email account!\n")
             
         except Exception as error:
@@ -519,37 +495,27 @@ class emailAgent():
 
     def connectSMTP(self, server, portNum):
         print("Connecting to SMTP email server")
-
-        # if email_server is already logged to either version, log it out
-        if self.loginAlreadySet != None:
-            self.logoutEmail()
-
-        self.mode = "SMTP"
-        self.email_server = smtplib.SMTP(host=server, port=int(portNum))
-        self.email_server.ehlo()
-        self.email_server.starttls(context=self.context)
-        self.email_server.ehlo()    
+        self.SMTPClient = smtplib.SMTP(host=server, port=int(portNum))
+        self.SMTPClient.ehlo()
+        self.SMTPClient.starttls(context=self.context)
+        self.SMTPClient.ehlo()    
 
     def connectIMAP(self, server, portNum):    
         print("Connecting to IMAP email server")
+        self.IMAPClient = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
-        # if email_server is already logged to either version, log it out
-        if self.loginAlreadySet != None:
-            self.logoutEmail()
-
-        self.mode = "IMAP"
-        self.email_server = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
-
-    def get_email_info(self, purpose:str):
+    def get_email_info(self):
         '''
             This function returns a dictionary containing information 
             about a host address and port number of an email company.
 
             Args:
-                -purpose: (string) Either "send" or "receive"
             Return:
-                -email_service_provider_info: (Dict) Contains info about the email company necessary for logging in.
-                    I.E.: {"host_address": "smtp.gmail.com", "port_num": "587"}
+                -email_service_provider_info: (Dict) Contains info about the email company necessary for logging in with format:
+                    {
+                        "smtp_server": {"host_address": "smtp.gmail.com", "port_num": "587"},
+                        "imap_server": {"host_address": "imap.gmail.com", "port_num": "993"}   
+                    }
         '''
         # Based on input about which email service provider the user wants to login to determine info for server
 
@@ -557,27 +523,12 @@ class emailAgent():
         lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
         dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
 
-        # narrow down content of list based on if it can fit the "purpose" (send/receive)
-        # if "host_address" is empty then not valid for this purpose
-        if purpose == "send":
-            possible_providers = [i for i in self.email_providers_info.keys() if 
-                    len(self.email_providers_info[i]["smtp_server"]["host_address"]) != 0]   
-        elif purpose == "receive":
-            possible_providers = [i for i in self.email_providers_info.keys() if 
-                    len(self.email_providers_info[i]["imap_server"]["host_address"]) != 0]  
-
-        else:
-            # error check myself incase I forget about this in the future
-            raise Exception("Either use a valid 'purpose' or add another option")
-
         found_valid_email_provider = False
         email_service_provider_info = {}
 
-        print("default state: {0}\nLogin already set{1}".format(self.use_default, self.loginAlreadySet))
-
         while found_valid_email_provider is False and self.use_default is False:
             print("The available list of providers you can login to is: \n{0} \
-                  \nSelect 'Default' if you dont want to skip logging in.".format(list(possible_providers)))
+                  \nSelect 'Default' if you dont want to skip logging in.".format(list(self.email_providers_info.keys())))
             email_service_provider = input("\nWhich email service provider do you want to login to: ")
 
             # see if email service provider exists in the list (case-insensitive)
@@ -789,8 +740,6 @@ class emailAgent():
                 -msgFilter: Defaults to unseen emails but can be set to a value 
                     that will narrow down what is considered a valid email
         '''
-        #first verify mode is IMAP
-        if self.mode != "IMAP": self.connect_to_email_server("receive")
         
         num_emails = 0 # initialize to zero, actual calcs done in while loop
         search_code = 'OK'
@@ -798,8 +747,8 @@ class emailAgent():
         
         while num_emails < 1 and search_code == 'OK':
             # Defaults to only look for unread emails
-            self.email_server.select('INBOX')
-            search_code, data = self.email_server.search(None, msgFilter) 
+            self.IMAPClient.select('INBOX')
+            search_code, data = self.IMAPClient.search(None, msgFilter) 
             num_emails = len(data[0].decode())
         
         # if this point is reached, new email detected and can end function so program can continue!
@@ -813,13 +762,11 @@ class emailAgent():
                     True if started off by sending email and want to wait for users reponse
                 -onlyUnread: when set to true, no command line input needed to tell which messages to read
         '''
+        # first check if connected to email servers, if not connect
+        if not self.connectedToServers:
+            self.connect_to_email_servers()
 
-        email_service_provider_info = self.get_email_info("receive")['imap_server']
-
-        self.connect_to_email_server("receive", host_address=email_service_provider_info['host_address'],
-            port_num=email_service_provider_info['port_num'])
-
-        if startedBySendingEmail == False or onlyUnread:
+        if startedBySendingEmail == False and onlyUnread == None:
             # input error checking
             filterInput = ""
             while filterInput != "n" and filterInput != "y":
@@ -833,9 +780,13 @@ class emailAgent():
                     emailFilter = "(UNSEEN)"
                 else:
                     raise Exception("Please enter a valid answer!\n")
-        else:
+        elif onlyUnread:
             emailFilter = '(UNSEEN)'    
-        
+        elif not onlyUnread: 
+            emailFilter = 'ALL'
+        else:
+            raise Exception("Unhandled filter arg!")
+
         # intially set to True but immediately set to False in loop
         # only set to True again if you wait for new messages
         keepCheckingInbox = True 
@@ -844,11 +795,11 @@ class emailAgent():
             keepCheckingInbox = False
 
             # opens folder/label you want to read from
-            self.email_server.select('INBOX')
+            self.IMAPClient.select('INBOX')
             self.webAppPrintWrapper("Successfully Opened Inbox")
             
             # get all the emails and their id #'s that match the filter
-            search_code, data = self.email_server.search(None, emailFilter) 
+            search_code, data = self.IMAPClient.search(None, emailFilter) 
 
             # Only try to check message data if return code is valid and there are emails matching the filter
             num_emails = len(data[0].decode()) 
@@ -861,17 +812,12 @@ class emailAgent():
 
                 # fetch the emails in order of most recent to least recent
                 # most recent email has the highest id number
-                self.`webAppPrintWrapper`("id_list: {}".format(id_list))
+                self.webAppPrintWrapper("id_list: {}".format(id_list))
                 for id_num in id_list:
                     if id_num == max(id_list):
                         self.webAppPrintWrapper("Fetching most recent email")
 
-                    # Check if mode is still in IMAP (might have changed if sent reply)
-                    if self.mode == "SMTP": # if true then switch back and prime code to fetch
-                        self.connect_to_email_server("receive")
-                        self.email_server.select('INBOX')
-
-                    return_code, data = self.email_server.fetch(str(id_num).encode(), '(RFC822)') 
+                    return_code, data = self.IMAPClient.fetch(str(id_num).encode(), '(RFC822)') 
                     raw_email = data[0][1]
 
                     # function returns (To, From, DateTime, Subject, Body)
@@ -1078,10 +1024,9 @@ class emailAgent():
 
     def scanForAttachments(self):
         '''
-            @brief: takes in the current MEME msg object, scans for attachments that it can add on, 
-                and returns the obj with the desired attachment
-            @param: msg = the current msg object with all fields handled besides the attachment
-            @return: the msg object with the attachments
+            @brief: scans self.textMsgToSend for attachments that it can add on to self.attachmentsList
+            @param: None
+            @return: None
         '''
 
         attachmentList = []
@@ -1103,7 +1048,7 @@ class emailAgent():
         for url in attachmentUrls:
             attachmentList.append(url)
 
-        # add attachments that were found
+        # add attachments that were found9-
         print("Checking if the following items are valid:\n{0}".format(attachmentList))
         for toAttach in attachmentList:
             self.addAttachment(toAttach)
@@ -1111,8 +1056,7 @@ class emailAgent():
 
     def addAttachment(self, toAttach:str):
         '''
-            @breif: adds new attachment to existing message object
-            @param: currentMsg: the current msg object with all fields handled besides the attachment
+            @breif: adds new attachment to self.attachmentsList for future sending
             @param: toAttach: a string that can either be a path to a local file or a url 
             
         '''
@@ -1144,7 +1088,7 @@ class emailAgent():
 
     def isURLValid(self, url:str):
         '''
-            @brief: determines if a url is valid syntactically and it exists
+            @brief: determines if a url is valid syntactically, is a link to media (gif, video, picture), and it exists
             @args: url: a string containing the url
             @return: bool (true if valid, false if invalid)
         '''
@@ -1200,8 +1144,17 @@ class emailAgent():
             This function is responsible for having the email server close connections with the server.
             Need to make it a function due to the fact that logging out requires different code depening on the type of server 
         '''
-        if self.mode == "SMTP": self.email_server.quit()
-        elif self.mode == "IMAP": self.email_server.logout()
+        # depending on situation, one of them might not have logged in in the first place
+        try:
+            self.SMTPClient.quit()
+        except Exception as e:
+            pass
+
+        try:
+            self.IMAPClient.logout()
+        except Exception as e:
+            pass
+        self.connectedToServers = False
 
     def start(self):
         '''

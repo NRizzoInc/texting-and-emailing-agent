@@ -27,7 +27,8 @@ import urllib
 from urllib import request 
 from urllib.parse import urlparse # WARNING: python3 only
 
-import webApp
+# 3rd party Dependencies
+import fleep # to identify file types
 
 path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(path_to_this_dir)
@@ -138,10 +139,15 @@ class emailAgent():
                 
                 # send pure text first
                 for currMsg in msgList:
-                    sms = currMsg.as_string() # need to convert message to string
-                    self.email_server.sendmail(msg["From"], msg["To"], sms)
-                    # add microscopic delay to ensure that messages arrive in correct order
-                    time.sleep(10/1000) # input is in seconds (convert to milliseconds)
+                    sms = currMsg.strip() # need to convert message to string
+                    # only send text bubble is there is actual text to send
+                    if (not sms.isspace() and len(sms) > 0): 
+                        self.SMTPClient.sendmail(msg["From"], msg["To"], sms)
+                        # add microscopic delay to ensure that messages arrive in correct order
+                        time.sleep(10/1000) # input is in seconds (convert to milliseconds)
+                        print("Text bubble sent")
+                    else:
+                        print("Note sending empty message")
 
                 # send attachments last
                 for attachments in self.attachmentsList:
@@ -186,7 +192,7 @@ class emailAgent():
 
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            msg = self.scanForAttachments(msg)
+            self.scanForAttachments()
             
             # check if text payload is empty besides newline (enter to submit)
             for part in msg.walk():
@@ -272,8 +278,8 @@ class emailAgent():
         totalLength = len(totalMsg)
         charLimit = 120
 
-        # message is over character limit
-        if totalLength > charLimit: 
+        # message is over character limit (and is not one giant word/url)
+        if totalLength > charLimit and text.count(' ') > 0: 
             count = 0
             lastIndex = 0
             toAppend = ''
@@ -298,14 +304,14 @@ class emailAgent():
                     toAppend = totalMsg[lastIndex:]
                     lastIndex = totalLength # exit while-loop condition
 
-                tempMsg = MIMEText(toAppend.strip()) # create a message object with the body
+                tempMsg = toAppend.strip() # create a message object with the body
 
                 # add to list
                 msgList.append(tempMsg)
 
         # normal (send one message)
         elif (not text.isspace()):
-            msgList.append(MIMEText(text.strip()))      
+            msgList.append(text.strip())      
 
         return msgList
 
@@ -1070,7 +1076,7 @@ class emailAgent():
 
         return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
 
-    def scanForAttachments(self, msg:MIMEMultipart):
+    def scanForAttachments(self):
         '''
             @brief: takes in the current MEME msg object, scans for attachments that it can add on, 
                 and returns the obj with the desired attachment
@@ -1093,16 +1099,17 @@ class emailAgent():
         # check for urls
         regexUrl = r"(http[s]?://[^\s]+)" # <http(s)://<until space or newline-not url valid>
         attachmentUrls = re.findall(regexUrl, self.textMsgToSend)
-        attachmentList.extend(attachmentUrls)
+        # make sure links arent links to regular webpages
+        for url in attachmentUrls:
+            attachmentList.append(url)
 
         # add attachments that were found
         print("Checking if the following items are valid:\n{0}".format(attachmentList))
         for toAttach in attachmentList:
-            msg = self.addAttachment(msg, toAttach)
+            self.addAttachment(toAttach)
+        print("Done checking if attachments are valid")
 
-        return msg
-    
-    def addAttachment(self, currentMsg:MIMEMultipart, toAttach:str):
+    def addAttachment(self, toAttach:str):
         '''
             @breif: adds new attachment to existing message object
             @param: currentMsg: the current msg object with all fields handled besides the attachment
@@ -1135,9 +1142,6 @@ class emailAgent():
         else:
             print("NOT A VALID PATH OR URL!")
 
-        # done adding attachments
-        return currentMsg
-    
     def isURLValid(self, url:str):
         '''
             @brief: determines if a url is valid syntactically and it exists
@@ -1150,11 +1154,23 @@ class emailAgent():
             syntacticallyValid = all([result.scheme, result.netloc, result.path])
             if (not syntacticallyValid): return False
 
-            # finally check if url exists (use an agent or else browser will block)
+            # check if url exists (use an agent or else browser will block)
             request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             returnCode = urllib.request.urlopen(request).getcode()
-            if (returnCode == 200): return True # 200 return code means success!
-            else: return False
+            if (returnCode != 200): return False # 200 return code means success!
+            
+            # check if file type is media (pic/video/gif)
+            # full list from fleep.supported_types: 
+            #  ['3d-image', 'archive', 'audio', 'database', 'document', 'executable', 'font',
+            #     'raster-image', 'raw-image', 'system', 'vector-image', 'video']
+            validTypes = ['3d-image', 'audio', 'raster-image', 'raw-image', 'vector-image', 'video']
+            urlContent = urllib.request.urlopen(request).read() # return is bytes
+            info = fleep.get(urlContent)
+            if info.type[0] in validTypes: 
+                return True
+            else: 
+                print("Type {0} is not accepted".format(info.type[0]))
+                return False
 
         except:
             print("NOT A VALID URL")

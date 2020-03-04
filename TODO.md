@@ -9,7 +9,9 @@
 - [ ] Get emailing to work
   - [ ] Implement send email messages
   - [ ] Implement receive email messages
-
+- [X] Fix url parsing (only make urls attachment if they are pics/video/gif, if just a link than leave it)
+  - [X] SOLUTION: used fleep library (see setup script for pip)
+  
 ## Nice to haves
 
 - [ ] Make contacts private (also prevents duplicate names)

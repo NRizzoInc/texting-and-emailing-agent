@@ -30,28 +30,28 @@ from urllib.parse import urlparse # WARNING: python3 only
 # 3rd party Dependencies
 import fleep # to identify file types
 
-path_to_this_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(path_to_this_dir)
+pathToThisDir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(pathToThisDir)
 
 
 class emailAgent():
-    def __init__(self, display_contacts=True, commandLine=False, useDefault=False):
+    def __init__(self, displayContacts=True, commandLine=False, useDefault=False):
         '''
             This class is responsible for sending emails 
         '''
-        self.messageTemplates_dir = os.path.join(path_to_this_dir, "templates", "messageTemplates")
-        self.path_to_contactList = os.path.join(path_to_this_dir, "contacts.json")
+        self.messageTemplatesDir = os.path.join(pathToThisDir, "templates", "messageTemplates")
+        self.pathToContactList = os.path.join(pathToThisDir, "contacts.json")
 
 
         # Open the contact list file (create new file if it does not exist)
-        if not os.path.exists(self.path_to_contactList):
-            with open(self.path_to_contactList, 'w+') as writeFile:
+        if not os.path.exists(self.pathToContactList):
+            with open(self.pathToContactList, 'w+') as writeFile:
                 json.dump({}, writeFile) #write empty dictionary to file (creates the file)
-        self.contactList = self.load_json(self.path_to_contactList)
+        self.contactList = self.loadJson(self.pathToContactList)
 
         # information to login
-        self.email_providers_info = self.load_json(os.path.join(path_to_this_dir, 'email_providers_info.json'))
-        self.send_to_phone = False
+        self.emailProvidersInfo = self.loadJson(os.path.join(pathToThisDir, 'emailProvidersInfo.json'))
+        self.sendToPhone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP
         self.IMAPClient = imaplib.IMAP4 
@@ -59,14 +59,14 @@ class emailAgent():
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
-        self.my_email_address = "codinggenius9@gmail.com"
+        self.myEmailAddress = "codinggenius9@gmail.com"
         self.password = "codingisfun1"
         # will be set to true if non-default account is used and login entered
         # allows user to not hav eto tpe login multiple times
         self.loginAlreadySet = False 
         # boolean that when set to True means the program will login
         # to a known email account wihtout extra inputs needed
-        self.use_default = useDefault 
+        self.useDefault = useDefault 
 
         # this var will get be filled with content printed to terminal
         # retreive information with getPrintedString() such that it gets cleared
@@ -81,23 +81,23 @@ class emailAgent():
         self.textMsgToSend = ''
 
         # display contents of the existing contact list
-        if display_contacts is True:    
+        if displayContacts is True:    
             self.webAppPrintWrapper("The current contact list is:\n")
             printableContactList = pprint.pformat(self.contactList)
             self.webAppPrintWrapper(printableContactList)
 
     # returns the contact list as it is currently in the contact list file
     def getContactList(self):
-        return self.load_json(self.path_to_contactList)
+        return self.loadJson(self.pathToContactList)
 
-    def sendMsg(self, receiver_contact_info, sendMethod:str='', msgToSend:str=''):
+    def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str=''):
         '''
             Calls all other functions necessary to send an a message (either through text or email)
 
             Args:
-                -receiver_contact_info: a dictionary about the receiver of format:
-                        last_name: {
-                            first_name: {
+                -receiverContactInfo: a dictionary about the receiver of format:
+                        lastName: {
+                            firstName: {
                                 "email": "",
                                 "phoneNumber": "",
                                 "carrier": ""
@@ -109,7 +109,7 @@ class emailAgent():
 
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
-            self.connect_to_email_servers()
+            self.connectToEmailServers()
 
         # second check if valid "sendMethod" is received
         if sendMethod == '': pass
@@ -118,9 +118,9 @@ class emailAgent():
         else: raise Exception("Invalid sendMethod param passed to function!")
 
         if self.commandLine:
-            msg = self.compose_msg(receiver_contact_info, msgToSend=msgToSend)
+            msg = self.composeMsg(receiverContactInfo, msgToSend=msgToSend)
         else:
-            msg = self.compose_msg(receiver_contact_info, sendingText=sendTextBool, msgToSend=msgToSend)
+            msg = self.composeMsg(receiverContactInfo, sendingText=sendTextBool, msgToSend=msgToSend)
         
         # send the message via the server set up earlier.
         if msg == None: # will only be None if can't send email or text message
@@ -131,7 +131,7 @@ class emailAgent():
 
         else:
             # method of sending email changes depending on whether it is an email of text
-            if self.send_to_phone is True:
+            if self.sendToPhone is True:
                 msgList = self.adjustTextMsg(msg)
                 
                 # send pure text first
@@ -155,9 +155,9 @@ class emailAgent():
             else:
                 self.SMTPClient.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
-                receiver_contact_info['first_name'], receiver_contact_info['last_name']))
+                receiverContactInfo['firstName'], receiverContactInfo['lastName']))
 
-    def compose_msg(self, receiver_contact_info, sendingText:bool=False, msgToSend:str=''):
+    def composeMsg(self, receiverContactInfo, sendingText:bool=False, msgToSend:str=''):
         '''
             This function is responsible for composing the email message that get sent out
             - Args:
@@ -172,19 +172,19 @@ class emailAgent():
         if self.commandLine:
             # determine if user wants to send an email message or phone text
             if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
-                msg = self.compose_text_msg(receiver_contact_info)
+                msg = self.composeTextMsg(receiverContactInfo)
             else:
                 if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
-                    msg = self.compose_email_msg(receiver_contact_info)
+                    msg = self.composeEmailMsg(receiverContactInfo)
                 else:
                     msg = 'invalid' # signifies to caller that no message is being sent
 
         # not sending through command line
         else:
             if sendingText:
-                msg = self.compose_text_msg(receiver_contact_info, msgToSend)
+                msg = self.composeTextMsg(receiverContactInfo, msgToSend)
             else:
-                msg = self.compose_email_msg(receiver_contact_info, msgToSend)
+                msg = self.composeEmailMsg(receiverContactInfo, msgToSend)
             
 
         # check if user added an attachment (either link or path to file) in message
@@ -200,43 +200,43 @@ class emailAgent():
         return msg
 
 
-    def compose_text_msg(self, receiver_contact_info, msgToSend:str=''):
+    def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
             @Args:
-                - receiver_contact_info: a dictionary containing the following information 
+                - receiverContactInfo: a dictionary containing the following information 
                     {first name, last name, email, carrier, phone number}
                 - msgToSend: a string containing the message to be sent (dont fill in if using command line)
         '''
-        receiver_carrier = receiver_contact_info['carrier'].lower()        
+        receiverCarrier = receiverContactInfo['carrier'].lower()        
 
         # Check if this email provider allows emails to be sent to phone numbers
-        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
+        lowerCaseList = list(map(lambda x:x.lower(), self.emailProvidersInfo.keys()))
         # use index of lower case match to get actual value of key according to original mapped dict keys
-        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
+        dictKeysMappedToList = list(map(lambda x:x, self.emailProvidersInfo.keys()))
 
-        if receiver_carrier in lower_case_list:
-            index_in_list_of_carrier = lower_case_list.index(receiver_carrier)
-            key_for_desired_carrier = dict_keys_mapped_to_list[index_in_list_of_carrier]
+        if receiverCarrier in lowerCaseList:
+            indexInListOfCarrier = lowerCaseList.index(receiverCarrier)
+            keyForDesiredCarrier = dictKeysMappedToList[indexInListOfCarrier]
 
-            if 'SMS-Gateways' not in self.email_providers_info[key_for_desired_carrier]["smtp_server"].keys():
+            if 'SMS-Gateways' not in self.emailProvidersInfo[keyForDesiredCarrier]["smtpServer"].keys():
                 print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
-                        receiver_contact_info['first_name'], receiver_contact_info['last_name']))
+                        receiverContactInfo['firstName'], receiverContactInfo['lastName']))
 
                 # Since cant send a text message to the person, ask if user want to send email message instead
                 if input("Do you want to send an email instead (y/n): ").lower() == 'y':
-                    return self.compose_email_msg()
+                    return self.composeEmailMsg()
                 
                 # If user cant send a text and wont send an email then just return
                 else:
                     return None
             else:
-                domain_name = self.email_providers_info[key_for_desired_carrier]["smtp_server"]['SMS-Gateways']
+                domainName = self.emailProvidersInfo[keyForDesiredCarrier]["smtpServer"]['SMS-Gateways']
 
         # Remove all non-numerical parts of phone number (should be contiguous 10 digit number)
-        actual_phoneNumber = ''.join(char for char in receiver_contact_info['phoneNumber'] if char.isdigit())
+        actualPhoneNum = ''.join(char for char in receiverContactInfo['phoneNumber'] if char.isdigit())
         
-        text_msg_address = "{0}@{1}".format(actual_phoneNumber, domain_name)
-        print("Sending text message to {0}".format(text_msg_address))
+        textMsgAddress = "{0}@{1}".format(actualPhoneNum, domainName)
+        print("Sending text message to {0}".format(textMsgAddress))
         
         # Get content to send in text message
         if self.commandLine:
@@ -249,12 +249,12 @@ class emailAgent():
 
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object with the body
-        msg['From'] = self.my_email_address
-        msg['To'] = text_msg_address
+        msg['From'] = self.myEmailAddress
+        msg['To'] = textMsgAddress
         msg['Subject'] = "" # keep newline
         self.textMsgToSend = body # dont add body yet bc text message
         
-        self.send_to_phone = True
+        self.sendToPhone = True
 
         return msg
 
@@ -312,33 +312,33 @@ class emailAgent():
 
         return msgList
 
-    def compose_email_msg(self, receiver_contact_info, msgToSend:str=''):
+    def composeEmailMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
             This function provides the user with a method of choosing which email format to send and entering the desired message.
             @Args:
-                - receiver_contact_info: a dictionary containing the following information 
+                - receiverContactInfo: a dictionary containing the following information 
                     {first name, last name, email, carrier, phone number}
                 - msgToSend: a string containing the message to be sent (dont fill in if using command line)
         '''
         if self.commandLine:
             # Get a list of all possible message types
-            list_of_msg_types = [types.replace('.txt', '') for types in os.listdir(self.messageTemplates_dir)]
+            listOfMsgTypes = [types.replace('.txt', '') for types in os.listdir(self.messageTemplatesDir)]
             contents = ''
             
-            type_of_msg = 'default' 
-            path_to_msg_template = os.path.join(self.messageTemplates_dir, 'default.txt')
+            typeOfMsg = 'default' 
+            pathToMsgTemplate = os.path.join(self.messageTemplatesDir, 'default.txt')
 
-            with open(path_to_msg_template) as read_file:
-                contents = read_file.read()
+            with open(pathToMsgTemplate) as readFile:
+                contents = readFile.read()
 
-            for msg_type in list_of_msg_types:
-                path_to_msg_template = os.path.join(self.messageTemplates_dir, msg_type + '.txt')
-                with open(path_to_msg_template) as read_file:
-                    msg_contents = read_file.read()
-                print("The {0} message type looks like: \n{1}".format(msg_type, msg_contents))
+            for msgType in listOfMsgTypes:
+                pathToMsgTemplate = os.path.join(self.messageTemplatesDir, msgType + '.txt')
+                with open(pathToMsgTemplate) as readFile:
+                    msgContents = readFile.read()
+                print("The {0} message type looks like: \n{1}".format(msgType, msgContents))
                 if 'y' in input("Would you like to send this message type? (y/n): ").lower():
-                    type_of_msg = msg_type   
-                    contents = msg_contents 
+                    typeOfMsg = msgType   
+                    contents = msgContents 
                     break
 
 
@@ -346,128 +346,128 @@ class emailAgent():
             # read in the content of the text file to send as the body of the email
 
             # TODO create other elif statements for different cases
-            if type_of_msg == "test_msg":
-                receiver = str(receiver_contact_info['first_name'])
-                sendable_msg = self.read_template(path_to_msg_template).substitute(
-                    receiver_name=receiver, sender_name=self.my_email_address) 
+            if typeOfMsg == "testMsg":
+                receiver = str(receiverContactInfo['firstName'])
+                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(
+                    receiverName=receiver, senderName=self.myEmailAddress) 
 
-            elif type_of_msg == 'input_content':
-                my_input = input("Input what you would like to send in the body of the email: ")
-                sendable_msg = self.read_template(path_to_msg_template).substitute(content=my_input)
+            elif typeOfMsg == 'inputContent':
+                myInput = input("Input what you would like to send in the body of the email: ")
+                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
             
             # Default to default file 
             else:
-                sendable_msg = contents
+                sendableMsg = contents
 
-            # print("Sending message:\n{0}".format(sendable_msg))
+            # print("Sending message:\n{0}".format(sendableMsg))
 
         # not using command line
         else:
-            sendable_msg = msgToSend
+            sendableMsg = msgToSend
             
         # setup the parameters of the message
         msg = MIMEMultipart() # create a message object
-        msg['From'] = self.my_email_address
-        msg['To'] = receiver_contact_info['email'] # send message as if it were a text
+        msg['From'] = self.myEmailAddress
+        msg['To'] = receiverContactInfo['email'] # send message as if it were a text
         msg['Subject'] = "Emailing Application"
         # add in the message body
-        msg.attach(MIMEText(sendable_msg, 'plain'))
+        msg.attach(MIMEText(sendableMsg, 'plain'))
         return msg
 
 
-    def read_template(self, path_to_file):
-        with open(path_to_file, 'r+', encoding='utf-8') as template_file:
-            template_file_content = template_file.read()
-        return Template(template_file_content)
+    def readTemplate(self, pathToFile):
+        with open(pathToFile, 'r+', encoding='utf-8') as templateFile:
+            templateFileContent = templateFile.read()
+        return Template(templateFileContent)
 
-    def get_receiver_contact_info(self, my_first_name, my_last_name):
+    def getReceiverContactInfo(self, myFirstName, myLastName):
         '''
-            This function will search the existing database for entries with the input first_name and last_name.\n
+            This function will search the existing database for entries with the input firstName and lastName.\n
 
             Returns:\n
                 Dictionary of format: {first name, last name, email, carrier, phone number}
                 The phone number return accepts common type of seperaters or none (ex: '-')             
         '''
 
-        receiver_contact_info_dict = {}
+        receiverContactInfoDict = {}
         email = ''
         phoneNumber = ''
         carrier = ''
 
         # Go through the list looking for name matches (case-insensitive)
-        for last_name in self.contactList.keys():
-            # print(last_name)
-            for first_name in self.contactList[last_name].keys():
-                # print(first_name)
-                if first_name.lower() == my_first_name.lower() and last_name.lower() == my_last_name.lower():
+        for lastName in self.contactList.keys():
+            # print(lastName)
+            for firstName in self.contactList[lastName].keys():
+                # print(firstName)
+                if firstName.lower() == myFirstName.lower() and lastName.lower() == myLastName.lower():
                     print("\nFound a match!\n")
-                    contact_first_name = first_name
-                    contact_last_name = last_name
+                    contactFirstName = firstName
+                    contactLastName = lastName
                     # stores contact information in the form {"email": "blah@gmail.com", "carrier":"version"}
-                    receiver_contact_info_dict = self.contactList[last_name][first_name]
-                    email = receiver_contact_info_dict['email']
-                    phoneNumber = receiver_contact_info_dict['phoneNumber']
-                    carrier = receiver_contact_info_dict['carrier']
+                    receiverContactInfoDict = self.contactList[lastName][firstName]
+                    email = receiverContactInfoDict['email']
+                    phoneNumber = receiverContactInfoDict['phoneNumber']
+                    carrier = receiverContactInfoDict['carrier']
 
         # if values were not initialized then no match was found
         if email == '' and phoneNumber == '' and carrier == '':
             raise Exception("Contact does not exist! \n\nAdd them to the contact \
-                list by calling this program followed by 'add_contacts'")
+                list by calling this program followed by 'addContact'")
         
-        print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(my_first_name, my_last_name))
+        print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(myFirstName, myLastName))
         print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
-            contact_first_name, contact_last_name, email, carrier, phoneNumber))
+            contactFirstName, contactLastName, email, carrier, phoneNumber))
 
-        dict_to_return = {
-            'first_name' : contact_first_name,
-            'last_name': contact_last_name,
+        dictToRtn = {
+            'firstName' : contactFirstName,
+            'lastName': contactLastName,
             'email': email,
             'carrier': carrier,
             'phoneNumber' : phoneNumber
         }
 
-        return dict_to_return
+        return dictToRtn
 
-    def connect_to_email_servers(self):
+    def connectToEmailServers(self):
         '''
             This function is responsible for connecting to the email server.
             Args:
-                - host_address: contains information about host address of email server 
+                - hostAddress: contains information about host address of email server 
                 - purpose: A str that is either "send" or "receive" which is needed to determine which protocol to use
-                - port_num: contains information about the port # of email server (defaults to 465)
+                - portNum: contains information about the port # of email server (defaults to 465)
             Return:
                 - No returns, but this function does create a couple 'self' variables
         '''
 
         # Get email login
-        if self.use_default is False and self.loginAlreadySet == False:
+        if self.useDefault is False and self.loginAlreadySet == False:
             # if false then make user use their own email username and password
-            self.my_email_address = input("Enter your email address: ")
-            self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.my_email_address))
+            self.myEmailAddress = input("Enter your email address: ")
+            self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.myEmailAddress))
             self.loginAlreadySet = True # set to true so next time the user will not have to retype login info
         else:
             print("Using default gmail account created for this program to login to an email\n")
             # I created a dummy gmail account that this program can login to
 
         
-        email_service_provider_info = self.get_email_info()
-        smtpInfo = email_service_provider_info["smtp_server"]
-        imapInfo = email_service_provider_info["imap_server"]
+        emailServiceProviderInfo = self.getEmailProviderInfo()
+        smtpInfo = emailServiceProviderInfo["smtpServer"]
+        imapInfo = emailServiceProviderInfo["imapServer"]
 
-        imapHostAddr = imapInfo['host_address']
-        smtpHostAddr = smtpInfo['host_address']
-        imapPort = imapInfo['port_num']
-        smtpPort = smtpInfo['port_num']
+        imapHostAddr = imapInfo['hostAddress']
+        smtpHostAddr = smtpInfo['hostAddress']
+        imapPort = imapInfo['portNum']
+        smtpPort = smtpInfo['portNum']
 
-        # Establish connection to both email servers using self.my_email_address and password given by user
+        # Establish connection to both email servers using self.myEmailAddress and password given by user
         # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)        
         self.connectSMTP(smtpHostAddr, smtpPort)        
         self.connectIMAP(imapHostAddr, imapPort)
 
         # Try to login to email server, if it fails then catch exception
         try:
-            self.SMTPClient.login(self.my_email_address, self.password)
-            self.IMAPClient.login(self.my_email_address, self.password)
+            self.SMTPClient.login(self.myEmailAddress, self.password)
+            self.IMAPClient.login(self.myEmailAddress, self.password)
             self.connectedToServers = True
             print("Successfully logged into email account!\n")
             
@@ -477,20 +477,20 @@ class emailAgent():
                 # TODO make connection more secure
                 print("\nCould not connect to email server because of error:\n{0}\n".format(error))
                 print("Try changing your account settings to allow less secure apps to allow connection to be made.")
-                link_to_page = "https://myaccount.google.com/lesssecureapps"
-                print("Or try enabling two factor authorization and generating an app-password\n{0}".format(link_to_page))
+                linkToPage = "https://myaccount.google.com/lesssecureapps"
+                print("Or try enabling two factor authorization and generating an app-password\n{0}".format(linkToPage))
                 print("Quiting program, try connecting again with correct email/password, \
                     after making the changes, or trying a different email")
             else:
                 print("Encountered error while trying to connect to email server: \n{0}".format(error))
             quit()
 
-    def load_json(self, path_to_json=None):
-        if path_to_json == None:
-            path_to_json = self.path_to_contactList
+    def loadJson(self, pathToJson=None):
+        if pathToJson == None:
+            pathToJson = self.pathToContactList
 
-        with open(path_to_json, 'r+') as read_file:
-            data = json.load(read_file)
+        with open(pathToJson, 'r+') as readFile:
+            data = json.load(readFile)
         return data
 
     def connectSMTP(self, server, portNum):
@@ -504,70 +504,70 @@ class emailAgent():
         print("Connecting to IMAP email server")
         self.IMAPClient = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
-    def get_email_info(self):
+    def getEmailProviderInfo(self):
         '''
             This function returns a dictionary containing information 
             about a host address and port number of an email company.
 
             Args:
             Return:
-                -email_service_provider_info: (Dict) Contains info about the email company necessary for logging in with format:
+                -emailServiceProviderInfo: (Dict) Contains info about the email company necessary for logging in with format:
                     {
-                        "smtp_server": {"host_address": "smtp.gmail.com", "port_num": "587"},
-                        "imap_server": {"host_address": "imap.gmail.com", "port_num": "993"}   
+                        "smtpServer": {"hostAddress": "smtp.gmail.com", "portNum": "587"},
+                        "imapServer": {"hostAddress": "imap.gmail.com", "portNum": "993"}   
                     }
         '''
         # Based on input about which email service provider the user wants to login to determine info for server
 
         # concert the dictionary to all lower case to make searching easier
-        lower_case_list = list(map(lambda x:x.lower(), self.email_providers_info.keys()))
-        dict_keys_mapped_to_list = list(map(lambda x:x, self.email_providers_info.keys()))
+        lowerCaseList = list(map(lambda x:x.lower(), self.emailProvidersInfo.keys()))
+        dictKeysMappedToList = list(map(lambda x:x, self.emailProvidersInfo.keys()))
 
-        found_valid_email_provider = False
-        email_service_provider_info = {}
+        foundValidEmailProvider = False
+        emailServiceProviderInfo = {}
 
-        while found_valid_email_provider is False and self.use_default is False:
+        while foundValidEmailProvider is False and self.useDefault is False:
             print("The available list of providers you can login to is: \n{0} \
-                  \nSelect 'Default' if you dont want to skip logging in.".format(list(self.email_providers_info.keys())))
-            email_service_provider = input("\nWhich email service provider do you want to login to: ")
+                  \nSelect 'Default' if you dont want to skip logging in.".format(list(self.emailProvidersInfo.keys())))
+            emailServiceProvider = input("\nWhich email service provider do you want to login to: ")
 
             # see if email service provider exists in the list (case-insensitive)
             # -use lambda function to turn list to lowercase
-            if email_service_provider.lower() in lower_case_list:
+            if emailServiceProvider.lower() in lowerCaseList:
                 # get the index of name match in the list (regardless of case)
-                index = lower_case_list.index(email_service_provider.lower())
+                index = lowerCaseList.index(emailServiceProvider.lower())
 
                 # Using the index of where the correct key is located, 
                 # use the dict which contains all entries of original dict to get exact key name
-                dict_key_name = dict_keys_mapped_to_list[index]
+                dictKeyName = dictKeysMappedToList[index]
 
                 # Get the information pertaining to this dict key
-                email_service_provider_info = self.email_providers_info[dict_key_name]
-                found_valid_email_provider = True
+                emailServiceProviderInfo = self.emailProvidersInfo[dictKeyName]
+                foundValidEmailProvider = True
             else:
                 print("The desired email service provider not supported! Try using another one")
             
         # if user wants to use the pre-setup gmail accoun,
         # then program needs to change which smtp server it is trying to access
-        if self.use_default is True or email_service_provider.lower() == "default":
-            email_service_provider_info = self.email_providers_info['Default']
+        if self.useDefault is True or emailServiceProvider.lower() == "default":
+            emailServiceProviderInfo = self.emailProvidersInfo['Default']
             # set to true for case of user opting into default during runtime
-            self.use_default = True 
+            self.useDefault = True 
 
-        return email_service_provider_info
+        return emailServiceProviderInfo
     
-    def add_contacts_to_contacts_list(self, first_name, last_name, email, carrier, phoneNumber):
+    def addContact(self, firstName, lastName, email, carrier, phoneNumber):
         '''
             This function is responsible for adding another contact to the contact list by processing the inputs
             Args:\n
-                first_name: first name of the person being added
-                last_name: last name of the person being added
+                firstName: first name of the person being added
+                lastName: last name of the person being added
                 email: email of the person being added
                 carrier: carrier of the person being added
                 phoneNumber: phone number of the person being added
         '''
         
-        common_data_dict = {
+        commonDataDict = {
             'email': email,
             'phoneNumber': phoneNumber,
             'carrier': carrier
@@ -582,19 +582,19 @@ class emailAgent():
         keysMappedToList = list(map(lambda x:x, newContactList.keys()))
 
         # If so, just modify it instead of creating an entirely new last name section
-        if last_name.lower() in lastNameLowerCaseList:
+        if lastName.lower() in lastNameLowerCaseList:
             # get the actual last name (with correct capitalization)
-            indexOfLastName = lastNameLowerCaseList.index(last_name.lower())
+            indexOfLastName = lastNameLowerCaseList.index(lastName.lower())
             actualLastName = keysMappedToList[indexOfLastName]
 
             # check if need to add the person
             firstNameLowerCaseList = list(map(lambda x:x.lower(), newContactList[actualLastName].keys()))
-            if first_name.lower() not in firstNameLowerCaseList:
-                newContactList[last_name][first_name] = common_data_dict
+            if firstName.lower() not in firstNameLowerCaseList:
+                newContactList[lastName][firstName] = commonDataDict
             else: 
                 # if already in list, ask user if they want to update the info
                 firstNameKeysMappedToList = list(map(lambda x:x, newContactList[actualLastName].keys()))
-                indexOfFirstName = firstNameLowerCaseList.index(first_name.lower())
+                indexOfFirstName = firstNameLowerCaseList.index(firstName.lower())
                 actualFirstName = firstNameKeysMappedToList[indexOfFirstName]
 
                 user = newContactList[actualLastName][actualFirstName]
@@ -605,12 +605,12 @@ class emailAgent():
                 update = input("Do you want to update their information (y/n): ")
 
                 if (update == 'y'):
-                    newContactList = self.updateContactInfo(first_name=actualFirstName, last_name=actualLastName, addingExternally=False)
+                    newContactList = self.updateContactInfo(firstName=actualFirstName, lastName=actualLastName, addingExternally=False)
        
         # If last name doesnt exist in contact list yet, then add it
         else:
-            newContactList[last_name] = {}
-            newContactList[last_name][first_name] = common_data_dict
+            newContactList[lastName] = {}
+            newContactList[lastName][firstName] = commonDataDict
 
         # Update existing variable used by rest of program so it constantly stays up to date
         self.contactList = newContactList
@@ -618,44 +618,44 @@ class emailAgent():
         pprint.pprint(self.contactList)
 
         # In either case, write updated version of contact list to the json file
-        with open(self.path_to_contactList, 'w+') as write_file:
-            json.dump(newContactList, write_file, indent=4)
+        with open(self.pathToContactList, 'w+') as writeFile:
+            json.dump(newContactList, writeFile, indent=4)
 
-    def updateContactInfo(self, first_name=None, last_name=None, addingExternally=True):
+    def updateContactInfo(self, firstName=None, lastName=None, addingExternally=True):
         '''
             Returns an updated version of the contact list
             Param "addingExternally" is true if this is being called as a stand alone function
         '''
 
-        common_data_dict = {
+        commonDataDict = {
             'email': '',
             'phoneNumber': '',
             'carrier': ''
         }
         updatedContactList = self.contactList
 
-        if (first_name == None or last_name == None):
-            first_name = input("Enter the person's first name you want to update: ")
-            last_name = input("Enter the person's last name you want to update: ")
+        if (firstName == None or lastName == None):
+            firstName = input("Enter the person's first name you want to update: ")
+            lastName = input("Enter the person's last name you want to update: ")
 
         # check to see if the person's last name already exists.
         lastNameLowerCaseList = list(map(lambda x:x.lower(), updatedContactList.keys()))
         # use index of lower case match to get actual value of key according to original mapped dict keys
         keysMappedToList = list(map(lambda x:x, updatedContactList.keys()))
 
-        if last_name.lower() in lastNameLowerCaseList:
+        if lastName.lower() in lastNameLowerCaseList:
             # get the actual last name (with correct capitalization)
-            indexOfLastName = lastNameLowerCaseList.index(last_name.lower())
+            indexOfLastName = lastNameLowerCaseList.index(lastName.lower())
             actualLastName = keysMappedToList[indexOfLastName]
 
             # get the actual first name
             firstNameLowerCaseList = list(map(lambda x:x.lower(), updatedContactList[actualLastName].keys()))
-            if first_name.lower() not in firstNameLowerCaseList:
+            if firstName.lower() not in firstNameLowerCaseList:
                 print("user not found!")
                 return None
             else: 
                 firstNameKeysMappedToList = list(map(lambda x:x, updatedContactList[actualLastName].keys()))
-                indexOfFirstName = firstNameLowerCaseList.index(first_name.lower())
+                indexOfFirstName = firstNameLowerCaseList.index(firstName.lower())
                 actualFirstName = firstNameKeysMappedToList[indexOfFirstName]
                 user = updatedContactList[actualLastName][actualFirstName]
         else:
@@ -670,27 +670,27 @@ class emailAgent():
         updatephoneNumber = input("Their phone number is '{0}', would you like to change it (y/n): ".format(user['phoneNumber']))
         print('') # space the text out in terminal
 
-        newFirstName = first_name
-        newLastName = last_name
-        common_data_dict['email'] = user['email']
-        common_data_dict['carrier'] = user['carrier']
-        common_data_dict['phoneNumber'] = user['phoneNumber']
+        newFirstName = firstName
+        newLastName = lastName
+        commonDataDict['email'] = user['email']
+        commonDataDict['carrier'] = user['carrier']
+        commonDataDict['phoneNumber'] = user['phoneNumber']
         updatePhrase = "What would you like to change the <field> to: "
         if (updateFirstName == 'y'):
             newFirstName = input(updatePhrase.replace('<field>', 'first name'))
         if (updateLastName == 'y'):
             newLastName = input(updatePhrase.replace('<field>', 'last name'))
         if (updateEmail == 'y'):
-            common_data_dict['email'] = input (updatePhrase.replace('<field>', 'email'))
+            commonDataDict['email'] = input (updatePhrase.replace('<field>', 'email'))
         if (updateCarrier == 'y'):
-            common_data_dict['carrier'] = input(updatePhrase.replace('<field>', 'cell carrier'))
+            commonDataDict['carrier'] = input(updatePhrase.replace('<field>', 'cell carrier'))
         if (updatephoneNumber == 'y'):
-            common_data_dict['phoneNumber'] = input(updatePhrase.replace('<field>', 'phone number'))
+            commonDataDict['phoneNumber'] = input(updatePhrase.replace('<field>', 'phone number'))
         
         if (len(updatedContactList[actualLastName]) == 1):
             del updatedContactList[actualLastName]
             updatedContactList[newLastName] = {}
-            updatedContactList[newLastName][newFirstName] = common_data_dict
+            updatedContactList[newLastName][newFirstName] = commonDataDict
         else:
             if (updateLastName):
                 # get a copy of everything past the last name
@@ -702,7 +702,7 @@ class emailAgent():
                 del updatedContactList[actualLastName][actualFirstName]
                 actualFirstName = newFirstName
             if (updateEmail or updateCarrier or updatephoneNumber):
-                updatedContactList[actualLastName][actualFirstName] = common_data_dict
+                updatedContactList[actualLastName][actualFirstName] = commonDataDict
         
         # handled by other function if internal
         if (addingExternally):
@@ -711,8 +711,8 @@ class emailAgent():
             print("The updated contacts list is:\n")
             pprint.pprint(self.contactList)
 
-            with open(self.path_to_contactList, 'w+') as write_file:
-                json.dump(updatedContactList, write_file, indent=4)
+            with open(self.pathToContactList, 'w+') as writeFile:
+                json.dump(updatedContactList, writeFile, indent=4)
 
         return updatedContactList
 
@@ -722,15 +722,15 @@ class emailAgent():
             (no args needed because it will ask for inputs).
         '''
 
-        first_name = input("Please enter their first name: ")
-        last_name = input("Please enter their last name: ")
-        my_email = input("Please enter their email: ")
+        firstName = input("Please enter their first name: ")
+        lastName = input("Please enter their last name: ")
+        myEmail = input("Please enter their email: ")
         carrier = input("Please enter their cell phone carrier this person uses: ")
         phoneNumber = input("Please enter their phone number: ")
 
         # call function that handles the actual adding
-        emailAgent(display_contacts=False).add_contacts_to_contacts_list(
-            first_name, last_name, my_email, carrier, phoneNumber)
+        emailAgent(displayContacts=False).addContact(
+            firstName, lastName, myEmail, carrier, phoneNumber)
 
     def waitForNewMessage(self, msgFilter='(UNSEEN)'):
         '''
@@ -741,21 +741,21 @@ class emailAgent():
                     that will narrow down what is considered a valid email
         '''
         
-        num_emails = 0 # initialize to zero, actual calcs done in while loop
-        search_code = 'OK'
+        numEmails = 0 # initialize to zero, actual calcs done in while loop
+        searchCode = 'OK'
         self.webAppPrintWrapper("waiting for new message...\n")
         
-        while num_emails < 1 and search_code == 'OK':
+        while numEmails < 1 and searchCode == 'OK':
             # Defaults to only look for unread emails
             self.IMAPClient.select('INBOX')
-            search_code, data = self.IMAPClient.search(None, msgFilter) 
-            num_emails = len(data[0].decode())
+            searchCode, data = self.IMAPClient.search(None, msgFilter) 
+            numEmails = len(data[0].decode())
         
         # if this point is reached, new email detected and can end function so program can continue!
         self.webAppPrintWrapper("New email message detected!")       
 
 
-    def receive_email(self, startedBySendingEmail=False, onlyUnread:bool=True):
+    def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         '''
             @Args:
                 -startedBySendingEmail:
@@ -764,7 +764,7 @@ class emailAgent():
         '''
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
-            self.connect_to_email_servers()
+            self.connectToEmailServers()
 
         if startedBySendingEmail == False and onlyUnread == None:
             # input error checking
@@ -799,30 +799,30 @@ class emailAgent():
             self.webAppPrintWrapper("Successfully Opened Inbox")
             
             # get all the emails and their id #'s that match the filter
-            search_code, data = self.IMAPClient.search(None, emailFilter) 
+            searchCode, data = self.IMAPClient.search(None, emailFilter) 
 
             # Only try to check message data if return code is valid and there are emails matching the filter
-            num_emails = len(data[0].decode()) 
-            if search_code == "OK" and num_emails > 0:
-                mail_ids = data[0].decode() # convert byte to string
+            numEmails = len(data[0].decode()) 
+            if searchCode == "OK" and numEmails > 0:
+                msgIds = data[0].decode() # convert byte to string
 
-                # convert to descending ordered list (mail_ids is a str with the mail_ids seperated by spaces)
-                id_list = list(map(lambda x:int(x), list(mail_ids.split()))) 
-                id_list.sort(reverse = True) # sort() performs operation on the same variable
+                # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
+                idList = list(map(lambda x:int(x), list(msgIds.split()))) 
+                idList.sort(reverse = True) # sort() performs operation on the same variable
 
                 # fetch the emails in order of most recent to least recent
                 # most recent email has the highest id number
-                self.webAppPrintWrapper("id_list: {}".format(id_list))
-                for id_num in id_list:
-                    if id_num == max(id_list):
+                self.webAppPrintWrapper("idList: {}".format(idList))
+                for idNum in idList:
+                    if idNum == max(idList):
                         self.webAppPrintWrapper("Fetching most recent email")
 
-                    return_code, data = self.IMAPClient.fetch(str(id_num).encode(), '(RFC822)') 
-                    raw_email = data[0][1]
+                    rtnCode, data = self.IMAPClient.fetch(str(idNum).encode(), '(RFC822)') 
+                    rawEmail = data[0][1]
 
                     # function returns (To, From, DateTime, Subject, Body)
-                    emailTouple = self.process_raw_email(raw_email)
-                    email_msg = {
+                    emailTouple = self.processRawEmail(rawEmail)
+                    emailMsg = {
                         "To": emailTouple[0],
                         "From": emailTouple[1],
                         "DateTime": emailTouple[2],
@@ -840,29 +840,29 @@ class emailAgent():
 
                         # format of 'contactInfo'
                         contactInfo = {
-                            'first_name' : '',
-                            'last_name': '',
+                            'firstName' : '',
+                            'lastName': '',
                             'email': '',
                             'carrier': '',
                             'phoneNumber' : ''
                         }
 
                         # send response to the information of "from" from the received email
-                        contactInfo = self.numberToContact(email_msg["From"])
+                        contactInfo = self.numberToContact(emailMsg["From"])
 
                         # if contactInfo is None, then sender of email not in contact list. Resort to other methods
                         if contactInfo == None:
                             # signifies sender was a cell phone
-                            if '@' in email_msg["From"]:
+                            if '@' in emailMsg["From"]:
                                 # get phoneNumber/carrier info
-                                tempDict = self.phoneNumberToParts(email_msg["From"])
+                                tempDict = self.phoneNumberToParts(emailMsg["From"])
                                 # if it was a text message then only need this piece of information
                                 contactInfo['phoneNumber'] = tempDict['phoneNumber']
                                 contactInfo['carrier'] = tempDict['carrier']
 
                             # message was from an actual email
                             else:
-                                contactInfo['email'] = email_msg['From']
+                                contactInfo['email'] = emailMsg['From']
 
 
                         self.sendMsg(contactInfo)
@@ -875,18 +875,18 @@ class emailAgent():
 
                     if 'y' in waitForMsg:
                         self.waitForNewMessage()
-                        id_num += 1 # if a new message pops up then there must be another email
+                        idNum += 1 # if a new message pops up then there must be another email
                         keepCheckingInbox = True # allows function to look at emails to repeat
 
                     # only give prompt if this is not the last email
-                    if id_num != min(id_list):
-                        next_email = input("Do you want to see the next email (yes/no): ")
-                        if "n" in next_email:
+                    if idNum != min(idList):
+                        nextEmail = input("Do you want to see the next email (yes/no): ")
+                        if "n" in nextEmail:
                             break
                     else:
                         self.webAppPrintWrapper("That was the last email!")
 
-            elif num_emails == 0:
+            elif numEmails == 0:
                 self.webAppPrintWrapper("No new emails in the inbox!")
                 # Ask if they want to wait for a reply so long as user didnt start off by sending an email
                 if startedBySendingEmail == False:
@@ -917,12 +917,12 @@ class emailAgent():
         dataDict = self.phoneNumberToParts(fullPhoneNumber) 
 
         # iterate through contact list and check if phone number matches
-        for last_names in self.contactList.keys():
-            for first_names in self.contactList[last_names].keys():
+        for lastNames in self.contactList.keys():
+            for firstNames in self.contactList[lastNames].keys():
                 # check if phone number matches
-                if self.contactList[last_names][first_names]["phoneNumber"].replace('-', '') == dataDict['phoneNumber']:
+                if self.contactList[lastNames][firstNames]["phoneNumber"].replace('-', '') == dataDict['phoneNumber']:
                     print("Matched recieved email to an existing contact!!")
-                    return self.get_receiver_contact_info(first_names, last_names)
+                    return self.getReceiverContactInfo(firstNames, lastNames)
 
         # if reached this point then did not find number in contact list
         return None
@@ -944,11 +944,11 @@ class emailAgent():
         smsGatewayTag = fullPhoneNumber[fullPhoneNumber.index('@'):]
         
         # check if sms-gateway exists in email providers list
-        for provider in self.email_providers_info.keys():
+        for provider in self.emailProvidersInfo.keys():
             # check if provider has an sms-gateway
-            if 'SMS-Gateway' in self.email_providers_info[provider]['smtp_server'].keys():
+            if 'SMS-Gateway' in self.emailProvidersInfo[provider]['smtpServer'].keys():
                 # check if gateway matches
-                if self.email_providers_info[provider]['smtp_server']['SMS-Gateway'].lower() == smsGatewayTag:
+                if self.emailProvidersInfo[provider]['smtpServer']['SMS-Gateway'].lower() == smsGatewayTag:
                     carrier = provider
                     return {'phoneNumber':phoneNumber, 'carrier':carrier}
         
@@ -958,37 +958,37 @@ class emailAgent():
 
     def setDefaultState(self, newState:bool):
         ''' 
-            This function is responsible for changing the 'self' variable "use_default" 
+            This function is responsible for changing the 'self' variable "useDefault" 
             to whatever the argument newState is.
         '''
-        self.use_default = newState
+        self.useDefault = newState
 
     
     def getDefaultState(self):
         ''' 
-            This function is responsible for getting the 'self' variable "use_default" 
+            This function is responsible for getting the 'self' variable "useDefault" 
         '''
-        return self.use_default 
+        return self.useDefault 
 
 
-    def process_raw_email(self, raw_email):
+    def processRawEmail(self, rawEmail):
         '''
             This function returns the body of the raw email.
             The raw email needs to be processed because it contains alot of junk that makes it illegible 
 
             Args:
-                -raw_email: a byte string that can be converted into a Message object
+                -rawEmail: a byte string that can be converted into a Message object
             Return:
-                -refined_email(touple): The touple will contain (To, From, DateTime, Subject, body) 
+                -refinedEmail(touple): The touple will contain (To, From, DateTime, Subject, body) 
         '''
         # convert byte literal to string removing b''
-        email_msg = email.message_from_bytes(raw_email)      
+        emailMsg = email.message_from_bytes(rawEmail)      
 
 
         # If message is multi part we only want the text version of the body
         # This walks the message and gets the body.
-        if email_msg.is_multipart():
-            for part in email_msg.walk():       
+        if emailMsg.is_multipart():
+            for part in emailMsg.walk():       
                 if part.get_content_type() == "text/plain":
                     #to control automatic email-style MIME decoding (e.g., Base64, uuencode, quoted-printable)
                     body = part.get_payload(decode=True) 
@@ -998,10 +998,10 @@ class emailAgent():
                     continue
 
         # Get date and time of email
-        date_tuple = email.utils.parsedate_tz(email_msg['Date'])
-        if date_tuple:
+        dataTuple = email.utils.parsedate_tz(emailMsg['Date'])
+        if dataTuple:
             local_date = datetime.datetime.fromtimestamp(
-                email.utils.mktime_tz(date_tuple))
+                email.utils.mktime_tz(dataTuple))
             dateTime = local_date.strftime("%a, %d %b %Y %H:%M:%S")
 
         # email delineator (get column size)
@@ -1016,11 +1016,11 @@ class emailAgent():
         Subject: {3}
 
         Body: {4}
-        """.format(email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body))
+        """.format(emailMsg['To'], emailMsg['From'], dateTime, emailMsg['Subject'], body))
 
         self.webAppPrintWrapper("\n<{0}>\n".format('-'*delineator)) # email delineator
 
-        return (email_msg['To'], email_msg['From'], dateTime, email_msg['Subject'], body)
+        return (emailMsg['To'], emailMsg['From'], dateTime, emailMsg['Subject'], body)
 
     def scanForAttachments(self):
         '''
@@ -1164,7 +1164,7 @@ class emailAgent():
         
 
 def run():
-    arg_length = len(sys.argv)
+    argLength = len(sys.argv)
     # the order of arguments is: 
     # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
     # "add contact" will help user to add a contact to the contact list
@@ -1172,18 +1172,18 @@ def run():
 
 
     # use this phrase to easily add more contacts to the contact list
-    if 'add_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True, commandLine=True)
+    if 'addContact' in sys.argv:
+        emailer = emailAgent(displayContacts=True, commandLine=True)
         emailer.simpleAddContact()
         sys.exit()
     
-    if 'update_contact' in sys.argv:
-        emailer = emailAgent(display_contacts=True, commandLine=True)
+    if 'updateContact' in sys.argv:
+        emailer = emailAgent(displayContacts=True, commandLine=True)
         emailer.updateContactInfo()
         sys.exit()
 
     # Create a class obj for this file
-    emailer = emailAgent(display_contacts=False, commandLine=True)
+    emailer = emailAgent(displayContacts=False, commandLine=True)
 
     if 'default' in ''.join(sys.argv):
         emailer.setDefaultState(True)
@@ -1191,12 +1191,12 @@ def run():
         emailer.setDefaultState(False)
 
     # determine what the user wants to use the emailing agent for
-    service_type = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
+    serviceType = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
 
-    if "send" in service_type:
+    if "send" in serviceType:
 
         # First check that enough arguments were provided (if not do it manually)
-        if arg_length < 3: 
+        if argLength < 3: 
             print("""\
                 \nInvalid number of arguments entered! \
                 \nProvide first and last name seperated by spaces when running this script!""")
@@ -1215,32 +1215,32 @@ def run():
                 while len(fullName) < 2:
                     fullName = input("Enter their first name followed by their last name: ").split(' ')
                 
-                first_name = fullName[0]
-                last_name = fullName[1]
+                firstName = fullName[0]
+                lastName = fullName[1]
                 
         else:
             # Get arguments from when script is called
-            first_name = sys.argv[1]
-            last_name = sys.argv[2]
-            # receiver_contact_info contains first_name, last_name, email, carrier, phone number
+            firstName = sys.argv[1]
+            lastName = sys.argv[2]
+            # receiverContactInfo contains firstName, lastName, email, carrier, phone number
 
         # get contact info regardless of method to reach this point
-        receiver_contact_info = emailer.get_receiver_contact_info(first_name, last_name)
+        receiverContactInfo = emailer.getReceiverContactInfo(firstName, lastName)
 
-        # arg_length- if all arguments given when calling script
-        if arg_length == 4:
+        # argLength- if all arguments given when calling script
+        if argLength == 4:
             # if there is a third argument, then use default email account (dont need to login)
             emailer.setDefaultState(True)
 
-        emailer.sendMsg(receiver_contact_info)
+        emailer.sendMsg(receiverContactInfo)
     
         waitForReply = input("Do you want to wait for a reply (y/n): ")
         if 'n' not in waitForReply:
-            emailer.receive_email(startedBySendingEmail=True)
+            emailer.receiveEmail(startedBySendingEmail=True)
 
-    elif "get" in service_type:
+    elif "get" in serviceType:
         # Entering something in the second argument signifies that you want to use the default login
-        emailer.receive_email()
+        emailer.receiveEmail()
             
     else:
         print("Please Enter a Valid Option!")

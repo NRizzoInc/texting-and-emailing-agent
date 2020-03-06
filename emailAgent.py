@@ -754,6 +754,61 @@ class emailAgent():
         # if this point is reached, new email detected and can end function so program can continue!
         self.webAppPrintWrapper("New email message detected!")       
 
+    def getAllEmails(self):
+        '''
+            @brief: gets all emails
+        '''
+        # first check if connected to email servers, if not connect
+        if not self.connectedToServers:
+            self.connectToEmailServers()
+        
+        # opens folder/label you want to read from
+        self.IMAPClient.select('INBOX')
+        self.webAppPrintWrapper("Successfully Opened Inbox")
+                    
+        # get all the emails and their id #'s that match the filter
+        rtnCode, data = self.IMAPClient.search(None, "ALL") 
+        if rtnCode != "OK":
+            self.webAppPrintWrapper("Bad return code from inbox!")
+        
+        numEmails = len(data[0].decode()) 
+        msgIds = data[0].decode() # convert byte to string
+
+        # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
+        idList = list(map(lambda x:int(x), list(msgIds.split()))) 
+        idList.sort(reverse = True) # sort() performs operation on the same variable
+        self.webAppPrintWrapper("idList: {}".format(idList))
+
+        # get all emails
+        for idNum in idList:
+            rtnCode, emailData = self.IMAPClient.fetch(str(idNum).encode(), '(RFC822)') 
+            if (rtnCode != "OK"):
+                self.webAppPrintWrapper("Bad email return code received!!")
+                
+            rawEmail = emailData[0][1]
+
+            # function returns (To, From, DateTime, Subject, Body)
+            emailMsg = self.processRawEmail(rawEmail)
+            if self.commandLine:
+                self.printProcessedEmail(emailMsg["To"], emailMsg["From"], emailMsg['DateTime'], emailMsg['Subject'], emailMsg['Body'])
+
+
+    def getUnreadEmails(self):
+        '''
+        @brief: gets all unread emails
+        '''
+        # first check if connected to email servers, if not connect
+        if not self.connectedToServers:
+            self.connectToEmailServers()
+        
+        # opens folder/label you want to read from
+        self.IMAPClient.select('INBOX')
+        self.webAppPrintWrapper("Successfully Opened Inbox")
+                    
+        # get all the emails and their id #'s that match the filter
+        rtnCode, data = self.IMAPClient.search(None, "(UNSEEN)") 
+
+        
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         '''
@@ -770,9 +825,6 @@ class emailAgent():
             # input error checking
             filterInput = ""
             while filterInput != "n" and filterInput != "y":
-                # search the inbox for all valid emails (first argument is 'charset' and second is 'filter')
-                # "ALL" returns all emails without any filter
-                # (UNSEEN) filter to all unread emails
                 filterInput = input("Do you want to see only unopened emails (y/n): ")
                 if filterInput == "n":
                     emailFilter = "ALL"
@@ -821,14 +873,10 @@ class emailAgent():
                     rawEmail = data[0][1]
 
                     # function returns (To, From, DateTime, Subject, Body)
-                    emailTouple = self.processRawEmail(rawEmail)
-                    emailMsg = {
-                        "To": emailTouple[0],
-                        "From": emailTouple[1],
-                        "DateTime": emailTouple[2],
-                        "Subject": emailTouple[3],
-                        "Body": emailTouple[4]
-                    }
+                    emailMsg = self.processRawEmail(rawEmail)
+                    if self.commandLine:
+                        self.printProcessedEmail(emailMsg["To"], emailMsg["From"],
+                            emailMsg['DateTime'], emailMsg['Subject'], emailMsg['Body'])
 
                     # only ask this question if user didnt start off by sending emails
                     if startedBySendingEmail == False: 
@@ -979,11 +1027,10 @@ class emailAgent():
             Args:
                 -rawEmail: a byte string that can be converted into a Message object
             Return:
-                -refinedEmail(touple): The touple will contain (To, From, DateTime, Subject, body) 
+                -refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body) 
         '''
         # convert byte literal to string removing b''
         emailMsg = email.message_from_bytes(rawEmail)      
-
 
         # If message is multi part we only want the text version of the body
         # This walks the message and gets the body.
@@ -1004,6 +1051,26 @@ class emailAgent():
                 email.utils.mktime_tz(dataTuple))
             dateTime = local_date.strftime("%a, %d %b %Y %H:%M:%S")
 
+        emailMsgDict = {
+            "To": emailMsg['To'],
+            "From": emailMsg['From'],
+            "DateTime": dateTime,
+            "Subject": emailMsg['Subject'],
+            "Body": body
+        }
+
+        return emailMsgDict
+
+    def printProcessedEmail(self, To, From, dateTime, subject, body):
+        '''
+            @brief: Prints the processed email
+            @args: 
+                - To: Who the is receiving the message (usually the user using this code)
+                - From: Who the message is from 
+                - dateTime: Timestamp of when the message was sent
+                - subject: The subject
+                - body: The actual message
+        '''
         # email delineator (get column size)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
         delineator = columns - 2 # have to account for '<' and '>' chars on either end 
@@ -1016,11 +1083,9 @@ class emailAgent():
         Subject: {3}
 
         Body: {4}
-        """.format(emailMsg['To'], emailMsg['From'], dateTime, emailMsg['Subject'], body))
+        """.format(To, From, dateTime, subject, body))
 
-        self.webAppPrintWrapper("\n<{0}>\n".format('-'*delineator)) # email delineator
-
-        return (emailMsg['To'], emailMsg['From'], dateTime, emailMsg['Subject'], body)
+        print("\n<{0}>\n".format('-'*delineator)) # email delineator
 
     def scanForAttachments(self):
         '''

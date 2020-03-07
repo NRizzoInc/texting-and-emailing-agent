@@ -115,7 +115,7 @@ class emailAgent():
         if sendMethod == '': pass
         elif sendMethod == 'email': sendTextBool = False
         elif sendMethod == 'text': sendTextBool = True
-        else: raise Exception("Invalid sendMethod param passed to function!")
+        else: raise Exception("Invalid sendMethod Param passed to function!")
 
         if self.commandLine:
             msg = self.composeMsg(receiverContactInfo, msgToSend=msgToSend)
@@ -247,7 +247,7 @@ class emailAgent():
         # body += "\n" # have to add newline char at the end of the body
 
 
-        # setup the parameters of the message
+        # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object with the body
         msg['From'] = self.myEmailAddress
         msg['To'] = textMsgAddress
@@ -365,7 +365,7 @@ class emailAgent():
         else:
             sendableMsg = msgToSend
             
-        # setup the parameters of the message
+        # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object
         msg['From'] = self.myEmailAddress
         msg['To'] = receiverContactInfo['email'] # send message as if it were a text
@@ -754,10 +754,10 @@ class emailAgent():
         # if this point is reached, new email detected and can end function so program can continue!
         self.webAppPrintWrapper("New email message detected!")      
 
-    def getEmailListIDs(self, emailFilter='(UNSEEN)')->list():
+    def getEmailListIDs(self, emailFilter:str='(UNSEEN)')->list():
         """
             \n@brief: Helper function that gets all the email ids (belonging to emailFilter)
-            \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
+            \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@return: List of email ids matching the filter
         """
         # first check if connected to email servers, if not connect
@@ -783,7 +783,7 @@ class emailAgent():
         # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
         idList = list(map(lambda x:int(x), list(msgIds.split()))) 
         idList.sort(reverse = True) # sort() performs operation on the same variable
-        self.webAppPrintWrapper("idList: {0}".format(idList))
+        # self.webAppPrintWrapper("idList: {0}".format(idList))
         
         return idList
 
@@ -792,6 +792,7 @@ class emailAgent():
             \n@Brief: Helper function that fetches and returns emails of the specified id number
             \n@Param: emailIdNum- the id number of the email to fetch
             \n@Return: A raw email byte string that can be converted into a Message object (need to use email.message_from_bytes())
+            \n@Note: call 'processRawEmail(rawEmail, emailIdNum)' to convert to usable form
 
         """
         rtnCode, emailData = self.IMAPClient.fetch(str(emailIdNum).encode(), '(RFC822)') 
@@ -803,10 +804,10 @@ class emailAgent():
 
 
 
-    def getEmailListWithContent(self, emailFilter='(UNSEEN)')->list():
+    def getEmailListWithContent(self, emailFilter:str='(UNSEEN)')->list():
         """
             \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
-            \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
+            \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum} 
             \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
         """
@@ -860,14 +861,48 @@ class emailAgent():
         for emailDict in emailList:
             print("{0}) {1}".format(emailDict["idNum"], emailDict["Subject"]))
 
-    def _printEmailIdPretty(self, emailInfo:dict):
+    def _printEmailDescriptor(self, emailMsg:dict):
         """
-            \n@Brief- Takes email dict and prints: "Mail Id #: <subject> "
-            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body}]
-            \n@Param- lowerBound(int): the index to start printing ids from 
-            \n@Param- upperBound(int): the index to stop printing ids 
-            \n@Return- None 
+            \n@Brief: Internal function which helps print useful messages about an email for a user to access
+            \n@Param: emailMsg(dict)- a dictionary of the email with format {To, From, DateTime, Subject, Body, idNum}
+            \n@Return: None (prints stuff)
         """
+        # get terminal size to make message appear on one line (subtract to make comfortable)
+        columns, rows = shutil.get_terminal_size(fallback=(80, 24))
+        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + 5 # last 5 comes from email id reaching up to 99999 (might need to make more) 
+        if (emailMsg['Subject'].strip().isspace() or emailMsg['Subject'] == '' or emailMsg['Subject'] == None):
+            # there is no subject, show part of message instead
+            print("{0} - #{1}) {2}...".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion]))
+
+        # there is an actual subject in the message
+        else:
+            overflow = columns - len(emailMsg["Subject"]) - spaceCushion
+            moreToMsg = "" # leave empty, if not enough space, add them
+            if overflow < 0: 
+                emailMsg = emailMsg[:overflow]
+                moreToMsg = "..."
+            print("{0} - #{1}) {2}{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg))
+
+
+    def getEmailsGradually(self, emailFilter:str="(UNSEEN)", printDescriptors:bool=True)->list():
+        """
+            \n@Brief- Takes email dict and prints out email nicely for user
+            \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
+            \n@Param: printDescriptors(bool)- if true, print "<email id>) <email subject>" for all emails
+            \n@Return- List of dicts with email message data. List format [{To, From, DateTime, Subject, Body, idNum}]
+        """
+        idList = self.getEmailListIDs(emailFilter=emailFilter)
+        emailList = []
+        for idNum in idList:
+            rawEmail = self.fetchEmail(idNum)
+            emailMsg = self.processRawEmail(rawEmail, idNum)
+            emailList.append(emailMsg)
+            if printDescriptors:
+                self._printEmailDescriptor(emailMsg)
+
+        return emailList
+
+
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         """
@@ -881,11 +916,11 @@ class emailAgent():
             
         # input error checking                
         if onlyUnread:
-            emailList = self.getUnreadEmails()
-            self.printEmailListPretty(emailList)
+            emailList = self.getEmailsGradually(emailFilter="(UNSEEN)")
+            # emailList = self.getUnreadEmails()
+            # self.printEmailListPretty(emailList)
         elif not onlyUnread: 
-            emailList = self.getListAllEmails()
-            self.printEmailListPretty(emailList)
+            emailList = self.getEmailsGradually(emailFilter="ALL")
 
 
         # intially set to True but immediately set to False in loop
@@ -1017,7 +1052,7 @@ class emailAgent():
             for firstNames in self.contactList[lastNames].keys():
                 # check if phone number matches
                 if self.contactList[lastNames][firstNames]["phoneNumber"].replace('-', '') == dataDict['phoneNumber']:
-                    print("Matched recieved email to an existing contact!!")
+                    print("Matched received email to an existing contact!!")
                     return self.getReceiverContactInfo(firstNames, lastNames)
 
         # if reached this point then did not find number in contact list
@@ -1111,12 +1146,13 @@ class emailAgent():
     def printProcessedEmailDict(self, emailDict:dict):
         """
             \n@brief: Convience function which passes preformatted dictionary to printProcessedEmail 
-            \n@arg: emailDict(dict) = {
+            \n@Param: emailDict(dict) = {
                     "To": "", 
                     "From": "", 
                     "DateTime": "", 
                     "Subject": "", 
-                    "Body": ""
+                    "Body": "",
+                    "idNum": ""
                 }
         """
         sampleDict = {
@@ -1124,7 +1160,8 @@ class emailAgent():
             "From": "", 
             "DateTime": "", 
             "Subject": "", 
-            "Body": ""
+            "Body": "",
+            "idNum": ""
         }
         if (emailDict.keys() != sampleDict.keys()):
             raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))
@@ -1160,7 +1197,7 @@ class emailAgent():
     def scanForAttachments(self):
         '''
             @brief: scans self.textMsgToSend for attachments that it can add on to self.attachmentsList
-            @param: None
+            @Param: None
             @return: None
         '''
 
@@ -1192,7 +1229,7 @@ class emailAgent():
     def addAttachment(self, toAttach:str):
         '''
             @breif: adds new attachment to self.attachmentsList for future sending
-            @param: toAttach: a string that can either be a path to a local file or a url 
+            @Param: toAttach: a string that can either be a path to a local file or a url 
             
         '''
         # check if valid file path

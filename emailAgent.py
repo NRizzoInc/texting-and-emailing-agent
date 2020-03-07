@@ -92,21 +92,17 @@ class emailAgent():
         return self.loadJson(self.pathToContactList)
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str=''):
-        '''
-            Calls all other functions necessary to send an a message (either through text or email)
-
-            Args:
-                -receiverContactInfo: a dictionary about the receiver of format:
-                        lastName: {
-                            firstName: {
-                                "email": "",
-                                "phoneNumber": "",
-                                "carrier": ""
-                            }
-                        },
-                - sendMethod: a string that should either be 'email' or 'text'
-                - msgToSend: a string that contains the message that is desired to be sent
-        '''            
+        """
+            \n@Brief: Calls all other functions necessary to send an a message (either through text or email)
+            \n@Param: receiverContactInfo- a dictionary about the receiver of format: 
+            \n    {
+            \n        lastName: {
+            \n            firstName: {email: "", phoneNumber: "", carrier: ""}
+            \n        }
+            \n    }
+            \n@Param: sendMethod- a string that should either be 'email' or 'text'
+            \n@Param: msgToSend- a string that contains the message that is desired to be sent
+        """            
 
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
@@ -911,12 +907,14 @@ class emailAgent():
             print("Stopped fetching")
         return (emailList, idDict)
 
-    def _openEmail(self, idDict:dict, emailList:list)->str():
+    def _openEmail(self, idDict:dict, emailList:list)->(str(), dict()):
         """
             \n@Brief: Helper function that determines which email the user wants to open, printing and returning it
             \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>', '<list index>'}
             \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum}]
-            \n@Return: string of whats printed to the terminal
+            \n@Return(touple): (printedStr, emailDict)
+            \n@Return: printedStr- string of what is printed to the terminal
+            \n@Return: emailDict- email info dict of format {To, From, DateTime, Subject, Body, idNum}
         """
         idSelected = -1
         if self.commandLine:
@@ -929,6 +927,43 @@ class emailAgent():
         emailListIndex = idDict[idSelected]
         emailDict = emailList[emailListIndex]
         printedStr = self.printProcessedEmailDict(emailDict)
+        return (printedStr, emailDict)
+
+    def _reply(self, startedBySendingEmail:bool, emailMsgDict:dict):
+        """
+            \n@Brief: Helper function that determines if user wants to reply to email
+            \n@Param: startedBySendingEmail- bool that informs program if the first action taken was to send
+            \n@Param: emailMsgDict- dict of info about email of format {To, From, DateTime, Subject, Body, idNum}
+        """
+        # only ask this question if user didnt start off by sending emails
+        if startedBySendingEmail == False: 
+            if self.commandLine:
+                replyBool = input("Do you want to reply to this email (y/n): ")
+            else:
+                raise Exception("IMPLEMENT NON-COMMAND LINE '_reply'")
+        else:
+            replyBool = 'n'
+
+        if 'y' in replyBool:
+            # send response to the information of "from" from the received email
+            contactInfo = self.numberToContact(emailMsgDict["From"])
+
+            # if contactInfo is None, then sender of email not in contact list. Resort to other methods
+            if contactInfo == None:
+                # signifies sender was a cell phone
+                if '@' in emailMsgDict["From"]:
+                    # get phoneNumber/carrier info
+                    tempDict = self.phoneNumberToParts(emailMsgDict["From"])
+                    # if it was a text message then only need this piece of information
+                    contactInfo['phoneNumber'] = tempDict['phoneNumber']
+                    contactInfo['carrier'] = tempDict['carrier']
+
+                # message was from an actual email
+                else:
+                    contactInfo['email'] = emailMsgDict['From']
+
+
+            self.sendMsg(contactInfo)
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         """
@@ -951,44 +986,9 @@ class emailAgent():
         keepCheckingInbox = True 
         while keepCheckingInbox: 
             keepCheckingInbox = False
-            self._openEmail(idDict, emailList)
+            printedStr, emailInfoDict = self._openEmail(idDict, emailList)
+            self._reply(startedBySendingEmail, emailInfoDict)
 
-                # only ask this question if user didnt start off by sending emails
-                # if startedBySendingEmail == False: 
-                #     replyBool = input("Do you want to reply to this email (y/n): ")
-                # else:
-                #     replyBool = 'n'
-
-                # if 'y' in replyBool:
-
-                # # format of 'contactInfo'
-                # contactInfo = {
-                #     'firstName' : '',
-                #     'lastName': '',
-                #     'email': '',
-                #     'carrier': '',
-                #     'phoneNumber' : ''
-                # }
-                # send response to the information of "from" from the received email
-#                        contactInfo = self.numberToContact(emailMsg["From"])
-#
-#                        # if contactInfo is None, then sender of email not in contact list. Resort to other methods
-#                        if contactInfo == None:
-#                            # signifies sender was a cell phone
-#                            if '@' in emailMsg["From"]:
-#                                # get phoneNumber/carrier info
-#                                tempDict = self.phoneNumberToParts(emailMsg["From"])
-#                                # if it was a text message then only need this piece of information
-#                                contactInfo['phoneNumber'] = tempDict['phoneNumber']
-#                                contactInfo['carrier'] = tempDict['carrier']
-#
-#                            # message was from an actual email
-#                            else:
-#                                contactInfo['email'] = emailMsg['From']
-#
-#
-#                        self.sendMsg(contactInfo)
-#
 #                    # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
 #                    if startedBySendingEmail == False:
 #                        waitForMsg = input("Do you want to wait for a reply (yes/no): ")
@@ -1027,14 +1027,12 @@ class emailAgent():
 #            startedBySendingEmail = False
             
 
-    def numberToContact(self, fullPhoneNumber:str):
-        '''
-            This function will attempt to match a phone number to an existing contact
-            
-            Returns:\n
-                Contact info dictionary of format: {first name, last name, email, carrier, phone number}
-                The phone number return accepts common type of seperaters or none (ex: '-')
-        '''
+    def numberToContact(self, fullPhoneNumber:str)->dict():
+        """
+            \n@Brief: This function will attempt to match a phone number to an existing contact
+            \n@Return: fullPhoneNumber- Contact info dictionary of format: {first name, last name, email, carrier, phone number}
+            \n@Note: The phone number return accepts common type of seperaters or none (ex: '-')
+        """
         # seperate phone number into parts (phoneNumber and carrier)
         dataDict = self.phoneNumberToParts(fullPhoneNumber) 
 
@@ -1145,7 +1143,7 @@ class emailAgent():
                     "Body": "",
                     "idNum": ""
                 }
-            \n@Return: string of what's printed to the terminal
+            \n@Return: string of what is printed to the terminal
         """
         sampleDict = {
             "To": "", 

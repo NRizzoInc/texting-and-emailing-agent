@@ -754,7 +754,7 @@ class emailAgent():
         # if this point is reached, new email detected and can end function so program can continue!
         self.webAppPrintWrapper("New email message detected!")      
 
-    def _getEmailListIDs(self, emailFilter='(UNSEEN)')->list():
+    def getEmailListIDs(self, emailFilter='(UNSEEN)')->list():
         """
             \n@brief: Helper function that gets all the email ids (belonging to emailFilter)
             \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
@@ -787,7 +787,7 @@ class emailAgent():
         
         return idList
 
-    def _fetchEmail(self, emailIdNum:int)->bytearray():
+    def fetchEmail(self, emailIdNum:int)->bytearray():
         """
             \n@Brief: Helper function that fetches and returns emails of the specified id number
             \n@Param: emailIdNum- the id number of the email to fetch
@@ -803,19 +803,19 @@ class emailAgent():
 
 
 
-    def _getEmailListWithContent(self, emailFilter='(UNSEEN)')->list():
+    def getEmailListWithContent(self, emailFilter='(UNSEEN)')->list():
         """
             \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
             \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
             \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
         """
-        idList = self._getEmailListIDs(emailFilter=emailFilter)
+        idList = self.getEmailListIDs(emailFilter=emailFilter)
 
         # get all emails
         emailList = []
         for idNum in idList:
-            rawEmail = self._fetchEmail(idNum)
+            rawEmail = self.fetchEmail(idNum)
 
             # function returns (To, From, DateTime, Subject, Body)
             emailMsg = self.processRawEmail(rawEmail)
@@ -829,7 +829,7 @@ class emailAgent():
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
             \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
         """
-        emailList = self._getEmailListWithContent(emailFilter="ALL")
+        emailList = self.getEmailListWithContent(emailFilter="ALL")
         return emailList
 
     def getUnreadEmails(self)->list():
@@ -838,7 +838,7 @@ class emailAgent():
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
             \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
         """
-        emailList = self._getEmailListWithContent(emailFilter="(UNSEEN)")
+        emailList = self.getEmailListWithContent(emailFilter="(UNSEEN)")
         return emailList
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):

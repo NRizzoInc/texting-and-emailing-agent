@@ -752,205 +752,239 @@ class emailAgent():
             numEmails = len(data[0].decode())
         
         # if this point is reached, new email detected and can end function so program can continue!
-        self.webAppPrintWrapper("New email message detected!")       
+        self.webAppPrintWrapper("New email message detected!")      
 
-    def getAllEmails(self):
-        '''
-            @brief: gets all emails
-        '''
+    def _getEmailListIDs(self, emailFilter='(UNSEEN)')->list():
+        """
+            \n@brief: Helper function that gets all the email ids (belonging to emailFilter)
+            \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
+            \n@return: List of email ids matching the filter
+        """
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
             self.connectToEmailServers()
-        
+
+        # verify correct input entered
+        if emailFilter != '(UNSEEN)' and emailFilter != 'ALL':
+            print("WARNING UNKNOWN EMAIL FILTER ENTERED- may result in undefined behavior")
+
         # opens folder/label you want to read from
         self.IMAPClient.select('INBOX')
         self.webAppPrintWrapper("Successfully Opened Inbox")
                     
         # get all the emails and their id #'s that match the filter
-        rtnCode, data = self.IMAPClient.search(None, "ALL") 
+        rtnCode, data = self.IMAPClient.search(None, emailFilter) 
         if rtnCode != "OK":
             self.webAppPrintWrapper("Bad return code from inbox!")
-        
+
         numEmails = len(data[0].decode()) 
         msgIds = data[0].decode() # convert byte to string
 
         # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
         idList = list(map(lambda x:int(x), list(msgIds.split()))) 
         idList.sort(reverse = True) # sort() performs operation on the same variable
-        self.webAppPrintWrapper("idList: {}".format(idList))
+        self.webAppPrintWrapper("idList: {0}".format(idList))
+        
+        return idList
+
+    def _fetchEmail(self, emailIdNum:int)->bytearray():
+        """
+            \n@Brief: Helper function that fetches and returns emails of the specified id number
+            \n@Param: emailIdNum- the id number of the email to fetch
+            \n@Return: A raw email byte string that can be converted into a Message object (need to use email.message_from_bytes())
+
+        """
+        rtnCode, emailData = self.IMAPClient.fetch(str(emailIdNum).encode(), '(RFC822)') 
+        if (rtnCode != "OK"):
+            self.webAppPrintWrapper("Bad email return code received!!")
+            
+        rawEmail = emailData[0][1]
+        return rawEmail
+
+
+
+    def _getEmailListWithContent(self, emailFilter='(UNSEEN)')->list():
+        """
+            \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
+            \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
+        """
+        idList = self._getEmailListIDs(emailFilter=emailFilter)
 
         # get all emails
+        emailList = []
         for idNum in idList:
-            rtnCode, emailData = self.IMAPClient.fetch(str(idNum).encode(), '(RFC822)') 
-            if (rtnCode != "OK"):
-                self.webAppPrintWrapper("Bad email return code received!!")
-                
-            rawEmail = emailData[0][1]
+            rawEmail = self._fetchEmail(idNum)
 
             # function returns (To, From, DateTime, Subject, Body)
             emailMsg = self.processRawEmail(rawEmail)
-            if self.commandLine:
-                self.printProcessedEmail(emailMsg["To"], emailMsg["From"], emailMsg['DateTime'], emailMsg['Subject'], emailMsg['Body'])
+            emailList.append(emailMsg)
 
+        return emailList
 
-    def getUnreadEmails(self):
-        '''
-        @brief: gets all unread emails
-        '''
-        # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
-            self.connectToEmailServers()
-        
-        # opens folder/label you want to read from
-        self.IMAPClient.select('INBOX')
-        self.webAppPrintWrapper("Successfully Opened Inbox")
-                    
-        # get all the emails and their id #'s that match the filter
-        rtnCode, data = self.IMAPClient.search(None, "(UNSEEN)") 
+    def getListAllEmails(self)->list():
+        """
+            \n@brief: Fetches all emails and lists them by id number
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
+        """
+        emailList = self._getEmailListWithContent(emailFilter="ALL")
+        return emailList
 
-        
+    def getUnreadEmails(self)->list():
+        """
+            \n@brief: Fetches all unread emails and lists them by id number
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
+        """
+        emailList = self._getEmailListWithContent(emailFilter="(UNSEEN)")
+        return emailList
+
+    def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
+        """
+            \n@Brief- Takes email list and prints: "Mail Id #: <subject> "
+            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body}]
+            \n@Param- lowerBound(int): the index to start printing ids from 
+            \n@Param- upperBound(int): the index to stop printing ids 
+            \n@Return- None
+        """
+        if emailList == None or len(emailList) == 0: 
+            print("No emails!")
+            return
+        for mailId, emailDict in enumerate(emailList[lowerBound:upperBound]):
+            print("{0}) {1}".format(mailId, emailDict["Subject"]))
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
-        '''
+        """
             @Args:
-                -startedBySendingEmail:
-                    True if started off by sending email and want to wait for users reponse
-                -onlyUnread: when set to true, no command line input needed to tell which messages to read
-        '''
+                \n-startedBySendingEmail: True if started off by sending email and want to wait for users reponse
+                \n-onlyUnread: when set to true, no command line input needed to tell which messages to read
+        """
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
             self.connectToEmailServers()
-
-        if startedBySendingEmail == False and onlyUnread == None:
-            # input error checking
-            filterInput = ""
-            while filterInput != "n" and filterInput != "y":
-                filterInput = input("Do you want to see only unopened emails (y/n): ")
-                if filterInput == "n":
-                    emailFilter = "ALL"
-                elif filterInput == "y":
-                    emailFilter = "(UNSEEN)"
-                else:
-                    raise Exception("Please enter a valid answer!\n")
-        elif onlyUnread:
-            emailFilter = '(UNSEEN)'    
+            
+        # input error checking                
+        if onlyUnread:
+            emailList = self.getUnreadEmails()
+            self.printEmailListPretty(emailList)
         elif not onlyUnread: 
-            emailFilter = 'ALL'
-        else:
-            raise Exception("Unhandled filter arg!")
+            emailList = self.getListAllEmails()
+            self.printEmailListPretty(emailList)
+
 
         # intially set to True but immediately set to False in loop
         # only set to True again if you wait for new messages
-        keepCheckingInbox = True 
-        while keepCheckingInbox: 
-
-            keepCheckingInbox = False
-
-            # opens folder/label you want to read from
-            self.IMAPClient.select('INBOX')
-            self.webAppPrintWrapper("Successfully Opened Inbox")
-            
-            # get all the emails and their id #'s that match the filter
-            searchCode, data = self.IMAPClient.search(None, emailFilter) 
-
-            # Only try to check message data if return code is valid and there are emails matching the filter
-            numEmails = len(data[0].decode()) 
-            if searchCode == "OK" and numEmails > 0:
-                msgIds = data[0].decode() # convert byte to string
-
-                # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
-                idList = list(map(lambda x:int(x), list(msgIds.split()))) 
-                idList.sort(reverse = True) # sort() performs operation on the same variable
-
-                # fetch the emails in order of most recent to least recent
-                # most recent email has the highest id number
-                self.webAppPrintWrapper("idList: {}".format(idList))
-                for idNum in idList:
-                    if idNum == max(idList):
-                        self.webAppPrintWrapper("Fetching most recent email")
-
-                    rtnCode, data = self.IMAPClient.fetch(str(idNum).encode(), '(RFC822)') 
-                    rawEmail = data[0][1]
-
-                    # function returns (To, From, DateTime, Subject, Body)
-                    emailMsg = self.processRawEmail(rawEmail)
-                    if self.commandLine:
-                        self.printProcessedEmail(emailMsg["To"], emailMsg["From"],
-                            emailMsg['DateTime'], emailMsg['Subject'], emailMsg['Body'])
-
-                    # only ask this question if user didnt start off by sending emails
-                    if startedBySendingEmail == False: 
-                        replyBool = input("Do you want to reply to this email (y/n): ")
-                    else:
-                        replyBool = 'n'
-
-                    if 'y' in replyBool:
-
-                        # format of 'contactInfo'
-                        contactInfo = {
-                            'firstName' : '',
-                            'lastName': '',
-                            'email': '',
-                            'carrier': '',
-                            'phoneNumber' : ''
-                        }
-
-                        # send response to the information of "from" from the received email
-                        contactInfo = self.numberToContact(emailMsg["From"])
-
-                        # if contactInfo is None, then sender of email not in contact list. Resort to other methods
-                        if contactInfo == None:
-                            # signifies sender was a cell phone
-                            if '@' in emailMsg["From"]:
-                                # get phoneNumber/carrier info
-                                tempDict = self.phoneNumberToParts(emailMsg["From"])
-                                # if it was a text message then only need this piece of information
-                                contactInfo['phoneNumber'] = tempDict['phoneNumber']
-                                contactInfo['carrier'] = tempDict['carrier']
-
-                            # message was from an actual email
-                            else:
-                                contactInfo['email'] = emailMsg['From']
-
-
-                        self.sendMsg(contactInfo)
-
-                    # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
-                    if startedBySendingEmail == False:
-                        waitForMsg = input("Do you want to wait for a reply (yes/no): ")
-                    else:
-                        waitForMsg = 'y'
-
-                    if 'y' in waitForMsg:
-                        self.waitForNewMessage()
-                        idNum += 1 # if a new message pops up then there must be another email
-                        keepCheckingInbox = True # allows function to look at emails to repeat
-
-                    # only give prompt if this is not the last email
-                    if idNum != min(idList):
-                        nextEmail = input("Do you want to see the next email (yes/no): ")
-                        if "n" in nextEmail:
-                            break
-                    else:
-                        self.webAppPrintWrapper("That was the last email!")
-
-            elif numEmails == 0:
-                self.webAppPrintWrapper("No new emails in the inbox!")
-                # Ask if they want to wait for a reply so long as user didnt start off by sending an email
-                if startedBySendingEmail == False:
-                    waitForMsg = input("\nDo you want to wait for a new message (yes/no): ")
-                else:
-                    waitForMsg = 'y'
-
-                if 'y' in waitForMsg:
-                    self.waitForNewMessage()
-                    keepCheckingInbox = True # allows function to look at emails to repeat
-
-            else:
-                self.webAppPrintWrapper("Invalid return code from inbox!")
-
-            # this var should only be set to True the first time it goes through if input starts as True.
-            startedBySendingEmail = False
+#        keepCheckingInbox = True 
+#        while keepCheckingInbox: 
+#
+#            keepCheckingInbox = False
+#
+#            # opens folder/label you want to read from
+#            self.IMAPClient.select('INBOX')
+#            self.webAppPrintWrapper("Successfully Opened Inbox")
+#            
+#            # get all the emails and their id #'s that match the filter
+#            searchCode, data = self.IMAPClient.search(None, emailFilter) 
+#
+#            # Only try to check message data if return code is valid and there are emails matching the filter
+#            numEmails = len(data[0].decode()) 
+#            if searchCode == "OK" and numEmails > 0:
+#                msgIds = data[0].decode() # convert byte to string
+#
+#                # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
+#                idList = list(map(lambda x:int(x), list(msgIds.split()))) 
+#                idList.sort(reverse = True) # sort() performs operation on the same variable
+#
+#                # fetch the emails in order of most recent to least recent
+#                # most recent email has the highest id number
+#                self.webAppPrintWrapper("idList: {}".format(idList))
+#                for idNum in idList:
+#                    if idNum == max(idList):
+#                        self.webAppPrintWrapper("Fetching most recent email")
+#
+#                    rtnCode, data = self.IMAPClient.fetch(str(idNum).encode(), '(RFC822)') 
+#                    rawEmail = data[0][1]
+#
+#                    # function returns (To, From, DateTime, Subject, Body)
+#                    emailMsg = self.processRawEmail(rawEmail)
+#                    if self.commandLine:
+#                        self.printProcessedEmailDict(emailMsg)
+#
+#                    # only ask this question if user didnt start off by sending emails
+#                    if startedBySendingEmail == False: 
+#                        replyBool = input("Do you want to reply to this email (y/n): ")
+#                    else:
+#                        replyBool = 'n'
+#
+#                    if 'y' in replyBool:
+#
+#                        # format of 'contactInfo'
+#                        contactInfo = {
+#                            'firstName' : '',
+#                            'lastName': '',
+#                            'email': '',
+#                            'carrier': '',
+#                            'phoneNumber' : ''
+#                        }
+#
+#                        # send response to the information of "from" from the received email
+#                        contactInfo = self.numberToContact(emailMsg["From"])
+#
+#                        # if contactInfo is None, then sender of email not in contact list. Resort to other methods
+#                        if contactInfo == None:
+#                            # signifies sender was a cell phone
+#                            if '@' in emailMsg["From"]:
+#                                # get phoneNumber/carrier info
+#                                tempDict = self.phoneNumberToParts(emailMsg["From"])
+#                                # if it was a text message then only need this piece of information
+#                                contactInfo['phoneNumber'] = tempDict['phoneNumber']
+#                                contactInfo['carrier'] = tempDict['carrier']
+#
+#                            # message was from an actual email
+#                            else:
+#                                contactInfo['email'] = emailMsg['From']
+#
+#
+#                        self.sendMsg(contactInfo)
+#
+#                    # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
+#                    if startedBySendingEmail == False:
+#                        waitForMsg = input("Do you want to wait for a reply (yes/no): ")
+#                    else:
+#                        waitForMsg = 'y'
+#
+#                    if 'y' in waitForMsg:
+#                        self.waitForNewMessage()
+#                        idNum += 1 # if a new message pops up then there must be another email
+#                        keepCheckingInbox = True # allows function to look at emails to repeat
+#
+#                    # only give prompt if this is not the last email
+#                    if idNum != min(idList):
+#                        nextEmail = input("Do you want to see the next email (yes/no): ")
+#                        if "n" in nextEmail:
+#                            break
+#                    else:
+#                        self.webAppPrintWrapper("That was the last email!")
+#
+#            elif numEmails == 0:
+#                self.webAppPrintWrapper("No new emails in the inbox!")
+#                # Ask if they want to wait for a reply so long as user didnt start off by sending an email
+#                if startedBySendingEmail == False:
+#                    waitForMsg = input("\nDo you want to wait for a new message (yes/no): ")
+#                else:
+#                    waitForMsg = 'y'
+#
+#                if 'y' in waitForMsg:
+#                    self.waitForNewMessage()
+#                    keepCheckingInbox = True # allows function to look at emails to repeat
+#
+#            else:
+#                self.webAppPrintWrapper("Invalid return code from inbox!")
+#
+#            # this var should only be set to True the first time it goes through if input starts as True.
+#            startedBySendingEmail = False
             
 
     def numberToContact(self, fullPhoneNumber:str):
@@ -1021,19 +1055,16 @@ class emailAgent():
 
     def processRawEmail(self, rawEmail):
         '''
-            This function returns the body of the raw email.
-            The raw email needs to be processed because it contains alot of junk that makes it illegible 
-
-            Args:
-                -rawEmail: a byte string that can be converted into a Message object
-            Return:
-                -refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body) 
+            \n@Brief: This function returns the body of the raw email. The raw email needs to be processed because it contains alot of junk that makes it illegible 
+            \n@Param: rawEmail: a byte string that can be converted into a Message object
+            \n@Return: refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body) 
         '''
         # convert byte literal to string removing b''
         emailMsg = email.message_from_bytes(rawEmail)      
 
         # If message is multi part we only want the text version of the body
         # This walks the message and gets the body.
+        body = ""
         if emailMsg.is_multipart():
             for part in emailMsg.walk():       
                 if part.get_content_type() == "text/plain":
@@ -1061,8 +1092,31 @@ class emailAgent():
 
         return emailMsgDict
 
-    def printProcessedEmail(self, To, From, dateTime, subject, body):
-        '''
+    def printProcessedEmailDict(self, emailDict:dict):
+        """
+            \n@brief: Convience function which passes preformatted dictionary to printProcessedEmail 
+            \n@arg: emailDict(dict) = {
+                    "To": "", 
+                    "From": "", 
+                    "DateTime": "", 
+                    "Subject": "", 
+                    "Body": ""
+                }
+        """
+        sampleDict = {
+            "To": "", 
+            "From": "", 
+            "DateTime": "", 
+            "Subject": "", 
+            "Body": ""
+        }
+        if (emailDict.keys() != sampleDict.keys()):
+            raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))
+        
+        self.printProcessedEmail(emailDict["To"], emailDict["From"], emailDict["DateTime"], emailDict["Subject"], emailDict["Body"])
+
+    def printProcessedEmail(self, To:str, From:str, dateTime:str, subject:str, body:str):
+        """
             @brief: Prints the processed email
             @args: 
                 - To: Who the is receiving the message (usually the user using this code)
@@ -1070,7 +1124,7 @@ class emailAgent():
                 - dateTime: Timestamp of when the message was sent
                 - subject: The subject
                 - body: The actual message
-        '''
+        """
         # email delineator (get column size)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
         delineator = columns - 2 # have to account for '<' and '>' chars on either end 
@@ -1305,7 +1359,14 @@ def run():
 
     elif "get" in serviceType:
         # Entering something in the second argument signifies that you want to use the default login
-        emailer.receiveEmail()
+        filterInput = ""
+        while filterInput != "n" and filterInput != "y":
+            filterInput = input("Do you want to see only unopened emails (y/n): ")
+            if filterInput == "y": emailer.receiveEmail(onlyUnread=True)
+            elif filterInput == "n": emailer.receiveEmail(onlyUnread=False)
+            else: print("Invalid Arg Entered!")
+
+        
             
     else:
         print("Please Enter a Valid Option!")

@@ -885,14 +885,14 @@ class emailAgent():
             print("{0} - #{1}) {2}{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg))
 
 
-    def getEmailsGradually(self, emailFilter:str="(UNSEEN)", printDescriptors:bool=True)->(list(), list()):
+    def getEmailsGradually(self, emailFilter:str="(UNSEEN)", printDescriptors:bool=True)->(list(), dict()):
         """
             \n@Brief- Takes email dict and prints out email nicely for user
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: printDescriptors(bool)- if true, print "<email id>) <email subject>" for all emails
             \n@Return- Touple(emailMsgLlist, idList) 
             \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum}]
-            \n@idList: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>', '<list index>'}
+            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>', '<list index>'}
         """
         idList = self.getEmailListIDs(emailFilter=emailFilter)
 
@@ -911,7 +911,24 @@ class emailAgent():
             print("Stopped fetching")
         return (emailList, idDict)
 
+    def _openEmail(self, idDict:dict, emailList:list)->str():
+        """
+            \n@Brief: Helper function that determines which email the user wants to open, printing and returning it
+            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>', '<list index>'}
+            \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum}]
+            \n@Return: string of whats printed to the terminal
+        """
+        idSelected = -1
+        if self.commandLine:
+            while not idSelected in idDict.keys():
+                idSelected = int(input("Enter email id to open: "))
+        else: 
+            raise Exception("IMPLEMENT NON-COMMAND LINE '_openEmail'")
 
+        # open selected email
+        emailListIndex = idDict[idSelected]
+        emailDict = emailList[emailListIndex]
+        printedStr = self.printProcessedEmailDict(emailDict)
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         """
@@ -934,15 +951,8 @@ class emailAgent():
         keepCheckingInbox = True 
         while keepCheckingInbox: 
             keepCheckingInbox = False
-            if self.commandLine:
-                idSelected = -1
-                while not idSelected in idDict.keys():
-                    idSelected = int(input("Enter email id to open: "))
-                
-                # open selected email
-                emailListIndex = idDict[idSelected]
-                emailDict = emailList[emailListIndex]
-                self.printProcessedEmailDict(emailDict)
+            self._openEmail(idDict, emailList)
+
                 # only ask this question if user didnt start off by sending emails
                 # if startedBySendingEmail == False: 
                 #     replyBool = input("Do you want to reply to this email (y/n): ")
@@ -1124,7 +1134,7 @@ class emailAgent():
 
         return emailMsgDict
 
-    def printProcessedEmailDict(self, emailDict:dict):
+    def printProcessedEmailDict(self, emailDict:dict)->str():
         """
             \n@brief: Convience function which passes preformatted dictionary to printProcessedEmail 
             \n@Param: emailDict(dict) = {
@@ -1135,6 +1145,7 @@ class emailAgent():
                     "Body": "",
                     "idNum": ""
                 }
+            \n@Return: string of what's printed to the terminal
         """
         sampleDict = {
             "To": "", 
@@ -1147,33 +1158,37 @@ class emailAgent():
         if (emailDict.keys() != sampleDict.keys()):
             raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))
         
-        self.printProcessedEmail(emailDict["To"], emailDict["From"], emailDict["DateTime"], emailDict["Subject"], emailDict["Body"])
+        return self.printProcessedEmail(emailDict["To"], emailDict["From"], emailDict["DateTime"], emailDict["Subject"], emailDict["Body"])
 
-    def printProcessedEmail(self, To:str, From:str, dateTime:str, subject:str, body:str):
+    def printProcessedEmail(self, To:str, From:str, DateTime:str, Subject:str, Body:str)->str():
         """
-            @brief: Prints the processed email
-            @args: 
-                - To: Who the is receiving the message (usually the user using this code)
-                - From: Who the message is from 
-                - dateTime: Timestamp of when the message was sent
-                - subject: The subject
-                - body: The actual message
+            \n@brief: Prints the processed email
+            \n@Param: To- Who the is receiving the message (usually the user using this code)
+            \n@Param: From- Who the message is from 
+            \n@Param: dateTime- Timestamp of when the message was sent
+            \n@Param: subject- The subject
+            \n@Param: body- The actual message
+            \n@Return: string of what's printed to the terminal
         """
         # email delineator (get column size)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
         delineator = columns - 2 # have to account for '<' and '>' chars on either end 
-        print("\n<{0}>\n".format('-'*delineator)) 
-
-        self.webAppPrintWrapper("""Email:\n
+        deliniatorStr = "\n<{0}>\n".format('-'*delineator)
+        
+        strToPrint = ""
+        strToPrint += deliniatorStr
+        strToPrint += """Email:\n
         To: {0}
         From: {1}
         DateTime: {2}
         Subject: {3}
 
         Body: {4}
-        """.format(To, From, dateTime, subject, body))
+        """.format(To, From, DateTime, Subject, Body)
+        strToPrint += deliniatorStr
 
-        print("\n<{0}>\n".format('-'*delineator)) # email delineator
+        print(strToPrint)
+        return strToPrint
 
     def scanForAttachments(self):
         '''

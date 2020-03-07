@@ -807,7 +807,7 @@ class emailAgent():
         """
             \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
             \n@param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
-            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum} 
             \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
         """
         idList = self.getEmailListIDs(emailFilter=emailFilter)
@@ -818,7 +818,7 @@ class emailAgent():
             rawEmail = self.fetchEmail(idNum)
 
             # function returns (To, From, DateTime, Subject, Body)
-            emailMsg = self.processRawEmail(rawEmail)
+            emailMsg = self.processRawEmail(rawEmail, idNum)
             emailList.append(emailMsg)
 
         return emailList
@@ -844,7 +844,7 @@ class emailAgent():
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
         """
             \n@Brief- Takes email list and prints: "Mail Id #: <subject> "
-            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body}]
+            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body, idNum}]
             \n@Param- lowerBound(int): the index to start printing ids from 
             \n@Param- upperBound(int): the index to stop printing ids 
             \n@Return- None
@@ -857,8 +857,17 @@ class emailAgent():
             emailList = emailList[lowerBound:upperBound]
         else:
             emailList = emailList[lowerBound:]
-        for mailId, emailDict in enumerate(emailList):
-            print("{0}) {1}".format(mailId, emailDict["Subject"]))
+        for emailDict in emailList:
+            print("{0}) {1}".format(emailDict["idNum"], emailDict["Subject"]))
+
+    def _printEmailIdPretty(self, emailInfo:dict):
+        """
+            \n@Brief- Takes email dict and prints: "Mail Id #: <subject> "
+            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body}]
+            \n@Param- lowerBound(int): the index to start printing ids from 
+            \n@Param- upperBound(int): the index to stop printing ids 
+            \n@Return- None 
+        """
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):
         """
@@ -1058,11 +1067,12 @@ class emailAgent():
         return self.useDefault 
 
 
-    def processRawEmail(self, rawEmail):
+    def processRawEmail(self, rawEmail:bytearray, idNum:int)->dict():
         '''
             \n@Brief: This function returns the body of the raw email. The raw email needs to be processed because it contains alot of junk that makes it illegible 
             \n@Param: rawEmail: a byte string that can be converted into a Message object
-            \n@Return: refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body) 
+            \n@Param: idNum: the id number associated with the email from the imap server
+            \n@Return: refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body, idNum) 
         '''
         # convert byte literal to string removing b''
         emailMsg = email.message_from_bytes(rawEmail)      
@@ -1092,7 +1102,8 @@ class emailAgent():
             "From": emailMsg['From'],
             "DateTime": dateTime,
             "Subject": emailMsg['Subject'],
-            "Body": body
+            "Body": body,
+            "idNum": idNum
         }
 
         return emailMsgDict

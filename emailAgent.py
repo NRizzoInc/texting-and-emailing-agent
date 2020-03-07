@@ -13,6 +13,7 @@ import datetime
 import shutil
 import re
 import platform
+from signal import signal, SIGINT # to catch control-c
 # Email imports
 import ssl
 import smtplib # to send emails- Simple Mail Transfer Protocol
@@ -892,14 +893,18 @@ class emailAgent():
             \n@Return- List of dicts with email message data. List format [{To, From, DateTime, Subject, Body, idNum}]
         """
         idList = self.getEmailListIDs(emailFilter=emailFilter)
-        emailList = []
-        for idNum in idList:
-            rawEmail = self.fetchEmail(idNum)
-            emailMsg = self.processRawEmail(rawEmail, idNum)
-            emailList.append(emailMsg)
-            if printDescriptors:
-                self._printEmailDescriptor(emailMsg)
 
+        print("ctrl-c to stop fetching...")
+        emailList = []
+        try:
+            for idNum in idList:
+                rawEmail = self.fetchEmail(idNum)
+                emailMsg = self.processRawEmail(rawEmail, idNum)
+                emailList.append(emailMsg)
+                if printDescriptors:
+                    self._printEmailDescriptor(emailMsg)
+        except KeyboardInterrupt:
+            print("Stopped fetching")
         return emailList
 
 

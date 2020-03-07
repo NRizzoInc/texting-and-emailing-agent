@@ -852,7 +852,12 @@ class emailAgent():
         if emailList == None or len(emailList) == 0: 
             print("No emails!")
             return
-        for mailId, emailDict in enumerate(emailList[lowerBound:upperBound]):
+        # shrink list according to function args
+        if (upperBound != -1): 
+            emailList = emailList[lowerBound:upperBound]
+        else:
+            emailList = emailList[lowerBound:]
+        for mailId, emailDict in enumerate(emailList):
             print("{0}) {1}".format(mailId, emailDict["Subject"]))
 
     def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True):

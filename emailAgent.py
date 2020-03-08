@@ -479,10 +479,7 @@ class emailAgent():
                 print("\nEncountered error while trying to connect to email server: \n{0}".format(error))
             quit()
 
-    def loadJson(self, pathToJson=None):
-        if pathToJson == None:
-            pathToJson = self.pathToContactList
-
+    def loadJson(self, pathToJson):
         with open(pathToJson, 'r+') as readFile:
             data = json.load(readFile)
         return data

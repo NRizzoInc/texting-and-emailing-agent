@@ -32,6 +32,16 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 class emailAgent():
+    """
+        \n@Brief: This class handles the sending and receiving of email/text messages
+        \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
+        \n@Note:The helper high level api functions are: updateContactList(), self.emailAgent.printContactListPretty(),
+        self.emailAgent.setDefaultState(bool), get_receiver_contact_info(firstName, lastName)
+    """
+    # static helper varaibles to remove magic strings
+    _unreadEmailFilter = "(UNSEEN)"
+    _allEmailFilter = "ALL"
+
     def __init__(self, displayContacts=True, commandLine=False, useDefault=False):
         '''
             This class is responsible for sending emails 
@@ -423,15 +433,13 @@ class emailAgent():
         return dictToRtn
 
     def connectToEmailServers(self):
-        '''
-            This function is responsible for connecting to the email server.
-            Args:
-                - hostAddress: contains information about host address of email server 
-                - purpose: A str that is either "send" or "receive" which is needed to determine which protocol to use
-                - portNum: contains information about the port # of email server (defaults to 465)
-            Return:
-                - No returns, but this function does create a couple 'self' variables
-        '''
+        """
+            \n@Brief: This function is responsible for connecting to the email server.
+            \n@Param: hostAddress- contains information about host address of email server 
+            \n@Param: purpose- str that is either "send" or "receive" which is needed to determine which protocol to use
+            \n@Param: portNum- contains information about the port # of email server (defaults to 465)
+            \n@Return:No returns, but this function does create a couple 'self' variables
+        """
 
         # Get email login
         if self.useDefault == False and self.loginAlreadySet == False:
@@ -738,9 +746,11 @@ class emailAgent():
             \n@Param: startedBySendingEmail- bool that informs program if the first action taken was to send
         """
         # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
+        waitForMsg = ''
         if startedBySendingEmail == False:
             if self.commandLine:
-                waitForMsg = input("Do you want to wait for a reply (y/n): ")
+                while 'y' not in waitForMsg:
+                    waitForMsg = input("Do you want to wait for a new message (y/n): ")
             else: 
                 raise Exception("IMPLEMENT NON-COMMAND LINE '_waitForNewMessage'")
         else:
@@ -764,14 +774,14 @@ class emailAgent():
                 numEmails = len(unreadEmailList)
                 # check intermittenly
                 time.sleep(10) # in seconds
-                print("{0} - checking for new message".format(str(datetime.datetime.now())))
+                print("{0} - No New Message".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
             
             # if this point is reached, new email detected and can end function so program can continue!
-            self.webAppPrintWrapper("New email message detected!")
+            self.webAppPrintWrapper("{0} - New email message detected!".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
             self.receiveEmail(onlyUnread=True, recursiveCall=True) # return to main receive function but have it stop early to not recur
             
 
-    def getEmailListIDs(self, emailFilter:str='(UNSEEN)')->list():
+    def getEmailListIDs(self, emailFilter:str=_unreadEmailFilter)->list():
         """
             \n@brief: Helper function that gets all the email ids (belonging to emailFilter)
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
@@ -782,7 +792,7 @@ class emailAgent():
             self.connectToEmailServers()
 
         # verify correct input entered
-        if emailFilter != '(UNSEEN)' and emailFilter != 'ALL':
+        if emailFilter != emailAgent._unreadEmailFilter and emailFilter != emailAgent._allEmailFilter:
             print("WARNING UNKNOWN EMAIL FILTER ENTERED- may result in undefined behavior")
 
         # opens folder/label you want to read from
@@ -824,15 +834,22 @@ class emailAgent():
 
 
 
-    def getEmailListWithContent(self, emailFilter:str='(UNSEEN)',  leaveUnread=False)->list():
+    def getEmailListWithContent(self, emailFilter:str=_unreadEmailFilter,  leaveUnread=False)->list():
         """
             \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: leaveUnread- Dont open the email (leave as unread)
-            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum} 
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
             \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
         """
-        idList = self.getEmailListIDs(emailFilter=emailFilter)
+        # Get both types of lists so that if reading all emails, can mark ones as unread
+        idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
+        idListALL = self.getEmailListIDs(emailFilter=emailAgent._allEmailFilter)
+        if emailFilter == emailAgent._unreadEmailFilter:
+            idList = idListUnread
+        else:
+            idList = idListALL
+    
 
         # get all emails
         emailList = []
@@ -840,7 +857,8 @@ class emailAgent():
             rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
 
             # function returns (To, From, DateTime, Subject, Body)
-            emailMsg = self.processRawEmail(rawEmail, idNum)
+            emailUnreadBool = idNum in idListUnread 
+            emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
             emailList.append(emailMsg)
 
         return emailList
@@ -848,25 +866,25 @@ class emailAgent():
     def getListAllEmails(self)->list():
         """
             \n@brief: Fetches all emails and lists them by id number
-            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
             \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
         """
-        emailList = self.getEmailListWithContent(emailFilter="ALL")
+        emailList = self.getEmailListWithContent(emailFilter=emailAgent._allEmailFilter)
         return emailList
 
     def getUnreadEmails(self)->list():
         """
             \n@brief: Fetches all unread emails and lists them by id number
-            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body} 
+            \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
             \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
         """
-        emailList = self.getEmailListWithContent(emailFilter="(UNSEEN)")
+        emailList = self.getEmailListWithContent(emailFilter=_unreadEmailFilter)
         return emailList
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
         """
             \n@Brief- Takes email list and prints: "Mail Id #: <subject> "
-            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body, idNum}]
+            \n@Param- emailDict(list): [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@Param- lowerBound(int): the index to start printing ids from 
             \n@Param- upperBound(int): the index to stop printing ids 
             \n@Return- None
@@ -885,15 +903,19 @@ class emailAgent():
     def _printEmailDescriptor(self, emailMsg:dict):
         """
             \n@Brief: Internal function which helps print useful messages about an email for a user to access
-            \n@Param: emailMsg(dict)- a dictionary of the email with format {To, From, DateTime, Subject, Body, idNum}
+            \n@Param: emailMsg(dict)- a dictionary of the email with format {To, From, DateTime, Subject, Body, idNum, unread}
             \n@Return: None (prints stuff)
         """
+        # if unread, print it
+        if emailMsg["unread"] == True:  unreadText = "(unread)"
+        else:                           unreadText = ""
+
         # get terminal size to make message appear on one line (subtract to make comfortable)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
-        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + 5 # last 5 comes from email id reaching up to 99999 (might need to make more) 
+        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + len(unreadText) + 5 # last 5 comes from email id reaching up to 99999 (might need to make more) 
         if (emailMsg['Subject'].strip().isspace() or emailMsg['Subject'] == '' or emailMsg['Subject'] == None):
             # there is no subject, show part of message instead
-            print("{0} - #{1}) {2}...".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion]))
+            print("{0} - #{1}) {2}...{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion], unreadText))
 
         # there is an actual subject in the message
         else:
@@ -902,20 +924,26 @@ class emailAgent():
             if overflow < 0: 
                 emailMsg = emailMsg[:overflow]
                 moreToMsg = "..."
-            print("{0} - #{1}) {2}{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg))
+            print("{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText))
 
 
-    def getEmailsGradually(self, emailFilter:str="(UNSEEN)", printDescriptors:bool=True, leaveUnread=False)->(list(), dict()):
+    def getEmailsGradually(self, emailFilter:str=_unreadEmailFilter, printDescriptors:bool=True, leaveUnread=False)->(list(), dict()):
         """
             \n@Brief- Takes email dict and prints out email nicely for user
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: printDescriptors(bool)- if true, print "<email id>) <email subject>" for all emails
             \n@Param: leaveUnread- Dont open the email (leave as unread)
             \n@Return- Touple(emailMsgLlist, idList) 
-            \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum}]
+            \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>', '<list index>'}
         """
-        idList = self.getEmailListIDs(emailFilter=emailFilter)
+        # Get both types of lists so that if reading all emails, can mark ones as unread
+        idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
+        idListALL = self.getEmailListIDs(emailFilter=emailAgent._allEmailFilter)
+        if emailFilter == emailAgent._unreadEmailFilter:
+            idList = idListUnread
+        else:
+            idList = idListALL
 
         print("ctrl-c to stop fetching...")
         emailList = []
@@ -923,7 +951,8 @@ class emailAgent():
         try:
             for idNum in idList:
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
-                emailMsg = self.processRawEmail(rawEmail, idNum)
+                emailUnreadBool = idNum in idListUnread 
+                emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
                 idDict[idNum] = len(emailList) # right before append (list size at first =0, and first entry in 0)
                 emailList.append(emailMsg)
                 if printDescriptors:
@@ -936,10 +965,10 @@ class emailAgent():
         """
             \n@Brief: Helper function that determines which email the user wants to open, printing and returning it
             \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>', '<list index>'}
-            \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum}]
+            \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@Return(touple): (printedStr, emailDict)
             \n@Return: printedStr- string of what is printed to the terminal
-            \n@Return: emailDict- email info dict of format {To, From, DateTime, Subject, Body, idNum}
+            \n@Return: emailDict- email info dict of format {To, From, DateTime, Subject, Body, idNum, unread}
             \n@Note: If no emails in list, return touple of ("", {})
         """
         idSelected = -1
@@ -954,7 +983,9 @@ class emailAgent():
 
             # error checking for valid email id
             while not idSelected in idDict.keys():
-                idSelected = int(input("Enter email id to open: "))
+                idSelected = input("Enter email id to open: ").replace('\n', '').strip()
+                if idSelected.isspace() or not idSelected.isdigit(): idSelected = -1
+                idSelected = int(idSelected)
         else: 
             raise Exception("IMPLEMENT NON-COMMAND LINE '_openEmail'")
 
@@ -968,7 +999,7 @@ class emailAgent():
         """
             \n@Brief: Helper function that determines if user wants to reply to email
             \n@Param: startedBySendingEmail- bool that informs program if the first action taken was to send
-            \n@Param: emailMsgDict- dict of info about email of format {To, From, DateTime, Subject, Body, idNum}
+            \n@Param: emailMsgDict- dict of info about email of format {To, From, DateTime, Subject, Body, idNum, unread}
         """
         # only ask this question if user didnt start off by sending emails
         if startedBySendingEmail == False: 
@@ -1013,9 +1044,9 @@ class emailAgent():
             
         # input error checking                
         if onlyUnread:
-            emailList, idDict = self.getEmailsGradually(emailFilter="(UNSEEN)")
+            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter)
         elif not onlyUnread: 
-            emailList, idDict = self.getEmailsGradually(emailFilter="ALL")
+            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter)
 
         # intially set to True but immediately set to False in loop
         # only set to True again if you wait for new messages
@@ -1109,13 +1140,23 @@ class emailAgent():
         return self.useDefault 
 
 
-    def processRawEmail(self, rawEmail:bytearray, idNum:int)->dict():
-        '''
+    def processRawEmail(self, rawEmail:bytearray, idNum:int, unread:bool=False)->dict():
+        """
             \n@Brief: This function returns the body of the raw email. The raw email needs to be processed because it contains alot of junk that makes it illegible 
             \n@Param: rawEmail: a byte string that can be converted into a Message object
             \n@Param: idNum: the id number associated with the email from the imap server
-            \n@Return: refinedEmail(dict): The touple will contain the keys (To, From, DateTime, Subject, body, idNum) 
-        '''
+            \n@Param: unread(optional): bool that user can use tells program this email is unread if True
+            \n@Return: refinedEmail(dict):  Dictionary with format: 
+            \n{
+            \n\t"To": "", 
+            \n\t"From": "", 
+            \n\t"DateTime": "", 
+            \n\t"Subject": "", 
+            \n\t"body": "", 
+            \n\t"idNum": "", 
+            \n\t"unread": bool
+            \n}
+        """
         # convert byte literal to string removing b''
         emailMsg = email.message_from_bytes(rawEmail)      
 
@@ -1140,12 +1181,13 @@ class emailAgent():
             dateTime = local_date.strftime("%a, %d %b %Y %H:%M:%S")
 
         emailMsgDict = {
-            "To": emailMsg['To'],
-            "From": emailMsg['From'],
-            "DateTime": dateTime,
-            "Subject": emailMsg['Subject'],
-            "Body": body,
-            "idNum": idNum
+            "To":           emailMsg['To'],
+            "From":         emailMsg['From'],
+            "DateTime":     dateTime,
+            "Subject":      emailMsg['Subject'],
+            "Body":         body,
+            "idNum":        idNum,
+            "unread":       unread
         }
 
         return emailMsgDict
@@ -1169,7 +1211,8 @@ class emailAgent():
             "DateTime": "", 
             "Subject": "", 
             "Body": "",
-            "idNum": ""
+            "idNum": "",
+            "unread": bool()
         }
         if (emailDict.keys() != sampleDict.keys()):
             raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))
@@ -1420,7 +1463,7 @@ def run():
     
         waitForReply = input("Do you want to wait for a reply (y/n): ")
         if 'n' not in waitForReply:
-            emailer.receiveEmail(startedBySendingEmail=True)
+            emailer.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
     elif "get" in serviceType:
         # Entering something in the second argument signifies that you want to use the default login

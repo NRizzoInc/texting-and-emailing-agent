@@ -8,7 +8,7 @@
   - [ ] Implement receive text messages
 - [ ] Get emailing to work
   - [ ] Implement send email messages
-  - [ ] Implement receive email messages
+  - [ ] Implement receive email/text messages-WIP!->refactored the receive code to provide more ins/hooks for webapp to use
 - [X] Fix url parsing (only make urls attachment if they are pics/video/gif, if just a link than leave it)
   - [X] SOLUTION: used fleep library (see setup script for pip)
   
@@ -22,3 +22,4 @@
   - [ ] If possible use dropdown & text enter at same time
 - [ ] Add "Can't find your contact, add them!" button when sending
 - [ ] Add drop down menu for sms providers
+- [ ] Define low/high level api functions better

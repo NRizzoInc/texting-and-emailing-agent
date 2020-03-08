@@ -31,17 +31,14 @@ from urllib.parse import urlparse # WARNING: python3 only
 # 3rd party Dependencies
 import fleep # to identify file types
 
-pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(pathToThisDir)
-
-
 class emailAgent():
     def __init__(self, displayContacts=True, commandLine=False, useDefault=False):
         '''
             This class is responsible for sending emails 
         '''
-        self.messageTemplatesDir = os.path.join(pathToThisDir, "templates", "messageTemplates")
-        self.pathToContactList = os.path.join(pathToThisDir, "contacts.json")
+        self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
+        self.messageTemplatesDir = os.path.join(self.__pathToThisDir, "templates", "emailTemplates")
+        self.pathToContactList = os.path.join(self.__pathToThisDir, "emailData", "contacts.json")
 
 
         # Open the contact list file (create new file if it does not exist)
@@ -51,7 +48,7 @@ class emailAgent():
         self.contactList = self.loadJson(self.pathToContactList)
 
         # information to login
-        self.emailProvidersInfo = self.loadJson(os.path.join(pathToThisDir, 'emailProvidersInfo.json'))
+        self.emailProvidersInfo = self.loadJson(os.path.join(self.__pathToThisDir, "emailData", "emailProvidersInfo.json"))
         self.sendToPhone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP

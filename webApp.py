@@ -16,12 +16,15 @@ import socket # used to get local network exposible IP
 import emailAgent # need to call functions
 class WebApp():
     def __init__(self):
-        self.emailAgent = emailAgent.emailAgent(display_contacts=True)
+        self.emailAgent = emailAgent.emailAgent(displayContacts=True)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
         self.app = Flask(__name__)
-        self.app.static_folder = "templates/stylesheets" # change location of where the css stylesheets are
+        # change location of where the html, css, and js code lives
+        self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
+        self.app.static_folder = os.path.join(self.__pathToThisDir, "templates", "stylesheets") 
+        self.app.template_folder = os.path.join(self.__pathToThisDir, "templates", "htmlTemplates") 
         self.sites = {
             "landingpage"   :   '/',
             "textpage"      :   '/textpage',

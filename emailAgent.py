@@ -434,7 +434,7 @@ class emailAgent():
         '''
 
         # Get email login
-        if self.useDefault is False and self.loginAlreadySet == False:
+        if self.useDefault == False and self.loginAlreadySet == False:
             # if false then make user use their own email username and password
             self.myEmailAddress = input("Enter your email address: ")
             self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.myEmailAddress))
@@ -444,7 +444,7 @@ class emailAgent():
             # I created a dummy gmail account that this program can login to
 
         
-        emailServiceProviderInfo = self.getEmailProviderInfo()
+        emailServiceProviderInfo = self.getEmailProviderInfo(emailWebsite=self.myEmailAddress)
         smtpInfo = emailServiceProviderInfo["smtpServer"]
         imapInfo = emailServiceProviderInfo["imapServer"]
 
@@ -476,7 +476,7 @@ class emailAgent():
                 print("Quiting program, try connecting again with correct email/password, \
                     after making the changes, or trying a different email")
             else:
-                print("Encountered error while trying to connect to email server: \n{0}".format(error))
+                print("\nEncountered error while trying to connect to email server: \n{0}".format(error))
             quit()
 
     def loadJson(self, pathToJson=None):
@@ -498,27 +498,34 @@ class emailAgent():
         print("Connecting to IMAP email server")
         self.IMAPClient = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
-    def getEmailProviderInfo(self):
-        '''
-            This function returns a dictionary containing information 
+    def getEmailProviderInfo(self, emailWebsite:str="")->dict():
+        """
+            \n@Brief: This function returns a dictionary containing information 
             about a host address and port number of an email company.
-
-            Args:
-            Return:
-                -emailServiceProviderInfo: (Dict) Contains info about the email company necessary for logging in with format:
-                    {
-                        "smtpServer": {"hostAddress": "smtp.gmail.com", "portNum": "587"},
-                        "imapServer": {"hostAddress": "imap.gmail.com", "portNum": "993"}   
-                    }
-        '''
-        # Based on input about which email service provider the user wants to login to determine info for server
-
-        # concert the dictionary to all lower case to make searching easier
+            \n@Param: emailWebsite(str)- the email company/website(like name@gmail.com, name@verizon.net, etc...)
+            \n\t(optional)- used to guess some information w/o user input
+            \n@Return: emailServiceProviderInfo(dict)- Email company info necessary for logging in with format:
+            \n\t{
+            \n\t    "smtpServer": {"hostAddress": "smtp.gmail.com", "portNum": "587"},
+            \n\t    "imapServer": {"hostAddress": "imap.gmail.com", "portNum": "993"}   
+            \n\t}
+        """
+        # convert the dictionary to all lower case to make searching easier
         lowerCaseList = list(map(lambda x:x.lower(), self.emailProvidersInfo.keys()))
         dictKeysMappedToList = list(map(lambda x:x, self.emailProvidersInfo.keys()))
 
+        # helper variables while searching
         foundValidEmailProvider = False
         emailServiceProviderInfo = {}
+        emailServiceProvider = ""
+
+        # use email name (if possible) to guess provider to skip user input
+        if len(emailWebsite) > 0 and not emailWebsite.isspace():
+            emailServiceProvider = (emailWebsite[emailWebsite.find("@")+1:emailWebsite.find('.')])
+            print("Email Address is: {0}".format(emailServiceProvider))
+            if emailServiceProvider.lower() in lowerCaseList:
+                foundValidEmailProvider = True
+
 
         while foundValidEmailProvider is False and self.useDefault is False:
             print("The available list of providers you can login to is: \n{0} \
@@ -528,18 +535,20 @@ class emailAgent():
             # see if email service provider exists in the list (case-insensitive)
             # -use lambda function to turn list to lowercase
             if emailServiceProvider.lower() in lowerCaseList:
-                # get the index of name match in the list (regardless of case)
-                index = lowerCaseList.index(emailServiceProvider.lower())
-
-                # Using the index of where the correct key is located, 
-                # use the dict which contains all entries of original dict to get exact key name
-                dictKeyName = dictKeysMappedToList[index]
-
-                # Get the information pertaining to this dict key
-                emailServiceProviderInfo = self.emailProvidersInfo[dictKeyName]
-                foundValidEmailProvider = True
+                break
             else:
                 print("The desired email service provider not supported! Try using another one")
+            
+        # get the index of name match in the list (regardless of case)
+        index = lowerCaseList.index(emailServiceProvider.lower())
+
+        # Using the index of where the correct key is located, 
+        # use the dict which contains all entries of original dict to get exact key name
+        dictKeyName = dictKeysMappedToList[index]
+
+        # Get the information pertaining to this dict key
+        emailServiceProviderInfo = self.emailProvidersInfo[dictKeyName]
+        foundValidEmailProvider = True
             
         # if user wants to use the pre-setup gmail accoun,
         # then program needs to change which smtp server it is trying to access

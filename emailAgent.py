@@ -146,7 +146,6 @@ class emailAgent():
                         self.SMTPClient.sendmail(msg["From"], msg["To"], sms)
                         # add microscopic delay to ensure that messages arrive in correct order
                         time.sleep(10/1000) # input is in seconds (convert to milliseconds)
-                        print("Text bubble sent")
                     else:
                         print("Note sending empty message")
 
@@ -203,6 +202,21 @@ class emailAgent():
                         part.set_payload(None)
         return msg
 
+    def _getTextMsgInput(self)->str():
+        """
+            \n@Brief: Helper function that allows for messages to span multiple lines, stops with 'control-c'
+            \n@Return: Returns the message as a string
+        """
+        msgToRtn = ""
+        try:
+            print("Please enter the message you would like to send (Use control-c to stop): ")
+            while True:
+                msgToRtn += input("") + "\n"
+        except KeyboardInterrupt:
+            pass
+        finally:
+            # remove extra newlines
+            return msgToRtn.strip()
 
     def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
@@ -244,7 +258,7 @@ class emailAgent():
         
         # Get content to send in text message
         if self.commandLine:
-            body = input("Please enter the message you would like to send (Use enter key to finish typing): \n")
+            body = self._getTextMsgInput()
         # not using command line
         else: 
             body = msgToSend
@@ -356,7 +370,7 @@ class emailAgent():
                     receiverName=receiver, senderName=self.myEmailAddress) 
 
             elif typeOfMsg == 'inputContent':
-                myInput = input("Input what you would like to send in the body of the email: ")
+                myInput = self._getTextMsgInput()
                 sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
             
             # Default to default file 
@@ -527,7 +541,7 @@ class emailAgent():
         # use email name (if possible) to guess provider to skip user input
         if len(emailWebsite) > 0 and not emailWebsite.isspace():
             emailServiceProvider = (emailWebsite[emailWebsite.find("@")+1:emailWebsite.find('.')])
-            print("Email Address is: {0}".format(emailServiceProvider))
+            print("Email Provider: {0}".format(emailServiceProvider))
             if emailServiceProvider.lower() in lowerCaseList:
                 foundValidEmailProvider = True
 

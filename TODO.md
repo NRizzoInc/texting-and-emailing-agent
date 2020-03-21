@@ -23,3 +23,4 @@
 - [ ] Add "Can't find your contact, add them!" button when sending
 - [ ] Add drop down menu for sms providers
 - [ ] Define low/high level api functions better
+- [ ] Add ability to press enter when sending messages (keep concatting inputs until keyboard exception- 'control-c')

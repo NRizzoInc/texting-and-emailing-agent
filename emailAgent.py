@@ -36,7 +36,7 @@ class emailAgent():
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
         \n@Note:The helper high level api functions are: updateContactList(), self.emailAgent.printContactListPretty(),
-        self.emailAgent.setDefaultState(bool), get_receiver_contact_info(firstName, lastName)
+        self.emailAgent.setDefaultState(bool), getReceiverContactInfo(firstName, lastName)
     """
     # static helper varaibles to remove magic strings
     _unreadEmailFilter = "(UNSEEN)"
@@ -47,8 +47,9 @@ class emailAgent():
             This class is responsible for sending emails 
         '''
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.messageTemplatesDir = os.path.join(self.__pathToThisDir, "templates", "emailTemplates")
-        self.pathToContactList = os.path.join(self.__pathToThisDir, "emailData", "contacts.json")
+        self.__backendDir = os.path.join(self.__pathToThisDir, "backend")
+        self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
+        self.pathToContactList = os.path.join(self.__backendDir, "emailData", "contacts.json")
 
 
         # Open the contact list file (create new file if it does not exist)
@@ -58,7 +59,7 @@ class emailAgent():
         self.contactList = self.loadJson(self.pathToContactList)
 
         # information to login
-        self.emailProvidersInfo = self.loadJson(os.path.join(self.__pathToThisDir, "emailData", "emailProvidersInfo.json"))
+        self.emailProvidersInfo = self.loadJson(os.path.join(self.__backendDir, "emailData", "emailProvidersInfo.json"))
         self.sendToPhone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP

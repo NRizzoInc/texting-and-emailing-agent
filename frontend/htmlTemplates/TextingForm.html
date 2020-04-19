@@ -1,13 +1,13 @@
 <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='formInterface.css') }}">
-    <script src="{{ url_for('static', filename='formProcessor.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/formInterface.css">
+    <script type="module" src="../static/js/formProcessor.js"></script>
 </head>
 
 <!--Use wrapper to hide the form until the button is clicked-->
 <div class="interface-wrapper" id='Texting-Form-Wrapper'>
     <!--Use POST to make site inaccessible and protect data by not adding it to url-->
     <form id='Texting-Form' name="" method="POST">
-        <div class="row">
+        <div class="row" id="firstname-container">
             <div class="col-25">
                 <label for="firstName">First Name</label>
             </div>
@@ -15,7 +15,7 @@
                 <input type="text" id="firstName" name="firstname" placeholder="First name...">
             </div>
         </div>
-        <div class="row">
+        <div class="row" id="lastname-container">
             <div class="col-25">
                 <label for="lastName">Last Name</label>
             </div>

@@ -23,8 +23,8 @@ class WebApp():
         self.app = Flask(__name__)
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.app.static_folder = os.path.join(self.__pathToThisDir, "templates", "stylesheets") 
-        self.app.template_folder = os.path.join(self.__pathToThisDir, "templates", "htmlTemplates") 
+        self.app.static_folder = os.path.join(self.__pathToThisDir, "frontend", "static") 
+        self.app.template_folder = os.path.join(self.__pathToThisDir, "frontend", "htmlTemplates") 
         self.sites = {
             "landingpage"   :   '/',
             "textpage"      :   '/textpage',
@@ -125,7 +125,7 @@ class WebApp():
                 if (formData['task'] == "sending"):
                     print("Sending Text")
                     message = formData['message']
-                    receiver_contact_info = self.emailAgent.get_receiver_contact_info(firstName, lastName)
+                    receiver_contact_info = self.emailAgent.getReceiverContactInfo(firstName, lastName)
                     
                     self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text', msgToSend=message)
                 

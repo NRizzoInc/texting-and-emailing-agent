@@ -8,6 +8,9 @@ function buttonPostRequest(pageToRequest, id) {
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
     
     if (id == 'text-receive-button') {
+        console.log("receive")
+        document.getElementById('firstname-container').style.display = 'none'
+        document.getElementById('lastname-container').style.display = 'none'
         document.getElementById('message-container').style.display = 'none'
         document.getElementById('phone-number-container').style.display = 'none'
         document.getElementById('carrier-container').style.display = 'none'

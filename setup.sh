@@ -1,3 +1,4 @@
+#!/bin/bash
 # create virtual environment to install desired packages (i.e. flask)
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"

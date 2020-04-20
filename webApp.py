@@ -6,12 +6,12 @@ import urllib.request
 import re
 import platform
 import subprocess
+import socket # used to get local network exposible IP
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
 from flask import Flask, templating, render_template, request, redirect
-import socket # used to get local network exposible IP
 
 import emailAgent # need to call functions
 class WebApp():
@@ -21,6 +21,7 @@ class WebApp():
         self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
         self.app = Flask(__name__)
+
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.app.static_folder = os.path.join(self.__pathToThisDir, "frontend", "static") 
@@ -29,7 +30,6 @@ class WebApp():
         _urls = emailAgent.emailAgent.loadJson(os.path.join(self.app.static_folder, "urls.json"))
         self.sites = _urls["sites"]
         self.formSites = _urls["formSites"]
-        self.debugOn = False
 
         # create all sites to begin with
         self.initializingStatus = True
@@ -39,7 +39,8 @@ class WebApp():
         self.initializingStatus = False
 
         # start up the web app
-        self.app.run(host=self.host_ip, port=self.host_port, debug=self.debugOn)
+        self.__debugOn = False
+        self.app.run(host=self.host_ip, port=self.host_port, debug=self.__debugOn)
     
     def getIP(self):
         myPlatform = platform.system()

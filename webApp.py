@@ -118,21 +118,21 @@ class WebApp():
                 if (formData['task'] == "sending"):
                     print("Sending Text")
                     message = formData['message']
-                    receiver_contact_info = self.emailAgent.getReceiverContactInfo(firstName, lastName)
+                    receiverContactInfo = self.emailAgent.getReceiverContactInfo(firstName, lastName)
                     
-                    self.emailAgent.sendMsg(receiver_contact_info, sendMethod='text', msgToSend=message)
+                    self.emailAgent.sendMsg(receiverContactInfo, sendMethod='text', msgToSend=message)
                 
                 elif (formData['task'] == "receiving"):
                     print("Receiving Text")
-                    self.emailAgent.receive_email(onlyUnread=False)
-                    # self.emailAgent.receive_email(onlyUnread=True) TODO: uncomment this (need false for testing)
+                    self.emailAgent.receiveEmail(onlyUnread=False)
+                    # self.emailAgent.receiveEmail(onlyUnread=True) TODO: uncomment this (need false for testing)
                     toPrint = self.emailAgent.getPrintedString()
                     print(toPrint)
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']
                     phoneNumber = formData['phoneNumber']
-                    self.emailAgent.add_contacts_to_contacts_list(firstName, lastName, email, carrier, phoneNumber)
+                    self.emailAgent.addContact(firstName, lastName, email, carrier, phoneNumber)
                 else:
                     raise Exception("UNKNOWN TASK")
 

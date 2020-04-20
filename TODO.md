@@ -14,6 +14,7 @@
 - [ ] Send attachments that include env variables (%{VAR}% or ${VAR} or ${VAR})
 - [ ] Sending messages longer than 120 with no spaces is stuck in "appending"
 - [ ] Add command line flags
+  - [ ] Add flag for changing port/ip address 
 
 ## Nice to haves
 

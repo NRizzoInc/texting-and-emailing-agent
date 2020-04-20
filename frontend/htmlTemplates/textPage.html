@@ -6,17 +6,14 @@
     <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png">
     <link rel="stylesheet" type="text/css" href="../static/stylesheets/button.css">
     <link rel="stylesheet" type="text/css" href="../static/stylesheets/contactList.css">
-    <script src="../static/js/button.js"></script>
-    <script src="../static/js/jquery.js"></script><!--Jquery include-->
-    <script src="../static/js/contactList.js"></script>
     <title>{{ title }}</title>
 </head>
 
 <body>
     <div class="button-wrapper">
-        <button class="myBtn" id="text-send-button" onclick="buttonPostRequest('{{ links.sendText }}', 'text-send-button')">Send Text</button>
-        <button class="myBtn" id="text-receive-button" onclick="buttonPostRequest('{{ links.receiveText }}', 'text-receive-button')">Receive Text</button>
-        <button class="myBtn" id="add-contact" onclick="buttonPostRequest('{{ links.addContact }}', 'add-contact')">Add Contact</button>
+        <button class="myBtn" id="text-send-button">Send Text</button>
+        <button class="myBtn" id="text-receive-button">Receive Text</button>
+        <button class="myBtn" id="add-contact-button">Add Contact</button>
         <div class="contact-list" id="Contact-List">
             <div>Current Contact List:</div>
             <!-- TODO: REMOVE CONTACT/LIST LIMIT WHO SEES BASED ON IP (WILL SHOW SAME LIST TO EVERYONE) -->
@@ -27,5 +24,9 @@
     {% include "sidebar.html" %}
     
 </body>
+
+<script type="module" src="../static/js/external/jquery.js"></script>
+<script type="module" src="../static/js/button.js"></script>
+<script type="module" src="../static/js/contactList.js"></script>
 
 </html>

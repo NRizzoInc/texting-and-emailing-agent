@@ -24,18 +24,11 @@ class WebApp():
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.app.static_folder = os.path.join(self.__pathToThisDir, "frontend", "static") 
-        self.app.template_folder = os.path.join(self.__pathToThisDir, "frontend", "htmlTemplates") 
-        self.sites = {
-            "landingpage"   :   '/',
-            "textpage"      :   '/textpage',
-            "emailpage"     :   '/emailpage',
-            "aboutpage"     :   '/aboutpage',
-            "sidebarpage"   :   '/sidebarpage'
-        }
-        self.formSites = {
-            "textForm"      :   '/textForm',
-            "emailForm"      :   '/emailForm'
-        }
+        self.app.template_folder = os.path.join(self.__pathToThisDir, "frontend", "htmlTemplates")
+        # needs to be kept within the static folder so it can be loaded
+        _urls = emailAgent.emailAgent.loadJson(os.path.join(self.app.static_folder, "urls.json"))
+        self.sites = _urls["sites"]
+        self.formSites = _urls["formSites"]
         self.debugOn = False
 
         # create all sites to begin with

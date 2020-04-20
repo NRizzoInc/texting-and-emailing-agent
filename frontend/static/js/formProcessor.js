@@ -1,55 +1,42 @@
-function parseForm(formId, formLink) {
+'use strict';
+
+export function parseForm(formId, formLink) {
     // loop through form to get form key:value pairs 
-    let form = document.getElementById(formId);
-    let inputTags = form.getElementsByTagName('input');
-    let textTags = form.getElementsByTagName('textarea');
-    let inputs = [];
-    inputs.push(inputTags);
-    inputs.push(textTags);
+    const form = document.getElementById(formId);
+    const inputs = [] 
+    inputs.push(form.getElementsByTagName("input"))
+    inputs.push(form.getElementsByTagName("textarea"))
+    const formData = {};
     
-    // determine if sending or receiving message
-    let task;
-    console.log("task: " + form.getAttribute("name"))
-    if (form.getAttribute("name") == "sending") {
-        task = form.getAttribute("name") 
-    } 
-    else if (form.getAttribute("name") == "receiving") {
-        task = form.getAttribute("name") 
-    }
-    else if (form.getAttribute("name") == "adding-contact") {
-        task = form.getAttribute("name") 
-    } 
-    else {
-        task = "ERROR"
-        console.error('UNKNOWN MODE')
-    }
-    
-    let formData = {}; // declare json
-    formData['task'] = task;
     // get all inputs to form
-    for (let tag of inputs) { // iterate through all possible tags
-        for (let key of tag) { // iterate through all matches of that tag
-            if (key.id != "Submit-Button") {
-                // console.log("Id: " + key.id + "\nValue: " + key.value)
-                let value = document.getElementById(key.id).value
-                formData[key.id] = value
+    for (const tags of inputs) {
+        for (const div of tags) {
+            if (div.id != "Submit-Button") {
+                // dont include the submit button
+                formData[div.id] = div.value
             }
         }
     }
-    formData = JSON.stringify(formData)
 
+    // determine if adding contact, sending, or receiving message
+    formData.task = form.getAttribute("task")
+    if (!formData.task) {
+        console.error("No such valid task attribute")
+    }
+    
     // POST data to website
     $.ajax({
         url: formLink,
         type: 'POST',
-        data: formData,
-        dataType: "json",   
+        // need both for flask to understand MIME Type
+        dataType: "json",
         contentType: "application/json",
-        success: function (msg) {
-            console.log(msg);
+        data: JSON.stringify(formData),
+        success: (msg) => {
+            console.log("Successfully posted: " + JSON.stringify(msg));
         },
-        error: function (msg) {
-            // console.log(msg);
+        error: (err) => {
+            console.log("Failed to post: " + err);
         }
-    });
+    })
 } // end of parse form function

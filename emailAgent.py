@@ -502,7 +502,9 @@ class emailAgent():
                 print("\nEncountered error while trying to connect to email server: \n{0}".format(error))
             quit()
 
-    def loadJson(self, pathToJson):
+    # allow this function to be called without needing to initialize the class
+    @classmethod
+    def loadJson(cls, pathToJson):
         with open(pathToJson, 'r+') as readFile:
             data = json.load(readFile)
         return data

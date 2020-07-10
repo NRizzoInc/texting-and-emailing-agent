@@ -123,11 +123,17 @@ class WebApp():
                     message = formData['message']
                     receiverContactInfo = self.emailAgent.getReceiverContactInfo(firstName, lastName)
                     
-                    self.emailAgent.sendMsg(receiverContactInfo, sendMethod='text', msgToSend=message)
+                    sendErr = self.emailAgent.sendMsg(receiverContactInfo, sendMethod='text', msgToSend=message)
+                    if (sendErr != None):
+                        print(sendErr)
+                        # TODO: somehow inform user on webpage of send error (return should have error message)
                 
                 elif (formData['task'] == "receiving"):
                     print("Receiving Text")
-                    self.emailAgent.receiveEmail(onlyUnread=False)
+                    recError = self.emailAgent.receiveEmail(onlyUnread=False)
+                    if (recError != None):
+                        print(recError)
+                        # TODO: somehow inform user on webpage of send error (return should have error message)
                     # self.emailAgent.receiveEmail(onlyUnread=True) TODO: uncomment this (need false for testing)
                 
                 elif (formData['task'] == "adding-contact"):

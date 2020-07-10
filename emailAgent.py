@@ -41,6 +41,8 @@ class emailAgent():
     # static helper varaibles to remove magic strings
     _unreadEmailFilter = "(UNSEEN)"
     _allEmailFilter = "ALL"
+    __success = 0
+    __error = -1
 
     def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
         """
@@ -97,7 +99,7 @@ class emailAgent():
     def getContactList(self):
         return self.loadJson(self.pathToContactList)
 
-    def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str=''):
+    def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
             \n@Brief: Calls all other functions necessary to send an a message (either through text or email)
             \n@Param: receiverContactInfo- a dictionary about the receiver of format: 
@@ -108,11 +110,14 @@ class emailAgent():
             \n    }
             \n@Param: sendMethod- a string that should either be 'email' or 'text'
             \n@Param: msgToSend- a string that contains the message that is desired to be sent
+            \n@Return: String of error message if error occurs (None if success)
         """            
 
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
-            self.connectToEmailServers()
+            err = self.connectToEmailServers()
+            hasError = err != None
+            if (hasError): return err
 
         # second check if valid "sendMethod" is received
         if sendMethod == '': pass
@@ -158,6 +163,7 @@ class emailAgent():
                 self.SMTPClient.send_message(msg)
             print("Successfully sent the email/text to {0} {1}".format(
                 receiverContactInfo['firstName'], receiverContactInfo['lastName']))
+        return None
 
     def composeMsg(self, receiverContactInfo, sendingText:bool=False, msgToSend:str=''):
         '''
@@ -445,13 +451,13 @@ class emailAgent():
 
         return dictToRtn
 
-    def connectToEmailServers(self):
+    def connectToEmailServers(self)->str():
         """
             \n@Brief: This function is responsible for connecting to the email server.
             \n@Param: hostAddress- contains information about host address of email server 
             \n@Param: purpose- str that is either "send" or "receive" which is needed to determine which protocol to use
             \n@Param: portNum- contains information about the port # of email server (defaults to 465)
-            \n@Return:No returns, but this function does create a couple 'self' variables
+            \n@Return: None if success. String error message if error
         """
 
         # Get email login
@@ -485,20 +491,30 @@ class emailAgent():
             self.IMAPClient.login(self.myEmailAddress, self.password)
             self.connectedToServers = True
             print("Successfully logged into email account!\n")
+            return None
             
         except Exception as error:
+            linkToPage = "https://myaccount.google.com/lesssecureapps"
+            errorMsg = ""
+
             if '535' in str(error):
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
                 # TODO make connection more secure
-                print("\nCould not connect to email server because of error:\n{0}\n".format(error))
-                print("Try changing your account settings to allow less secure apps to allow connection to be made.")
-                linkToPage = "https://myaccount.google.com/lesssecureapps"
-                print("Or try enabling two factor authorization and generating an app-password\n{0}".format(linkToPage))
-                print("Quiting program, try connecting again with correct email/password, \
-                    after making the changes, or trying a different email")
+                errorMsg = "\n".join([
+                    "\nCould not connect to email server because of error:\n{0}\n".format(error),
+                    "Try changing your account settings to allow less secure apps to allow connection to be made.",
+                    "Or try enabling two factor authorization and generating an app-password\n{0}".format(linkToPage),
+                    "Quiting program, try connecting again with correct email/password",
+                    "after making the changes, or trying a different email\n"
+                ])
             else:
-                print("\nEncountered error while trying to connect to email server: \n{0}".format(error))
-            quit()
+                errorMsg = "\nEncountered error while trying to connect to email server: \n{0}".format(error)
+
+            if (self.isCommandLine):
+                print(errorMsg)
+                sys.exit(emailAgent.__error)
+            else:
+                return errorMsg
 
     # allow this function to be called without needing to initialize the class
     @classmethod
@@ -804,7 +820,11 @@ class emailAgent():
         """
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
-            self.connectToEmailServers()
+            err = self.connectToEmailServers()
+            hasError = err != None
+            if (hasError):
+                # return "Error connecting to email server: \n\n{0}".format(err)
+                return [] # return empty list to not cause other errors
 
         # verify correct input entered
         if emailFilter != emailAgent._unreadEmailFilter and emailFilter != emailAgent._allEmailFilter:
@@ -1046,17 +1066,21 @@ class emailAgent():
 
             self.sendMsg(contactInfo)
 
-    def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True, recursiveCall:bool=False):
+    def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True, recursiveCall:bool=False)->str():
         """
             \n@Brief: High level api function which allows user to receive an email
             \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
+            \n@Return: String of error message if error occurs (None if success)
         """
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
-            self.connectToEmailServers()
-            
+            err = self.connectToEmailServers()
+            hasError = err != None
+            if (hasError):
+                return err
+
         # input error checking                
         if onlyUnread:
             emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter)
@@ -1090,6 +1114,7 @@ class emailAgent():
         self._waitForNewMessage(startedBySendingEmail)
             
         print("Done Receiving Emails")
+        return None
 
     def numberToContact(self, fullPhoneNumber:str)->dict():
         """

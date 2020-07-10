@@ -45,6 +45,7 @@ class WebApp():
 
         # start up the web app
         self.__debugOn = False
+        self.app.config["TEMPLATES_AUTO_RELOAD"] = True # refreshes flask if html files change
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.__debugOn)
     
     def getIP(self):

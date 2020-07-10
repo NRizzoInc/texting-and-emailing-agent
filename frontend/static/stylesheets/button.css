@@ -22,13 +22,13 @@ body {
   * Change 'width' and 'height' to modify the size of the button
   */
 .myBtn {
-    background:url("https://www.washingtonpost.com/wp-apps/imrs.php?src=https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/HB4AT3D3IMI6TMPTWIZ74WAR54.jpg&w=767") no-repeat;
+    background:url("https://cdn.pixabay.com/photo/2016/05/31/12/42/red-button-1426817_960_720.png") no-repeat;
     background-size: cover;
     cursor: grab;
     border: none;
     /*Size of button*/
-    width: 20%;
-    height: 20%;
+    width: 25%;
+    height: 30%;
     /* So that image on buttons dont touch sidebar and have space between themselves*/
     top: 0;
     bottom: 0;

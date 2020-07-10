@@ -130,11 +130,11 @@ class WebApp():
                 
                 elif (formData['task'] == "receiving"):
                     print("Receiving Text")
-                    recError = self.emailAgent.receiveEmail(onlyUnread=False)
+                    numToFetch = 5 # TODO: stub -- add select box in frontend
+                    recError = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
                     if (recError != None):
                         print(recError)
                         # TODO: somehow inform user on webpage of send error (return should have error message)
-                    # self.emailAgent.receiveEmail(onlyUnread=True) TODO: uncomment this (need false for testing)
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']

@@ -962,12 +962,17 @@ class emailAgent():
             print("{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText))
 
 
-    def getEmailsGradually(self, emailFilter:str=_unreadEmailFilter, printDescriptors:bool=True, leaveUnread=False)->(list(), dict()):
+    def getEmailsGradually(self,
+                           emailFilter:str=_unreadEmailFilter,
+                           printDescriptors:bool=True,
+                           leaveUnread:int=False,
+                           maxFetchCount=-1)->(list(), dict()):
         """
             \n@Brief- Takes email dict and prints out email nicely for user
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: printDescriptors(bool)- if true, print "<email id>) <email subject>" for all emails
             \n@Param: leaveUnread- Dont open the email (leave as unread)
+            \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
             \n@Return- Touple(emailMsgLlist, idList) 
             \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>', '<list index>'}
@@ -980,11 +985,11 @@ class emailAgent():
         else:
             idList = idListALL
 
-        print("ctrl-c to stop fetching...")
         emailList = []
         idDict = {}
         try:
-            for idNum in idList:
+            print("ctrl-c to stop fetching...")
+            for idx, idNum in enumerate(idList):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
                 emailUnreadBool = idNum in idListUnread 
                 emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
@@ -992,8 +997,12 @@ class emailAgent():
                 emailList.append(emailMsg)
                 if printDescriptors:
                     self._printEmailDescriptor(emailMsg)
+                if (maxFetchCount != -1 and idx >= maxFetchCount): break # exit for loop if fetched enough
         except KeyboardInterrupt:
-            print("Stopped fetching")
+            # stub
+            pass
+
+        print("Stopped fetching")
         return (emailList, idDict)
 
     def _openEmail(self, idDict:dict, emailList:list)->(str(), dict()):
@@ -1066,12 +1075,17 @@ class emailAgent():
 
             self.sendMsg(contactInfo)
 
-    def receiveEmail(self, startedBySendingEmail=False, onlyUnread:bool=True, recursiveCall:bool=False)->str():
+    def receiveEmail(self,
+                     startedBySendingEmail=False,
+                     onlyUnread:bool=True,
+                     recursiveCall:bool=False,
+                     maxFetchCount:int=-1)->str():
         """
             \n@Brief: High level api function which allows user to receive an email
             \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
+            \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
             \n@Return: String of error message if error occurs (None if success)
         """
         # first check if connected to email servers, if not connect
@@ -1083,9 +1097,9 @@ class emailAgent():
 
         # input error checking                
         if onlyUnread:
-            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter)
+            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter, maxFetchCount=maxFetchCount)
         elif not onlyUnread: 
-            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter)
+            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
 
         # intially set to True but immediately set to False in loop
         # only set to True again if you wait for new messages

@@ -9,5 +9,8 @@
     "formSites": {
         "textForm"      :   "/textForm",
         "emailForm"     :   "/emailForm"
+    },
+    "infoSites": {
+        "terminalText"  :   "/terminalText"
     }
 }

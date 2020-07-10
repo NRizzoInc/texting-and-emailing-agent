@@ -30,12 +30,14 @@ class WebApp():
         _urls = emailAgent.emailAgent.loadJson(os.path.join(self.app.static_folder, "urls.json"))
         self.sites = _urls["sites"]
         self.formSites = _urls["formSites"]
+        self.infoSites = _urls["infoSites"]
 
         # create all sites to begin with
         self.initializingStatus = True
         self.generateSites()
         self.generateFormResultsSites()
-        self.printSites() # will only print if debug mode is on
+        self.printSites()
+        self.createInfoPages()
         self.initializingStatus = False
 
         # start up the web app
@@ -140,8 +142,18 @@ class WebApp():
             
             # if dont return elsewhere, use blank page
             return render_template("basicForm.html")
-        
 
+    # this function helps siphon stuff meant to print to terminal to a webpage to get 
+    def createInfoPages(self):
+        @self.app.route(self.infoSites["terminalText"], methods=["GET", "POST"])
+        def managerTerminalText():
+            # just return 
+            if flask.request.method == "GET":
+                return "Stub"
+            elif flask.request.method == "POST":
+                # recv = str(flask.request.get_data(as_text=True))
+                # do something... (eventually use post to trigger something)
+                return "POST not implemented\n"
 
     def printSites(self):
         '''

@@ -42,10 +42,13 @@ class emailAgent():
     _unreadEmailFilter = "(UNSEEN)"
     _allEmailFilter = "ALL"
 
-    def __init__(self, displayContacts=True, commandLine=False, useDefault=False):
-        '''
-            This class is responsible for sending emails 
-        '''
+    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
+        """
+            \n@Brief: This class is responsible for sending & receiving emails
+            \n@input: displayContacts- If true, print the contact list during init
+            \n@input: isCommandLine- True if using through the command line
+            \n@input: useDefault- True to use the default email account to send/receive texts & emails
+        """
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.__backendDir = os.path.join(self.__pathToThisDir, "backend")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
@@ -77,13 +80,9 @@ class emailAgent():
         # to a known email account wihtout extra inputs needed
         self.useDefault = useDefault 
 
-        # this var will get be filled with content printed to terminal
-        # retreive information with getPrintedString() such that it gets cleared
-        self.printedString = "" 
-
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
-        self.commandLine = commandLine
+        self.isCommandLine = isCommandLine
 
         # work around for sending text messages with char limit (wait to add content)
         self.attachmentsList = []
@@ -91,9 +90,8 @@ class emailAgent():
 
         # display contents of the existing contact list
         if displayContacts is True:    
-            self.webAppPrintWrapper("The current contact list is:\n")
             printableContactList = pprint.pformat(self.contactList)
-            self.webAppPrintWrapper(printableContactList)
+            print("The current contact list is:\n{0}".format(printableContactList))
 
     # returns the contact list as it is currently in the contact list file
     def getContactList(self):
@@ -122,7 +120,7 @@ class emailAgent():
         elif sendMethod == 'text': sendTextBool = True
         else: raise Exception("Invalid sendMethod Param passed to function!")
 
-        if self.commandLine:
+        if self.isCommandLine:
             msg = self.composeMsg(receiverContactInfo, msgToSend=msgToSend)
         else:
             msg = self.composeMsg(receiverContactInfo, sendingText=sendTextBool, msgToSend=msgToSend)
@@ -173,7 +171,7 @@ class emailAgent():
                 * 'invalid' if no type of message was chosen to be send
                 * None if selected message could not be sent
         '''
-        if self.commandLine:
+        if self.isCommandLine:
             # determine if user wants to send an email message or phone text
             if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
                 msg = self.composeTextMsg(receiverContactInfo)
@@ -258,7 +256,7 @@ class emailAgent():
         print("Sending text message to {0}".format(textMsgAddress))
         
         # Get content to send in text message
-        if self.commandLine:
+        if self.isCommandLine:
             body = self._getTextMsgInput()
         # not using command line
         else: 
@@ -339,7 +337,7 @@ class emailAgent():
                     {first name, last name, email, carrier, phone number}
                 - msgToSend: a string containing the message to be sent (dont fill in if using command line)
         '''
-        if self.commandLine:
+        if self.isCommandLine:
             # Get a list of all possible message types
             listOfMsgTypes = [types.replace('.txt', '') for types in os.listdir(self.messageTemplatesDir)]
             contents = ''
@@ -765,7 +763,7 @@ class emailAgent():
         # Ask if they want to wait for a reply (only if user didnt start off by sending an email)
         waitForMsg = ''
         if startedBySendingEmail == False:
-            if self.commandLine:
+            if self.isCommandLine:
                 while 'y' not in waitForMsg:
                     waitForMsg = input("Do you want to wait for a new message (y/n): ")
             else: 
@@ -784,7 +782,7 @@ class emailAgent():
             numEmails = startNumEmails
             unreadEmailList = []
             
-            self.webAppPrintWrapper("waiting for new message...\n")
+            print("waiting for new message...\n")
             while startNumEmails - numEmails == 0:
                 # Defaults to only look for unread emails
                 unreadEmailList = self.getEmailListIDs()
@@ -794,7 +792,7 @@ class emailAgent():
                 print("{0} - No New Message".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
             
             # if this point is reached, new email detected and can end function so program can continue!
-            self.webAppPrintWrapper("{0} - New email message detected!".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
+            print("{0} - New email message detected!".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
             self.receiveEmail(onlyUnread=True, recursiveCall=True) # return to main receive function but have it stop early to not recur
             
 
@@ -814,12 +812,12 @@ class emailAgent():
 
         # opens folder/label you want to read from
         self.IMAPClient.select('INBOX')
-        # self.webAppPrintWrapper("Successfully Opened Inbox")
+        # print("Successfully Opened Inbox")
                     
         # get all the emails and their id #'s that match the filter
         rtnCode, data = self.IMAPClient.search(None, emailFilter) 
         if rtnCode != "OK":
-            self.webAppPrintWrapper("Bad return code from inbox!")
+            print("Bad return code from inbox!")
 
         numEmails = len(data[0].decode()) 
         msgIds = data[0].decode() # convert byte to string
@@ -827,7 +825,7 @@ class emailAgent():
         # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
         idList = list(map(lambda x:int(x), list(msgIds.split()))) 
         idList.sort(reverse = True) # sort() performs operation on the same variable
-        # self.webAppPrintWrapper("idList: {0}".format(idList))
+        # print("idList: {0}".format(idList))
         
         return idList
 
@@ -844,7 +842,7 @@ class emailAgent():
         else:               openCode = '(RFC822)'
         rtnCode, emailData = self.IMAPClient.fetch(str(emailIdNum).encode(), openCode) 
         if (rtnCode != "OK"):
-            self.webAppPrintWrapper("Bad email return code received!!")
+            print("Bad email return code received!!")
             
         rawEmail = emailData[0][1]
         return rawEmail
@@ -989,7 +987,7 @@ class emailAgent():
             \n@Note: If no emails in list, return touple of ("", {})
         """
         idSelected = -1
-        if self.commandLine:
+        if self.isCommandLine:
             # making sure there is an email to open
             if len(idDict) == 0:
                 # return empty values for callers if nothing found
@@ -1020,7 +1018,7 @@ class emailAgent():
         """
         # only ask this question if user didnt start off by sending emails
         if startedBySendingEmail == False: 
-            if self.commandLine:
+            if self.isCommandLine:
                 replyBool = input("Do you want to reply to this email (y/n): ")
             else:
                 raise Exception("IMPLEMENT NON-COMMAND LINE '_reply'")
@@ -1363,17 +1361,6 @@ class emailAgent():
         except:
             print("NOT A VALID URL")
             return False
-    
-    # this functions purpose is to take a string argument (toPrint) 
-    # and both print it to terminal and store it so it can be accessed by "getPrintedString()"
-    def webAppPrintWrapper(self, toPrint:str): 
-        print(toPrint)
-        self.printedString += toPrint + "\n" # have to add newline bc normally automatically there
-
-    def getPrintedString(self):
-        tempStr = self.printedString
-        self.printedString = ""
-        return tempStr
 
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
@@ -1417,17 +1404,17 @@ def run():
 
     # use this phrase to easily add more contacts to the contact list
     if 'addContact' in sys.argv:
-        emailer = emailAgent(displayContacts=True, commandLine=True)
+        emailer = emailAgent(displayContacts=True, isCommandLine=True)
         emailer.simpleAddContact()
         sys.exit()
     
     if 'updateContact' in sys.argv:
-        emailer = emailAgent(displayContacts=True, commandLine=True)
+        emailer = emailAgent(displayContacts=True, isCommandLine=True)
         emailer.updateContactInfo()
         sys.exit()
 
     # Create a class obj for this file
-    emailer = emailAgent(displayContacts=False, commandLine=True)
+    emailer = emailAgent(displayContacts=False, isCommandLine=True)
 
     if 'default' in ''.join(sys.argv):
         emailer.setDefaultState(True)

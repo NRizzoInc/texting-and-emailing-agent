@@ -16,7 +16,7 @@ from flask import Flask, templating, render_template, request, redirect
 import emailAgent # need to call functions
 class WebApp():
     def __init__(self):
-        self.emailAgent = emailAgent.emailAgent(displayContacts=True)
+        self.emailAgent = emailAgent.emailAgent(displayContacts=True, isCommandLine=False)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
@@ -127,8 +127,6 @@ class WebApp():
                     print("Receiving Text")
                     self.emailAgent.receiveEmail(onlyUnread=False)
                     # self.emailAgent.receiveEmail(onlyUnread=True) TODO: uncomment this (need false for testing)
-                    toPrint = self.emailAgent.getPrintedString()
-                    print(toPrint)
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']

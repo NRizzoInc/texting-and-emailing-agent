@@ -135,7 +135,7 @@ class emailAgent():
             print("Could not send an email or text message")
             
         elif msg == "invalid":
-            raise Exception("No valid method of sending a message was chosen!")
+            print("No valid method of sending a message was chosen!")
 
         else:
             # method of sending email changes depending on whether it is an email of text

@@ -2,6 +2,7 @@
 // This file contains all the button commands
 
 import { parseForm } from "./formProcessor.js"
+import { loadResource } from "./utils.js"
 
 $(document).ready( () => {
     // add event listener for each form button element
@@ -12,10 +13,25 @@ $(document).ready( () => {
         })
     }
 
+    // return button
+    const returnBtn = document.getElementById("Go-Back-Btn")
+    returnBtn.addEventListener("click", () => {
+        // hide form and bring up main page
+        document.getElementsByClassName('button-wrapper')[0].style.display = "block"
+        document.getElementById('Texting-Form-Wrapper').style.display = "none"
+    })
+
     const submitBtn = document.getElementById("Submit-Button")
     submitBtn.addEventListener("click", () => {
         submitFormBtn(submitBtn)
     })
+
+    // prevent page from automatically returning to main page from form
+    // goes back after form processing complete
+    const formEl = document.getElementById("Texting-Form")
+    formEl.addEventListener("submit", (event) => {
+        event.preventDefault()
+    }, true)
 })
 
 // get id new page and hide buttons
@@ -24,40 +40,80 @@ async function buttonPostRequest(id) {
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
 
+    // true means show (default everything to that except terminal data)
+    const displayDict = {
+        "fname":        true,
+        "lname":        true,
+        "email":        true,
+        "password":     true,
+        "message":      true,
+        "phone":        true,
+        "carrier":      true,
+        "terminal":     false,
+        "task":         null
+    }
+
     // set name attributes to match task of button
     // make non-necessary form lines disappear
     if (id == 'text-receive-button') {
-        document.getElementById('firstname-container').style.display = 'none'
-        document.getElementById('lastname-container').style.display = 'none'
-        document.getElementById('message-container').style.display = 'none'
-        document.getElementById('phone-number-container').style.display = 'none'
-        document.getElementById('carrier-container').style.display = 'none'
-        // use name attribute in formProcessor to determine some actions
-        document.getElementById('Texting-Form').setAttribute("task", "receiving")
+        displayDict.fname = false
+        displayDict.lname = false
+        displayDict.message = false
+        displayDict.phone = false
+        displayDict.carrier = false
+        displayDict.terminal = true
+        displayDict.task = "receiving"
     } 
     else if (id == 'text-send-button') {
-        document.getElementById('phone-number-container').style.display = 'none'
-        document.getElementById('carrier-container').style.display = 'none'
-        // use name attribute in formProcessor to determine some actions
-        document.getElementById('Texting-Form').setAttribute("task", "sending")   
+        displayDict.phone = false
+        displayDict.carrier = false
+        displayDict.task = "sending"
     }
     else if (id == 'add-contact-button') {
-        // hide non-neccessary stuff for adding a new contact
-        document.getElementById('message-container').style.display = "none"
-        document.getElementById('password-container').style.display = "none"
-        // use name attribute in formProcessor to determine some actions
-        document.getElementById('Texting-Form').setAttribute("task", "adding-contact")   
+        displayDict.message = false
+        displayDict.password = false
+        displayDict.task = "adding-contact"
     }
     else {
         console.error("ID Does Not Mean Anything");
     }
+    setDisplays(displayDict)
+}
+
+/**
+ * Helper function to set fields' visibility
+ * @param {{
+        "fname":        true,
+        "lname":        true,
+        "email":        true,
+        "password":     true,
+        "message":      true,
+        "phone":        true,
+        "carrier":      true,
+        "terminal":     false,
+        "task":         null
+    }} displayDict If a field is true, show it
+ */
+function setDisplays(displayDict) {
+    const display = "block"
+    const hide    = "none"
+    document.getElementById('firstname-container').style.display =          displayDict.fname     ? display : hide
+    document.getElementById('lastname-container').style.display =           displayDict.lname     ? display : hide
+    document.getElementById('email-container').style.display =              displayDict.email     ? display : hide
+    document.getElementById('password-container').style.display =           displayDict.password  ? display : hide
+    document.getElementById('message-container').style.display =            displayDict.message   ? display : hide
+    document.getElementById('phone-number-container').style.display =       displayDict.phone     ? display : hide
+    document.getElementById('carrier-container').style.display =            displayDict.carrier   ? display : hide
+    document.getElementById('terminal-text-container').style.display =      displayDict.terminal  ? display : hide
+    // use name attribute in formProcessor to determine some actions
+    document.getElementById('Texting-Form').setAttribute("task", displayDict.task)
 }
 
 async function submitFormBtn(submitBtn) {
     // has id of submit button (need to extrapolate form id parent)
     const triggerID = submitBtn.closest("form").id
-    
-    // get url to post to   
+
+    // get url to post to
     const urls = await loadResource("/static/urls.json")
     
     let formAddr;
@@ -70,12 +126,3 @@ async function submitFormBtn(submitBtn) {
     }
     parseForm(triggerID, formAddr)
 }
-
-async function loadResource (toLoad) {
-    return new Promise((resolve, reject) => {
-        $.getJSON(toLoad, (loadedObj) => {
-            // console.log("Loaded: " + JSON.stringify(loadedObj))
-            resolve(loadedObj)
-        })
-    }).catch((err) => "Failed to load resource: " + toLoad + ": " + err)
-} 

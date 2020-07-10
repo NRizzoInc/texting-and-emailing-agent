@@ -6,13 +6,13 @@
 <!--Use wrapper to hide the form until the button is clicked-->
 <div class="interface-wrapper" id='Texting-Form-Wrapper'>
     <!--Use POST to make site inaccessible and protect data by not adding it to url-->
-    <form id='Texting-Form' method="POST">
+    <form id='Texting-Form'>
         <div class="row" id="firstname-container">
             <div class="col-25">
                 <label for="firstName">First Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="firstName" name="firstname" placeholder="First name...">
+                <input type="text" id="firstName" name="firstname" placeholder="First name..." autocomplete="on">
             </div>
         </div>
         <div class="row" id="lastname-container">
@@ -20,15 +20,15 @@
                 <label for="lastName">Last Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="lastName" name="lastname" placeholder="Last name...">
+                <input type="text" id="lastName" name="lastname" placeholder="Last name..." autocomplete="on">
             </div>
         </div>
-        <div class="row">
+        <div class="row" id="email-container">
             <div class="col-25">
                 <label for="emailAddress">Email Address</label>
             </div>
             <div class="col-75">
-                <input type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)...">
+                <input type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)..." autocomplete="on">
             </div>
         </div>
         <div class="row" id="password-container">
@@ -36,7 +36,7 @@
                 <label for="password">Password</label>
             </div>
             <div class="col-75">
-                <input type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)...">
+                <input type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)..." autocomplete="on">
             </div>
         </div>
         <div class="row" id="message-container">
@@ -54,7 +54,7 @@
                 <label for="phoneNumber">Phone Number</label>
             </div>
             <div class="col-75">
-                <input type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number...">
+                <input type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number..." autocomplete="on">
             </div>
         </div>
         <div class="row" id="carrier-container">
@@ -62,12 +62,21 @@
                 <label for="carrier">Phone carrier</label>
             </div>
             <div class="col-75">
-                <input type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)">
+                <input type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
             </div>
         </div>
         <div class="row">
             <!--Use submit button's id in js to know when to get data-->
             <input type="submit" value="Submit" id="Submit-Button">
+            <input type="button" value="Go Back" id="Go-Back-Btn">
+        </div>
+        <div class="row" id="terminal-text-container">
+            <div class="col-25">
+                <label for="terminal-text">Email Message:</label>
+            </div>
+            <div class="col-75">
+                <textarea id="terminal-text" name="terminal-text" class="terminal-textarea" placeholder="Waiting to fetch email..." readonly=true></textarea>
+            </div>
         </div>
     </form>
 </div>

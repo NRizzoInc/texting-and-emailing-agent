@@ -32,6 +32,10 @@ class WebApp():
         self.formSites = _urls["formSites"]
         self.infoSites = _urls["infoSites"]
 
+        # store terminal data for frontend (used for receiving emails)
+        # WARNING: should get cleared after use
+        self._terminalData = ""
+
         # create all sites to begin with
         self.initializingStatus = True
         self.generateSites()
@@ -131,10 +135,13 @@ class WebApp():
                 elif (formData['task'] == "receiving"):
                     print("Receiving Text")
                     numToFetch = 5 # TODO: stub -- add select box in frontend
-                    recError = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
-                    if (recError != None):
-                        print(recError)
+                    recvDict = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
+                    if (recvDict["error"] == True):
+                        print("Failed to receive emails: \n{0}".format(recvDict["text"]))
                         # TODO: somehow inform user on webpage of send error (return should have error message)
+                    else:
+                        # clear old data & set new
+                        self._terminalData = recvDict["text"]
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']
@@ -143,11 +150,8 @@ class WebApp():
                 else:
                     raise Exception("UNKNOWN TASK")
 
-                # return to original site
-                return redirect(self.host_address + self.sites['textpage'])
-            
-            # if dont return elsewhere, use blank page
-            return render_template("basicForm.html")
+            # return to original site
+            return self.returnSuccessResp()
 
     # this function helps siphon stuff meant to print to terminal to a webpage to get 
     def createInfoPages(self):
@@ -155,7 +159,7 @@ class WebApp():
         def managerTerminalText():
             # just return 
             if flask.request.method == "GET":
-                return "Stub"
+                return self.returnSuccessResp({"terminalData": self._terminalData})
             elif flask.request.method == "POST":
                 # recv = str(flask.request.get_data(as_text=True))
                 # do something... (eventually use post to trigger something)
@@ -169,6 +173,14 @@ class WebApp():
         for site in self.sites.keys():
             print("{0}{1}".format(self.host_address, self.sites[site]))
         print() # newline
+    
+    def returnSuccessResp(self, additionalDict={}):
+        """
+            Helper function for flask app route request to tell frontend success and additional data
+        """
+        flaskResponseDict = {'success':True}
+        dataDict = {**flaskResponseDict, **additionalDict} # merge dictionaries
+        return json.dumps(dataDict), 200, {'ContentType':'application/json'}
 
 
 

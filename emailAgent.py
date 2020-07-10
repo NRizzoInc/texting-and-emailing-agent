@@ -875,7 +875,7 @@ class emailAgent():
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: leaveUnread- Dont open the email (leave as unread)
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
-            \n@Note: call 'printProcessedEmailDict()' on the returned list to print the emails and their ids nicely
+            \n@Note: call 'processEmailDict()' on the returned list to print the emails and their ids nicely
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
         idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
@@ -902,7 +902,7 @@ class emailAgent():
         """
             \n@brief: Fetches all emails and lists them by id number
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
-            \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
+            \n@Note: call 'processEmailDict()' on the returned dict to print the email nicely
         """
         emailList = self.getEmailListWithContent(emailFilter=emailAgent._allEmailFilter)
         return emailList
@@ -911,7 +911,7 @@ class emailAgent():
         """
             \n@brief: Fetches all unread emails and lists them by id number
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
-            \n@Note: call 'printProcessedEmailDict()' on the returned dict to print the email nicely
+            \n@Note: call 'processEmailDict()' on the returned dict to print the email nicely
         """
         emailList = self.getEmailListWithContent(emailFilter=_unreadEmailFilter)
         return emailList
@@ -975,7 +975,7 @@ class emailAgent():
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
             \n@Return- Touple(emailMsgLlist, idList) 
             \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
-            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>', '<list index>'}
+            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>': '<list index>'}
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
         idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
@@ -1005,18 +1005,18 @@ class emailAgent():
         print("Stopped fetching")
         return (emailList, idDict)
 
-    def _openEmail(self, idDict:dict, emailList:list)->(str(), dict()):
+    def _openEmail(self, idDict:dict, emailList:list, idSelected:int=-1)->(str(), dict()):
         """
             \n@Brief: Helper function that determines which email the user wants to open, printing and returning it
-            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>', '<list index>'}
+            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>': '<list index>'}
             \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum, unread}]
+            \n@Param: idSelected- (optional) pre-selected email id to open (usually used for non-command line applications)
             \n@Return(touple): (printedStr, emailDict)
             \n@Return: printedStr- string of what is printed to the terminal
             \n@Return: emailDict- email info dict of format {To, From, DateTime, Subject, Body, idNum, unread}
             \n@Note: If no emails in list, return touple of ("", {})
         """
-        idSelected = -1
-        if self.isCommandLine:
+        if self.isCommandLine and idSelected == -1:
             # making sure there is an email to open
             if len(idDict) == 0:
                 # return empty values for callers if nothing found
@@ -1030,13 +1030,11 @@ class emailAgent():
                 idSelected = input("Enter email id to open: ").replace('\n', '').strip()
                 if idSelected.isspace() or not idSelected.isdigit(): idSelected = -1
                 idSelected = int(idSelected)
-        else: 
-            raise Exception("IMPLEMENT NON-COMMAND LINE '_openEmail'")
 
         # open selected email
         emailListIndex = idDict[idSelected]
         emailDict = emailList[emailListIndex]
-        printedStr = self.printProcessedEmailDict(emailDict)
+        printedStr = self.processEmailDict(emailDict)
         return (printedStr, emailDict)
 
     def _reply(self, startedBySendingEmail:bool, emailMsgDict:dict):
@@ -1079,28 +1077,52 @@ class emailAgent():
                      startedBySendingEmail=False,
                      onlyUnread:bool=True,
                      recursiveCall:bool=False,
-                     maxFetchCount:int=-1)->str():
+                     maxFetchCount:int=-1)->dict():
         """
             \n@Brief: High level api function which allows user to receive an email
             \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
-            \n@Return: String of error message if error occurs (None if success)
+            \n@Return: {error: bool, text: str} If error, 'error' key will be true, printed email (or error) will be in 'text' key
         """
+        toRtn = {"error": False, "text": ""}
+
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError):
-                return err
+                toRtn["error"] = True
+                toRtn["text"] = err
+                return toRtn
 
-        # input error checking                
+        # input error checking
         if onlyUnread:
             emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter, maxFetchCount=maxFetchCount)
         elif not onlyUnread: 
             emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
 
+        if (self.isCommandLine):
+            self.recvCommandLine(startedBySendingEmail, recursiveCall, emailList, idDict)
+        else:
+            stubId = emailList[0]["idNum"] # TODO: actually get the id from the frontend
+            printedStr, emailInfoDict = self._openEmail(idDict, emailList, idSelected=stubId)
+            toRtn["text"] = printedStr
+
+        return toRtn
+
+
+    def recvCommandLine(self, startedBySendingEmail, recursiveCall, emailList, idDict):
+        """
+            \n@Brief: Lower level api function which allows user to receive an email via command line
+            \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
+            \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
+            \n@Param: emailList- List of all email messages
+            \n@emailList: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
+            \n@idDict: dict of email ids mapped to indexes of emailList in format {'<email id>': '<list index>'}
+            \n@Return: String of error message if error occurs (None if success)
+        """
         # intially set to True but immediately set to False in loop
         # only set to True again if you wait for new messages
         keepCheckingInbox = True 
@@ -1246,9 +1268,9 @@ class emailAgent():
 
         return emailMsgDict
 
-    def printProcessedEmailDict(self, emailDict:dict)->str():
+    def processEmailDict(self, emailDict:dict)->str():
         """
-            \n@brief: Convience function which passes preformatted dictionary to printProcessedEmail 
+            \n@brief: Convience function which passes preformatted dictionary to processedEmail 
             \n@Param: emailDict(dict) = {
                     "To": "", 
                     "From": "", 
@@ -1271,9 +1293,9 @@ class emailAgent():
         if (emailDict.keys() != sampleDict.keys()):
             raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))
         
-        return self.printProcessedEmail(emailDict["To"], emailDict["From"], emailDict["DateTime"], emailDict["Subject"], emailDict["Body"])
+        return self.processedEmail(emailDict["To"], emailDict["From"], emailDict["DateTime"], emailDict["Subject"], emailDict["Body"])
 
-    def printProcessedEmail(self, To:str, From:str, DateTime:str, Subject:str, Body:str)->str():
+    def processedEmail(self, To:str, From:str, DateTime:str, Subject:str, Body:str)->str():
         """
             \n@brief: Prints the processed email
             \n@Param: To- Who the is receiving the message (usually the user using this code)
@@ -1282,6 +1304,7 @@ class emailAgent():
             \n@Param: subject- The subject
             \n@Param: body- The actual message
             \n@Return: string of what's printed to the terminal
+            \n@note: Delinator is only put on message if in command line
         """
         # email delineator (get column size)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
@@ -1289,18 +1312,19 @@ class emailAgent():
         deliniatorStr = "\n<{0}>\n".format('-'*delineator)
         
         strToPrint = ""
-        strToPrint += deliniatorStr
-        strToPrint += """Email:\n
-        To: {0}
-        From: {1}
-        DateTime: {2}
-        Subject: {3}
-
-        Body: {4}
+        if(self.isCommandLine): strToPrint += deliniatorStr
+        strToPrint += """
+        \nEmail:\n
+        \nTo: {0}
+        \nFrom: {1}
+        \nDateTime: {2}
+        \nSubject: {3}
+        \n\nBody: {4}
         """.format(To, From, DateTime, Subject, Body)
-        strToPrint += deliniatorStr
 
-        print(strToPrint)
+        if (self.isCommandLine):
+            strToPrint += deliniatorStr
+            print(strToPrint)
         return strToPrint
 
     def scanForAttachments(self):

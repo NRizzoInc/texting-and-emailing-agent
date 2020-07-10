@@ -7,6 +7,7 @@ import re
 import platform
 import subprocess
 import socket # used to get local network exposible IP
+import uuid # used to generate keys for handling private data 
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
@@ -33,15 +34,13 @@ class WebApp():
         self.infoSites = _urls["infoSites"]
 
         # store terminal data for frontend (used for receiving emails)
-        # WARNING: should get cleared after use
-        self._terminalData = ""
+        self._terminalData = {}
 
         # create all sites to begin with
         self.initializingStatus = True
         self.generateSites()
         self.generateFormResultsSites()
         self.printSites()
-        self.createInfoPages()
         self.initializingStatus = False
 
         # start up the web app
@@ -100,6 +99,7 @@ class WebApp():
         formData = {}
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         def createTextForm():
+            optDataDict = {} # add keys to be returned at end of post request
             # if form is given data
             if (not self.initializingStatus):
                 url = self.host_address + self.formSites['textForm']
@@ -135,13 +135,13 @@ class WebApp():
                 elif (formData['task'] == "receiving"):
                     print("Receiving Text")
                     numToFetch = 5 # TODO: stub -- add select box in frontend
+                    optDataDict["authKey"] = str(uuid.uuid4()) # https://docs.python.org/3/library/uuid.html -- safe random uuid
                     recvDict = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
                     if (recvDict["error"] == True):
                         print("Failed to receive emails: \n{0}".format(recvDict["text"]))
                         # TODO: somehow inform user on webpage of send error (return should have error message)
                     else:
-                        # clear old data & set new
-                        self._terminalData = recvDict["text"]
+                        optDataDict["terminalData"] = recvDict["text"].strip()
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']
@@ -151,19 +151,7 @@ class WebApp():
                     raise Exception("UNKNOWN TASK")
 
             # return to original site
-            return self.returnSuccessResp()
-
-    # this function helps siphon stuff meant to print to terminal to a webpage to get 
-    def createInfoPages(self):
-        @self.app.route(self.infoSites["terminalText"], methods=["GET", "POST"])
-        def managerTerminalText():
-            # just return 
-            if flask.request.method == "GET":
-                return self.returnSuccessResp({"terminalData": self._terminalData})
-            elif flask.request.method == "POST":
-                # recv = str(flask.request.get_data(as_text=True))
-                # do something... (eventually use post to trigger something)
-                return "POST not implemented\n"
+            return self.returnSuccessResp(optDataDict)
 
     def printSites(self):
         '''

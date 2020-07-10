@@ -1,7 +1,12 @@
 'use strict';
 
-import { loadResource } from "./utils.js"
+import { writeResizeTextarea, exitForm } from "./utils.js"
 
+/**
+ * @brief Helper function that reads through the form data and collates it to be sent to backend
+ * @param {String} formId The form's html element's name
+ * @param {String} formLink The URL to the form being used (i.e. /textForm or /emailForm)
+ */
 export async function parseForm(formId, formLink) {
     // loop through form to get form key:value pairs 
     const form = document.getElementById(formId);
@@ -27,53 +32,34 @@ export async function parseForm(formId, formLink) {
     }
     
     // POST data to website (waits for backend to finish processing form data)
-    await postFormData(formLink, formData)
+    const resData = await postFormData(formLink, formData)
 
     // return to main text/email site
     if (formData.task == "receiving") {
         // if receive, show data in box
         const terminalTextId = "terminal-text"
-        const terminalText = await getTerminalPage()
+        const terminalText = resData.terminalData
         // autosize height/width to fit text
-        const textDiv = $(`#${terminalTextId}`)
-        textDiv.html(terminalText).each((idx, el) => {
-            const maxHeight = textDiv.parent().width()
-            const desiredHeight = el.scrollHeight
-            const heightToSet = Math.min(maxHeight, desiredHeight)
-            textDiv.outerHeight(heightToSet)
-        })
+        writeResizeTextarea(terminalTextId, terminalText)
 
     } else {
-        // immediately if not receive
-        window.history.back()
+        // immediately go back if not receiving
+        exitForm()
     }
 
 } // end of parse form function
 
-async function getTerminalPage() {
-    const urls = await loadResource("/static/urls.json")
-    const terminalPage = urls.infoSites.terminalText
-    let terminalData = {}
-    try {
-        terminalData = await $.ajax({
-            url: terminalPage,
-            type: 'GET',
-            // need both for flask to understand MIME Type
-            dataType: "json",
-            contentType: "application/json",
-        })
-        terminalData = terminalData.terminalData
-    } catch (err) {
-        console.log(`Error getting terminal page: ${JSON.stringify(err)}`)
-    }
-
-    return terminalData
-}
-
+/**
+ * @brief Helper function that posts the collated form data and gives back an "authKey" for later retrieval
+ * @param {String} formLink The url to post the data to
+ * @param {JSON} formData The data to post
+ * @returns {reqResponse} Contains the backend's json response to post request
+ * Contains some stuff like authKey UUID for retrieving backend's processed data or the data itself
+ */
 async function postFormData(formLink, formData) {
-    let postRtnCode = ""
+    const reqResponse = {terminalData: null, authKey: null}
     try {
-        postRtnCode = await $.ajax({
+        const resData = await $.ajax({
             url: formLink,
             type: 'POST',
             // need both for flask to understand MIME Type
@@ -81,9 +67,9 @@ async function postFormData(formLink, formData) {
             contentType: "application/json",
             data: JSON.stringify(formData),
         })
+        Object.assign(reqResponse, reqResponse, resData) // merge dicts
     } catch (err) {
         console.log(`Failed to post to '${formLink}': ${JSON.stringify(err)}`);
     }
-
-    return postRtnCode
+    return reqResponse
 }

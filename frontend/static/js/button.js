@@ -2,23 +2,21 @@
 // This file contains all the button commands
 
 import { parseForm } from "./formProcessor.js"
-import { loadResource } from "./utils.js"
+import { loadResource, writeResizeTextarea, exitForm } from "./utils.js"
 
 $(document).ready( () => {
     // add event listener for each form button element
     const formBtnList = document.getElementsByClassName("myBtn")
     for (const btn of formBtnList) {
         btn.addEventListener("click", () => {
-            buttonPostRequest(btn.id)
+            onFormBtnClick(btn.id)
         })
     }
 
     // return button
     const returnBtn = document.getElementById("Go-Back-Btn")
     returnBtn.addEventListener("click", () => {
-        // hide form and bring up main page
-        document.getElementsByClassName('button-wrapper')[0].style.display = "block"
-        document.getElementById('Texting-Form-Wrapper').style.display = "none"
+        exitForm()
     })
 
     const submitBtn = document.getElementById("Submit-Button")
@@ -34,8 +32,11 @@ $(document).ready( () => {
     }, true)
 })
 
-// get id new page and hide buttons
-async function buttonPostRequest(id) {
+/**
+ * @brief onClick callback for main page buttons that pulls up the new form page and hide buttons
+ * @Note triggered by "Send", "Receive", and "Add Contact" buttons
+ */
+async function onFormBtnClick(id) {
     // manipulate form page based on which form is desired 
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
@@ -105,10 +106,18 @@ function setDisplays(displayDict) {
     document.getElementById('phone-number-container').style.display =       displayDict.phone     ? display : hide
     document.getElementById('carrier-container').style.display =            displayDict.carrier   ? display : hide
     document.getElementById('terminal-text-container').style.display =      displayDict.terminal  ? display : hide
+
     // use name attribute in formProcessor to determine some actions
     document.getElementById('Texting-Form').setAttribute("task", displayDict.task)
+
+    // remove any content stored within output textarea
+    writeResizeTextarea("terminal-text", "")
 }
 
+/**
+ * @brief onClick function for the form 'submit' button
+ * @param {HTMLButtonElement} submitBtn The button element that was clicked (vanilla form)
+ */
 async function submitFormBtn(submitBtn) {
     // has id of submit button (need to extrapolate form id parent)
     const triggerID = submitBtn.closest("form").id

@@ -1319,7 +1319,7 @@ class emailAgent():
         \nFrom: {1}
         \nDateTime: {2}
         \nSubject: {3}
-        \n\nBody: {4}
+        \n\nBody: \n\n{4}
         """.format(To, From, DateTime, Subject, Body)
 
         if (self.isCommandLine):

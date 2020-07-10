@@ -780,7 +780,7 @@ class emailAgent():
         waitForMsg = ''
         if startedBySendingEmail == False:
             if self.isCommandLine:
-                while 'y' not in waitForMsg:
+                while ('y' not in waitForMsg and 'n' not in waitForMsg):
                     waitForMsg = input("Do you want to wait for a new message (y/n): ")
             else: 
                 raise Exception("IMPLEMENT NON-COMMAND LINE '_waitForNewMessage'")
@@ -935,11 +935,12 @@ class emailAgent():
         for emailDict in emailList:
             print("{0}) {1}".format(emailDict["idNum"], emailDict["Subject"]))
 
-    def _printEmailDescriptor(self, emailMsg:dict):
+    def _getEmailDescriptor(self, emailMsg:dict)->str():
         """
-            \n@Brief: Internal function which helps print useful messages about an email for a user to access
-            \n@Param: emailMsg(dict)- a dictionary of the email with format {To, From, DateTime, Subject, Body, idNum, unread}
-            \n@Return: None (prints stuff)
+            \n@Brief: Internal function which returns useful messages about an email for a user to access
+            \n@Param: emailMsg(dict)- a dictionary of the email with format 
+            {To, From, DateTime, Subject, Body, idNum, unread}
+            \n@Return: String of printed line content
         """
         # if unread, print it
         if emailMsg["unread"] == True:  unreadText = "(unread)"
@@ -947,10 +948,11 @@ class emailAgent():
 
         # get terminal size to make message appear on one line (subtract to make comfortable)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
-        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + len(unreadText) + 5 # last 5 comes from email id reaching up to 99999 (might need to make more) 
+        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + len(unreadText) + 5 # last 5 comes from email id reaching up to 99999 (might need to make more)
+        descStr = ""
         if (emailMsg['Subject'].strip().isspace() or emailMsg['Subject'] == '' or emailMsg['Subject'] == None):
             # there is no subject, show part of message instead
-            print("{0} - #{1}) {2}...{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion], unreadText))
+            descStr = "{0} - #{1}) {2}...{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion], unreadText)
 
         # there is an actual subject in the message
         else:
@@ -959,7 +961,9 @@ class emailAgent():
             if overflow < 0: 
                 emailMsg = emailMsg[:overflow]
                 moreToMsg = "..."
-            print("{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText))
+            descStr = "{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText)
+
+        return descStr
 
 
     def getEmailsGradually(self,
@@ -975,7 +979,7 @@ class emailAgent():
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
             \n@Return- Touple(emailMsgLlist, idList) 
             \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
-            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>': '<list index>'}
+            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>': {idx: '<list index>', desc: ''}}
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
         idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
@@ -988,15 +992,20 @@ class emailAgent():
         emailList = []
         idDict = {}
         try:
-            print("ctrl-c to stop fetching...")
+            if (self.isCommandLine):    print("ctrl-c to stop fetching...")
+            else:                       print("Fetching x{0} emails".format(maxFetchCount))
             for idx, idNum in enumerate(idList):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
                 emailUnreadBool = idNum in idListUnread 
                 emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
-                idDict[idNum] = len(emailList) # right before append (list size at first =0, and first entry in 0)
+                listIdx = len(emailList) # right before append (list size at first =0, and first entry in 0)
                 emailList.append(emailMsg)
+                emailDescLine = "" # default to empty string 
                 if printDescriptors:
-                    self._printEmailDescriptor(emailMsg)
+                    emailDescLine = self._getEmailDescriptor(emailMsg)
+                    if (self.isCommandLine): print(emailDescLine)
+                idDict[idNum] = {"idx": listIdx, "desc": emailDescLine}
+
                 if (maxFetchCount != -1 and idx >= maxFetchCount): break # exit for loop if fetched enough
         except KeyboardInterrupt:
             # stub
@@ -1008,7 +1017,7 @@ class emailAgent():
     def _openEmail(self, idDict:dict, emailList:list, idSelected:int=-1)->(str(), dict()):
         """
             \n@Brief: Helper function that determines which email the user wants to open, printing and returning it
-            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>': '<list index>'}
+            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>': {idx: '<list index>', desc: ''}}
             \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@Param: idSelected- (optional) pre-selected email id to open (usually used for non-command line applications)
             \n@Return(touple): (printedStr, emailDict)
@@ -1032,7 +1041,8 @@ class emailAgent():
                 idSelected = int(idSelected)
 
         # open selected email
-        emailListIndex = idDict[idSelected]
+        relevantInfo = idDict[idSelected]
+        emailListIndex = relevantInfo["idx"]
         emailDict = emailList[emailListIndex]
         printedStr = self.processEmailDict(emailDict)
         return (printedStr, emailDict)
@@ -1077,16 +1087,33 @@ class emailAgent():
                      startedBySendingEmail=False,
                      onlyUnread:bool=True,
                      recursiveCall:bool=False,
-                     maxFetchCount:int=-1)->dict():
+                     maxFetchCount:int=-1,
+                     waitForSelectCallback=None
+                    )->dict():
         """
             \n@Brief: High level api function which allows user to receive an email
             \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
-            \n@Return: {error: bool, text: str} If error, 'error' key will be true, printed email (or error) will be in 'text' key
+            \n@Param: waitForSelectCallback- Callback that interupts main fn so user can select which email to open
+            Takes dictionary as sole argument and should return an 'idNum' taken from 'emailList' key in dict
+            \n\t @Param: {
+                error: bool,
+                text: str,
+                idDict: {
+                    '<email id>': {
+                        idx: '<emailList index>',
+                        desc: 'info about email'
+                    }
+                }, 
+                emailList: list
+            }
+            \n@Return: An 'idNum' taken from 'emailList' key in emailsInfoDict
+            \n@Return: {error: bool, text: str, idDict: dict, emailList: list} 
+            If error, 'error' key will be true, printed email (or error) will be in 'text' key
         """
-        toRtn = {"error": False, "text": ""}
+        toRtn = {"error": False, "text": "", "idDict": {}, "emailList": []}
 
         # first check if connected to email servers, if not connect
         if not self.connectedToServers:
@@ -1106,9 +1133,13 @@ class emailAgent():
         if (self.isCommandLine):
             self.recvCommandLine(startedBySendingEmail, recursiveCall, emailList, idDict)
         else:
-            stubId = emailList[0]["idNum"] # TODO: actually get the id from the frontend
-            printedStr, emailInfoDict = self._openEmail(idDict, emailList, idSelected=stubId)
-            toRtn["text"] = printedStr
+            # provide frontend with info (actual email content in collated form) so user can select email to open
+            toRtn["idDict"] = idDict
+            toRtn["emailList"] = emailList
+            if (waitForSelectCallback != None):
+                emailId = waitForSelectCallback(toRtn)
+                printedStr, emailInfoDict = self._openEmail(idDict, emailList, idSelected=emailId)
+                toRtn["text"] = printedStr
 
         return toRtn
 
@@ -1120,7 +1151,7 @@ class emailAgent():
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
             \n@Param: emailList- List of all email messages
             \n@emailList: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
-            \n@idDict: dict of email ids mapped to indexes of emailList in format {'<email id>': '<list index>'}
+            \n@idDict: dict of email ids mapped to indexes of emailList in format {'<email id>': {idx: '<list index>', desc: ''}}
             \n@Return: String of error message if error occurs (None if success)
         """
         # intially set to True but immediately set to False in loop

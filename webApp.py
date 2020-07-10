@@ -137,7 +137,11 @@ class WebApp():
                     print("Receiving Text")
                     numToFetch = 5 # TODO: stub -- add select box in frontend
                     optDataDict["authKey"] = str(uuid.uuid4()) # https://docs.python.org/3/library/uuid.html -- safe random uuid
-                    recvDict = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
+                    recvDict = self.emailAgent.receiveEmail(
+                        onlyUnread=False,
+                        maxFetchCount=numToFetch,
+                        waitForSelectCallback=self.selectEmailIdCallback
+                    )
                     if (recvDict["error"] == True):
                         print("Failed to receive emails: \n{0}".format(recvDict["text"]))
                         # TODO: somehow inform user on webpage of send error (return should have error message)
@@ -153,6 +157,26 @@ class WebApp():
 
             # return to original site
             return self.returnSuccessResp(optDataDict)
+    
+    def selectEmailIdCallback(self, emailsInfoDict)->int():
+        """
+            \n@Brief Helper callback function which interrupts receiveEmail() to select email to open
+            \n@Param emailsInfoDict- dict of email ids mapped to indexes of emailMsgLlist of format
+            \n\t{
+                error: bool,
+                text: str,
+                idDict: {
+                    '<email id>': {
+                        idx: '<emailList index>',
+                        desc: 'info about email'
+                    }
+                }, 
+                emailList: list
+            }
+            \n@Return: An 'idNum' taken from an 'emailList' key in emailsInfoDict
+        """
+        stubId = emailsInfoDict["emailList"][0]["idNum"]
+        return stubId
 
     def printSites(self):
         '''

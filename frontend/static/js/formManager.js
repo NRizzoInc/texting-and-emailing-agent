@@ -276,8 +276,8 @@ function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
     const comparison = idNumPrev - idNumCurr
 
     // return based on result (reverse to get most recent on top/first)
-    if      (comparison <= -1) return  1
-    else if (comparison >= 1)  return -1
+    if      (comparison < 0)   return  1
+    else if (comparison > 0)   return -1
     else if (comparison == 0)  return  0
 }
 

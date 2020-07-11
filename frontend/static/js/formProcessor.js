@@ -1,12 +1,10 @@
 'use strict';
 
-import { writeResizeTextarea, exitForm } from "./utils.js"
-import { Dropdown } from "./dropdown.js"
-
 /**
  * @brief Helper function that reads through the form data and collates it to be sent to backend
  * @param {String} formId The form's html element's name
  * @param {String} formLink The URL to the form being used (i.e. /textForm or /emailForm)
+ * @returns {JSON} Response data from backend POST request
  */
 export async function parseForm(formId, formLink) {
     // loop through form to get form key:value pairs 
@@ -34,23 +32,7 @@ export async function parseForm(formId, formLink) {
     
     // POST data to website (waits for backend to finish processing form data)
     const resData = await postFormData(formLink, formData)
-
-    // if receive, need to select email id & show corresponding data in box
-    if (formData.task == "receiving") {
-        // create email id select dropdown
-        const emailSelDropdown = new Dropdown("email-id-selector")
-        
-
-        const terminalTextId = "terminal-text"
-        const terminalText = resData.terminalData
-        // autosize height/width to fit text
-        writeResizeTextarea(terminalTextId, terminalText)
-
-    } else {
-        // immediately go back if not receiving
-        exitForm()
-    }
-
+    return resData
 } // end of parse form function
 
 /**

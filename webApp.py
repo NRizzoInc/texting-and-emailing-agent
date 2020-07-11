@@ -35,12 +35,10 @@ class WebApp():
         self.formSites = _urls["formSites"]
         self.infoSites = _urls["infoSites"]
 
-        # store terminal data for frontend (used for receiving emails)
-        self._terminalData = {}
-
         # create all sites to begin with
         self.initializingStatus = True
         self.generateSites()
+        self.createInfoSites()
         self.generateFormResultsSites()
         self.printSites()
         self.initializingStatus = False
@@ -102,7 +100,17 @@ class WebApp():
         @self.app.route('/crash')
         def test():
             raise Exception()
-    
+
+    def createInfoSites(self):
+        @self.app.route(self.infoSites["emailData"], methods=["POST"])
+        def getEmailData()->dict():
+            # TODO: do a security check (has an authKey field but need to tie it to something)
+            emailData = flask.request.get_json()
+            toRtn = {}
+            emailContents = self.emailAgent.openEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])
+            toRtn["emailContent"] = emailContents.strip()
+            return self.returnSuccessResp(additionalDict=toRtn)
+
     # form submissions get posted here (only accessible)
     def generateFormResultsSites(self):
         formData = {}
@@ -142,19 +150,16 @@ class WebApp():
                         # TODO: somehow inform user on webpage of send error (return should have error message)
                 
                 elif (formData['task'] == "receiving"):
-                    print("Receiving Text")
+                    # responsible for login to get preliminary email data
+                    # use ui dropdown to select which email to fully fetch
                     numToFetch = 5 # TODO: stub -- add select box in frontend
+                    preliminaryEmailData = self.emailAgent.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
+                    optDataDict = {**optDataDict, **preliminaryEmailData} # merge dicts
                     optDataDict["authKey"] = str(uuid.uuid4()) # https://docs.python.org/3/library/uuid.html -- safe random uuid
-                    recvDict = self.emailAgent.receiveEmail(
-                        onlyUnread=False,
-                        maxFetchCount=numToFetch,
-                        waitForSelectCallback=self.selectEmailIdCallback
-                    )
-                    if (recvDict["error"] == True):
-                        print("Failed to receive emails: \n{0}".format(recvDict["text"]))
-                        # TODO: somehow inform user on webpage of send error (return should have error message)
-                    else:
-                        optDataDict["terminalData"] = recvDict["text"].strip()
+
+                    # TODO: somehow inform user on webpage of send error (return should have error message)
+                    if (optDataDict["error"] == True):
+                        print("Failed to receive emails: \n{0}".format(optDataDict["text"]))
                 
                 elif (formData['task'] == "adding-contact"):
                     carrier = formData['carrier']

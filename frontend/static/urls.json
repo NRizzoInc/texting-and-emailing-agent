@@ -11,5 +11,6 @@
         "emailForm"     :   "/emailForm"
     },
     "infoSites": {
+        "emailData"     :   "/emailData"
     }
 }

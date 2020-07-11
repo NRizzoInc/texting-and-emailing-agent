@@ -8,6 +8,10 @@ export class Dropdown {
     constructor(dropdownId) {
         this._dropdownId = dropdownId
         this._dropdownEl = document.getElementById(this._dropdownId)
+        const placeholderCandidate = document.getElementById("option-placeholder")
+        // deep copy if exists
+        this._placeholder = placeholderCandidate != null ? placeholderCandidate.cloneNode(true) : ""
+        this._data = {} // can be used to hold misc data (like emailList)
     }
 
     /**
@@ -33,6 +37,21 @@ export class Dropdown {
         this._dropdownId = newId
         this._dropdownEl = document.getElementById(newId)
         return this.getDropdownEl()
+    }
+
+    /**
+     * @brief Helper function which adds data to local storage for misc purposes
+     * @param {JSON} newData The data to add
+     */
+    appendData(newData) {
+        Object.assign(this._data, this._data, newData)
+    }
+
+    /**
+     * @returns Data kept within local storage
+     */
+    getData() {
+        return this._data
     }
 
     /**
@@ -124,5 +143,15 @@ export class Dropdown {
     removeOptionByText(text) {
         const toRemove = getOptionByText(text)
         toRemove.parentNode.removeChild(toRemove)
+    }
+
+    /**
+     * @brief Helper function that removes all options besides placeholder
+     */
+    clearDropdown() {
+        // zero out children & re-add placeholder
+        this._dropdownEl.innerHTML = ""
+        this._dropdownEl.appendChild(this._placeholder)
+        this._data = {}
     }
 }

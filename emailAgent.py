@@ -1025,6 +1025,7 @@ class emailAgent():
             \n@Return: emailDict- email info dict of format {To, From, DateTime, Subject, Body, idNum, unread}
             \n@Note: If no emails in list, return touple of ("", {})
         """
+        emailListIdx = -1
         if self.isCommandLine and idSelected == -1:
             # making sure there is an email to open
             if len(idDict) == 0:
@@ -1039,11 +1040,11 @@ class emailAgent():
                 idSelected = input("Enter email id to open: ").replace('\n', '').strip()
                 if idSelected.isspace() or not idSelected.isdigit(): idSelected = -1
                 idSelected = int(idSelected)
+                relevantInfo = idDict[idSelected]
+                emailListIdx = relevantInfo["idx"]
 
         # open selected email
-        relevantInfo = idDict[idSelected]
-        emailListIndex = relevantInfo["idx"]
-        emailDict = emailList[emailListIndex]
+        emailDict = emailList[emailListIdx]
         printedStr = self.processEmailDict(emailDict)
         return (printedStr, emailDict)
 
@@ -1087,31 +1088,22 @@ class emailAgent():
                      startedBySendingEmail=False,
                      onlyUnread:bool=True,
                      recursiveCall:bool=False,
-                     maxFetchCount:int=-1,
-                     waitForSelectCallback=None
+                     maxFetchCount:int=-1
                     )->dict():
         """
             \n@Brief: High level api function which allows user to receive an email
+            \n@Note: If called by non-command line application, need to parse return & call `openEmailById()`
+            - return["emailList"]["desc"] for each emails' brief summary. Id is stored in return["emailList"]
             \n@Param: startedBySendingEmail- True if started off by sending email and want to wait for users reponse
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
-            \n@Param: waitForSelectCallback- Callback that interupts main fn so user can select which email to open
-            Takes dictionary as sole argument and should return an 'idNum' taken from 'emailList' key in dict
-            \n\t @Param: {
-                error: bool,
-                text: str,
-                idDict: {
-                    '<email id>': {
-                        idx: '<emailList index>',
-                        desc: 'info about email'
-                    }
-                }, 
-                emailList: list
-            }
-            \n@Return: An 'idNum' taken from 'emailList' key in emailsInfoDict
-            \n@Return: {error: bool, text: str, idDict: dict, emailList: list} 
-            If error, 'error' key will be true, printed email (or error) will be in 'text' key
+            \n\t@Return: `{
+            \n\t    error: bool,
+            \n\t    text: str,
+            \n\t    idDict: {'<email id>': {idx: '<list index>', desc: ''}}, # dict of email ids mapped to indexes of emailList
+            \n\t    emailList: [{To, From, DateTime, Subject, Body, idNum, unread}] # list of dicts with email message data
+            \n\t} If error, 'error' key will be true, printed email (or error) will be in 'text' key`
         """
         toRtn = {"error": False, "text": "", "idDict": {}, "emailList": []}
 
@@ -1130,19 +1122,26 @@ class emailAgent():
         elif not onlyUnread: 
             emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
 
+        toRtn["idDict"] = idDict
+        toRtn["emailList"] = emailList
+
+        # if command line, can just ask user, otherwise need to call another function to select & open email by id
         if (self.isCommandLine):
             self.recvCommandLine(startedBySendingEmail, recursiveCall, emailList, idDict)
-        else:
-            # provide frontend with info (actual email content in collated form) so user can select email to open
-            toRtn["idDict"] = idDict
-            toRtn["emailList"] = emailList
-            if (waitForSelectCallback != None):
-                emailId = waitForSelectCallback(toRtn)
-                printedStr, emailInfoDict = self._openEmail(idDict, emailList, idSelected=emailId)
-                toRtn["text"] = printedStr
-
         return toRtn
 
+    def openEmailById(self, idDict, emailList, emailId)->str():
+        """
+            \n@Brief: High-level api helper function for non-command line applications that get email message by its id
+            \n@Note: Call `receiveEmail()` to get idDict & emailList which contains summaries
+            that need to be proccessed to determine which one to select and get its full content
+            \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>': {idx: '<list index>', desc: ''}}
+            \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum, unread}]
+            \n@Param: emailId- Selected email's id to open (should be determined by your code prior to calling this)
+            \n@Returns: String containing the email's contents
+        """
+        printedStr, emailInfoDict = self._openEmail(idDict, emailList, idSelected=emailId)
+        return printedStr
 
     def recvCommandLine(self, startedBySendingEmail, recursiveCall, emailList, idDict):
         """

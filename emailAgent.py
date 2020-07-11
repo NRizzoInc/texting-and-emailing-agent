@@ -3,6 +3,8 @@
     The purpose of this file is to be able to send/receive emails
 '''
 #TODO: If contact list has multiple emails, allow user to pick
+
+#------------------------------STANDARD DEPENDENCIES-----------------------------#
 import os
 import sys
 import json
@@ -28,8 +30,11 @@ import urllib
 from urllib import request 
 from urllib.parse import urlparse # WARNING: python3 only
 
-# 3rd party Dependencies
+#-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 import fleep # to identify file types
+
+#--------------------------------OUR DEPENDENCIES--------------------------------#
+import utils
 
 class emailAgent():
     """
@@ -61,10 +66,10 @@ class emailAgent():
         if not os.path.exists(self.pathToContactList):
             with open(self.pathToContactList, 'w+') as writeFile:
                 json.dump({}, writeFile) #write empty dictionary to file (creates the file)
-        self.contactList = self.loadJson(self.pathToContactList)
+        self.contactList = utils.loadJson(self.pathToContactList)
 
         # information to login
-        self.emailProvidersInfo = self.loadJson(os.path.join(self.__backendDir, "emailData", "emailProvidersInfo.json"))
+        self.emailProvidersInfo = utils.loadJson(os.path.join(self.__backendDir, "emailData", "emailProvidersInfo.json"))
         self.sendToPhone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP
@@ -97,7 +102,7 @@ class emailAgent():
 
     # returns the contact list as it is currently in the contact list file
     def getContactList(self):
-        return self.loadJson(self.pathToContactList)
+        return utils.loadJson(self.pathToContactList)
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
@@ -515,13 +520,6 @@ class emailAgent():
                 sys.exit(emailAgent.__error)
             else:
                 return errorMsg
-
-    # allow this function to be called without needing to initialize the class
-    @classmethod
-    def loadJson(cls, pathToJson):
-        with open(pathToJson, 'r+') as readFile:
-            data = json.load(readFile)
-        return data
 
     def connectSMTP(self, server, portNum):
         print("Connecting to SMTP email server")
@@ -1523,9 +1521,9 @@ def run():
         if argLength < 3: 
             print("""\
                 \nInvalid number of arguments entered! \
-                \nProvide first and last name seperated by spaces when running this script!""")
+                \nProvide first and last name seperated by spaces when running this script!
+                \nThe existing contact list includes:""")
 
-            emailer.webAppPrintWrapper("\nThe existing contact list includes:")
             emailer.printContactListPretty()
 
             addContact = input("Do you want to add a new contact to this list(y/n): ")

@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+
+#------------------------------STANDARD DEPENDENCIES-----------------------------#
 import os, sys
 import json # to get data from POST only forms
 import urllib.request
@@ -11,12 +13,15 @@ import uuid # used to generate keys for handling private data
 import logging # used to disable printing of each POST/GET request
 
 # This file is responsible for creating a flask Web App UI 
-#-----------------------------DEPENDENCIES-----------------------------#
+#-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 import flask
 from flask import Flask, templating, render_template, request, redirect
 from flask_socketio import SocketIO
 
-import emailAgent # need to call functions
+#--------------------------------OUR DEPENDENCIES--------------------------------#
+import emailAgent
+import utils
+
 class WebApp():
     def __init__(self, isDebug=False):
         self.emailAgent = emailAgent.emailAgent(displayContacts=True, isCommandLine=False)
@@ -30,7 +35,7 @@ class WebApp():
         self.app.static_folder = os.path.join(self.__pathToThisDir, "frontend", "static") 
         self.app.template_folder = os.path.join(self.__pathToThisDir, "frontend", "htmlTemplates")
         # needs to be kept within the static folder so it can be loaded
-        _urls = emailAgent.emailAgent.loadJson(os.path.join(self.app.static_folder, "urls.json"))
+        _urls = utils.loadJson(os.path.join(self.app.static_folder, "urls.json"))
         self.sites = _urls["sites"]
         self.formSites = _urls["formSites"]
         self.infoSites = _urls["infoSites"]

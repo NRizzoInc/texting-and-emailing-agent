@@ -247,14 +247,38 @@ async function postSelectedEmailData(data) {
  * "idDict": dict of email ids mapped to indexes of emailMsgLlist
  */ 
 async function parseEmailData(emailData) {
-    for (const [optToAddID, infoDict] of Object.entries(emailData.idDict)) {
-        const realVal = infoDict.idx // values that map to actual indexes within another list
+    const emailDicts = Object.entries(emailData.idDict)
+    const sortedDictList = emailDicts.sort(sortEmailDesc)
+    for (const [idNum, infoDict] of sortedDictList) {
+        const realVal = idNum // values that map to actual indexes within the 'emailData.emailList' list
         const text = infoDict.desc
         emailSelDropdown.addOption(realVal, text)
     }
 
     // need to store authKey, emailList, and other important info related to email dropdown
     emailSelDropdown.appendData(emailData)
+}
+
+/**
+ * @brief Helper function to sort list such that most recent email goes on top of dropdown
+ * @param {['<email id>', {idx: '<list index>', desc: ''}]} emailEntryPrev Dictionary containing info about this email
+ * @param {['<email id>', {idx: '<list index>', desc: ''}]} emailEntryCurr Dictionary containing info about this email
+ * @returns {-1 | 1 | 0}
+ * -1 = prev < curr.
+ *  1 = prev > curr.
+ *  0 = prev == curr.
+ */
+function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
+    // each only has 1 key which is the idNum that can be used to sort
+    // the higher the idNUm, the more recent the email was received
+    const idNumPrev = Number(emailEntryPrev[0])
+    const idNumCurr = Number(emailEntryCurr[0])
+    const comparison = idNumPrev - idNumCurr
+
+    // return based on result (reverse to get most recent on top/first)
+    if      (comparison <= -1) return  1
+    else if (comparison >= 1)  return -1
+    else if (comparison == 0)  return  0
 }
 
 /**

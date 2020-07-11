@@ -961,7 +961,7 @@ class emailAgent():
             if overflow < 0: 
                 emailMsg = emailMsg[:overflow]
                 moreToMsg = "..."
-            descStr = "{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText)
+            descStr = "{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'], emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText)
 
         return descStr
 
@@ -1040,10 +1040,10 @@ class emailAgent():
                 idSelected = input("Enter email id to open: ").replace('\n', '').strip()
                 if idSelected.isspace() or not idSelected.isdigit(): idSelected = -1
                 idSelected = int(idSelected)
-                relevantInfo = idDict[idSelected]
-                emailListIdx = relevantInfo["idx"]
 
         # open selected email
+        relevantInfo = idDict[idSelected]
+        emailListIdx = relevantInfo["idx"]
         emailDict = emailList[emailListIdx]
         printedStr = self.processEmailDict(emailDict)
         return (printedStr, emailDict)

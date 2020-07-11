@@ -14,6 +14,7 @@ import logging # used to disable printing of each POST/GET request
 #-----------------------------DEPENDENCIES-----------------------------#
 import flask
 from flask import Flask, templating, render_template, request, redirect
+from flask_socketio import SocketIO
 
 import emailAgent # need to call functions
 class WebApp():
@@ -52,6 +53,7 @@ class WebApp():
 
         # start up the web app
         self.app.config["TEMPLATES_AUTO_RELOAD"] = True # refreshes flask if html files change
+        self.flaskSocket = SocketIO(self.app, async_mode="threading")
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.__isDebug)
     
     def getIP(self):
@@ -163,26 +165,15 @@ class WebApp():
 
             # return to original site
             return self.returnSuccessResp(optDataDict)
-    
-    def selectEmailIdCallback(self, emailsInfoDict)->int():
+
+    def sendToClient(self, messageName, contentJson=None):
         """
-            \n@Brief Helper callback function which interrupts receiveEmail() to select email to open
-            \n@Param emailsInfoDict- dict of email ids mapped to indexes of emailMsgLlist of format
-            \n\t{
-                error: bool,
-                text: str,
-                idDict: {
-                    '<email id>': {
-                        idx: '<emailList index>',
-                        desc: 'info about email'
-                    }
-                }, 
-                emailList: list
-            }
-            \n@Return: An 'idNum' taken from an 'emailList' key in emailsInfoDict
+            Function to enable communication from backend to front-end via sockets
         """
-        stubId = emailsInfoDict["emailList"][0]["idNum"]
-        return stubId
+        if contentJson:
+            self.flaskSocket.emit(messageName, contentJson)
+        else:
+            self.flaskSocket.emit(messageName)
 
     def printSites(self):
         '''

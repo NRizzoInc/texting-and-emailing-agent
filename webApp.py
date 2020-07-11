@@ -8,6 +8,7 @@ import platform
 import subprocess
 import socket # used to get local network exposible IP
 import uuid # used to generate keys for handling private data 
+import logging # used to disable printing of each POST/GET request
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------DEPENDENCIES-----------------------------#
@@ -16,7 +17,7 @@ from flask import Flask, templating, render_template, request, redirect
 
 import emailAgent # need to call functions
 class WebApp():
-    def __init__(self):
+    def __init__(self, isDebug=False):
         self.emailAgent = emailAgent.emailAgent(displayContacts=True, isCommandLine=False)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
@@ -43,10 +44,15 @@ class WebApp():
         self.printSites()
         self.initializingStatus = False
 
+        # set logging (hide POST/GET Requests if not debugging)
+        self.__isDebug = isDebug
+        self._logger = logging.getLogger("werkzeug")
+        logLevel = logging.INFO if self.__isDebug == True else logging.ERROR
+        self._logger.setLevel(logLevel)
+
         # start up the web app
-        self.__debugOn = False
         self.app.config["TEMPLATES_AUTO_RELOAD"] = True # refreshes flask if html files change
-        self.app.run(host=self.host_ip, port=self.host_port, debug=self.__debugOn)
+        self.app.run(host=self.host_ip, port=self.host_port, debug=self.__isDebug)
     
     def getIP(self):
         myPlatform = platform.system()

@@ -7,75 +7,81 @@
 <div class="interface-wrapper" id='Texting-Form-Wrapper'>
     <!--Use POST to make site inaccessible and protect data by not adding it to url-->
     <form id='Texting-Form'>
-        <div class="row" id="firstname-container">
+        <div class="row vertical-margins" id="firstname-container">
             <div class="col-25">
                 <label for="firstName">First Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="firstName" name="firstname" placeholder="First name..." autocomplete="on">
+                <input class="input-padding" type="text" id="firstName" name="firstname" placeholder="First name..." autocomplete="on">
             </div>
         </div>
-        <div class="row" id="lastname-container">
+        <div class="row vertical-margins" id="lastname-container">
             <div class="col-25">
                 <label for="lastName">Last Name</label>
             </div>
             <div class="col-75">
-                <input type="text" id="lastName" name="lastname" placeholder="Last name..." autocomplete="on">
+                <input class="input-padding" type="text" id="lastName" name="lastname" placeholder="Last name..." autocomplete="on">
             </div>
         </div>
-        <div class="row" id="email-container">
+        <div class="row vertical-margins" id="email-container">
             <div class="col-25">
                 <label for="emailAddress">Email Address</label>
             </div>
             <div class="col-75">
-                <input type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)..." autocomplete="on">
+                <input class="input-padding" type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)..." autocomplete="on">
             </div>
         </div>
-        <div class="row" id="password-container">
+        <div class="row vertical-margins" id="password-container">
             <div class="col-25">
                 <label for="password">Password</label>
             </div>
             <div class="col-75">
-                <input type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)..." autocomplete="on">
+                <input class="input-padding" type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)..." autocomplete="on">
             </div>
         </div>
-        <div class="row" id="message-container">
+        <div class="row vertical-margins" id="message-container">
             <div class="col-25">
                 <label for="message">Your Message</label>
             </div>
             <div class="col-75">
-                <textarea id="message" name="message" placeholder="Write something..."
+                <textarea class="input-padding" id="message" name="message" placeholder="Write something..."
                 style="height:200px"></textarea>
             </div>
         </div>
         <!-- Fields only needed for adding a new contact -->
-        <div class="row" id="phone-number-container">
+        <div class="row vertical-margins" id="phone-number-container">
             <div class="col-25">
                 <label for="phoneNumber">Phone Number</label>
             </div>
             <div class="col-75">
-                <input type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number..." autocomplete="on">
+                <input class="input-padding" type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number..." autocomplete="on">
             </div>
         </div>
-        <div class="row" id="carrier-container">
+        <div class="row vertical-margins" id="carrier-container">
             <div class="col-25">
                 <label for="carrier">Phone carrier</label>
             </div>
             <div class="col-75">
-                <input type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
+                <input class="input-padding" type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
             </div>
         </div>
-        <div class="row">
-            <!--Use submit button's id in js to know when to get data-->
-            <input type="submit" value="Submit" id="Submit-Button">
-            <input type="button" value="Go Back" id="Go-Back-Btn">
+        <div class="row vertical-margins" id="helper-row">
+            <div class="col-25"></div>
+            <div class="col-75 flex-right-align vertical-center-align-parent">
+                <select class="child-shink-fit input-padding vertical-center-align-child" id="email-id-selector">
+                    <option value="" disabled selected>Select email to open</option>
+                </select>
+                <!--Use submit button's id in js to know when to get data-->
+                <input type="button" class="child-shink-fit input-padding vertical-center-align-child" value="Go Back" id="Go-Back-Btn">
+                <input type="submit" class="child-shink-fit input-padding vertical-center-align-child" value="Submit" id="Submit-Button">
+            </div>
         </div>
-        <div class="row" id="terminal-text-container">
+        <div class="row vertical-margins" id="terminal-text-container">
             <div class="col-25">
                 <label for="terminal-text">Email Message:</label>
             </div>
             <div class="col-75">
-                <textarea id="terminal-text" name="terminal-text" class="terminal-textarea" placeholder="Waiting to fetch email..." readonly=true></textarea>
+                <textarea class="terminal-textarea input-padding" id="terminal-text" name="terminal-text" placeholder="Waiting to fetch email..." readonly=true></textarea>
             </div>
         </div>
     </form>

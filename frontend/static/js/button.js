@@ -41,7 +41,7 @@ async function onFormBtnClick(id) {
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
 
-    // true means show (default everything to that except terminal data)
+    // true means show (default everything to that except terminal data & selector)
     const displayDict = {
         "fname":        true,
         "lname":        true,
@@ -51,6 +51,7 @@ async function onFormBtnClick(id) {
         "phone":        true,
         "carrier":      true,
         "terminal":     false,
+        "selector":     false,
         "task":         null
     }
 
@@ -63,6 +64,7 @@ async function onFormBtnClick(id) {
         displayDict.phone = false
         displayDict.carrier = false
         displayDict.terminal = true
+        displayDict.selector = true
         displayDict.task = "receiving"
     } 
     else if (id == 'text-send-button') {
@@ -92,11 +94,12 @@ async function onFormBtnClick(id) {
         "phone":        true,
         "carrier":      true,
         "terminal":     false,
+        "selector":     false,
         "task":         null
     }} displayDict If a field is true, show it
  */
 function setDisplays(displayDict) {
-    const display = "block"
+    const display = "flex"
     const hide    = "none"
     document.getElementById('firstname-container').style.display =          displayDict.fname     ? display : hide
     document.getElementById('lastname-container').style.display =           displayDict.lname     ? display : hide
@@ -106,6 +109,7 @@ function setDisplays(displayDict) {
     document.getElementById('phone-number-container').style.display =       displayDict.phone     ? display : hide
     document.getElementById('carrier-container').style.display =            displayDict.carrier   ? display : hide
     document.getElementById('terminal-text-container').style.display =      displayDict.terminal  ? display : hide
+    document.getElementById('email-id-selector').style.display =            displayDict.selector  ? display : hide
 
     // use name attribute in formProcessor to determine some actions
     document.getElementById('Texting-Form').setAttribute("task", displayDict.task)

@@ -25,10 +25,10 @@
 
 input[type=text], input[type=password], select, textarea {
     width: inherit;
-    padding: 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: vertical;
+    flex-grow: 1;
 }
 
 label {
@@ -40,31 +40,75 @@ label {
 input[type=submit], input[type=button] {
     background-color: #4CAF50;
     color: white;
-    padding: 12px 20px;
     margin-left: 2%;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    float: right;
 }
 
 input[type=submit]:hover, input[type=button]:hover {
     background-color: #45a049;
 }
 
-.col-25 {
-    float: left;
-    width: 25%;
-    margin-top: 6px;
+.input-padding {
+    padding: 12px 20px;
+    float: left; /* Keeps all inputs starting from the same point*/
 }
 
-.col-75 {
-    float: left;
-    width: 75%;
-    margin-top: 6px;
+.vertical-center-align-child {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.vertical-center-align-parent {
+    position: relative;
+}
+
+.flex-center-align {
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.flex-right-align {
+    align-items: right;
+    justify-content: flex-end;
+}
+
+.flex-left-align {
+    align-items: left;
+    justify-content: flex-start;
+}
+
+/* should be used by row class */
+.vertical-margins {
+    margin-top: 1%;
+    margin-bottom: 1%;
 }
 
 /* Clear floats after the columns */
+.row {
+    display: flex;
+    flex-flow: row;
+}
+
+.child-shink-fit {
+    width: auto; /* auto resize to fit line*/
+}
+
+.col-25 {
+    float: left;
+    width: 25%;
+}
+
+.col-75 {
+    display: flex;
+    float: left;
+    width: 75%;
+    flex-flow: row;
+}
+
 .row:after {
     content: "";
     display: table;

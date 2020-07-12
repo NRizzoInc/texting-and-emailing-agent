@@ -6,6 +6,7 @@ import { loadResource, writeResizeTextarea, isVisible } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector")
+const numFetchSelDropdown = new Dropdown("num-email-fetch-selector")
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
 const defaultDisplayDict = {
@@ -18,6 +19,7 @@ const defaultDisplayDict = {
     "carrier":      true,
     "textarea":     false,
     "selector":     false,
+    "numFetch":     false, // only show this in receiving
     "task":         null
 }
 
@@ -71,6 +73,7 @@ async function onFormBtnClick(id) {
         displayDict.message = false
         displayDict.phone = false
         displayDict.carrier = false
+        displayDict.numFetch = true // need to select num emails to fetch
         displayDict.task = "receiving"
         emailSelDropdown.clearDropdown()
     } 
@@ -102,6 +105,7 @@ async function onFormBtnClick(id) {
         "carrier":      true,
         "textarea":     false,
         "selector":     false,
+        "numFetch":     false,
         "task":         null
     }} displayDict If a field is true, show it
  */
@@ -117,6 +121,7 @@ function setDisplays(displayDict) {
     document.getElementById('carrier-container').style.display =            displayDict.carrier   ? display : hide
     document.getElementById('terminal-text-container').style.display =      displayDict.textarea  ? display : hide
     document.getElementById('email-id-selector').style.display =            displayDict.selector  ? display : hide
+    document.getElementById('num-email-fetch-container').style.display =     displayDict.numFetch  ? display : hide
 
     // use name attribute in formProcessor to determine some actions
     document.getElementById('Texting-Form').setAttribute("task", displayDict.task)
@@ -184,7 +189,7 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
         // post collated data about selected email to allow backend to fully fetch
         const resDict = await postSelectedEmailData(selEmailData)
 
-        // show textarea 
+        // hide everything besides textarea (for emails) & email selector dropdown
         const displayDict = {}
         const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
         for (const key of Object.keys(defaultDisplayDict)) {

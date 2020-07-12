@@ -1,0 +1,8 @@
+/* 
+    Purpose make the selected option in dropdown small and include "..." for leftover 
+    Allows individual options to grow to their size
+*/
+.dropdown-min-width {
+    text-overflow: ellipsis;
+    max-width: fit-content;
+}

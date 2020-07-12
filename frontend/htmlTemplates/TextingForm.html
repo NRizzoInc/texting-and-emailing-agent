@@ -70,7 +70,7 @@
             <div class="col-25"></div>
             <div class="col-75 flex-right-align vertical-center-align-parent">
                 <select class="child-shink-fit input-padding vertical-center-align-child" id="email-id-selector">
-                    <option id="option-placeholder" value="placeholder" disabled selected>Select email to open</option>
+                    <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
                 </select>
                 <!--Use submit button's id in js to know when to get data-->
                 <input type="button" class="child-shink-fit input-padding vertical-center-align-child" value="Go Back" id="Go-Back-Btn">
@@ -83,6 +83,16 @@
             </div>
             <div class="col-75">
                 <textarea class="terminal-textarea input-padding" id="terminal-text" name="terminal-text" placeholder="Waiting to fetch email (submit selected option)..." readonly=true></textarea>
+            </div>
+        </div>
+        <div class="row vertical-margins" id="num-email-row">
+            <div class="col-25">
+                <label for="num-email-fetch-selector"># To Fetch:</label>
+            </div>
+            <div class="col-75 flex-right-align">
+                <select class="input-padding dropdown-min-width" id="num-email-fetch-selector">
+                    <option id="num-email-fetch-selector-placeholder" value="5" selected>5</option>
+                </select>
             </div>
         </div>
     </form>

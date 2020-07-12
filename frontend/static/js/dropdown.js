@@ -8,7 +8,11 @@ export class Dropdown {
     constructor(dropdownId) {
         this._dropdownId = dropdownId
         this._dropdownEl = document.getElementById(this._dropdownId)
-        const placeholderCandidate = document.getElementById("option-placeholder")
+        const placeholderExt = "-placeholder"
+        this._placeholderId = `${dropdownId}${placeholderExt}`
+        const placeholderCandidate = document.getElementById(this._placeholderId)
+        this._placeholderExists = placeholderCandidate != null
+        console.assert(this._placeholderExists, `Invalid placeholder id. Should be '${this._placeholderId}'`)
         // deep copy if exists
         this._placeholder = placeholderCandidate != null ? placeholderCandidate.cloneNode(true) : ""
         this._data = {} // can be used to hold misc data (like emailList)

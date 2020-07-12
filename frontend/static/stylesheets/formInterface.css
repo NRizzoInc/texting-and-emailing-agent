@@ -64,6 +64,7 @@ input[type=submit]:hover, input[type=button]:hover {
     float: left;
     width: 75%;
     flex-flow: row;
+    left: 25%;
 }
 
 .row:after {

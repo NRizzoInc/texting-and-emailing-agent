@@ -2,7 +2,7 @@
 .vertical-center-align-child {
     position: relative;
     top: 50%;
-    transform: translateY(-50%);
+    /* transform: translateY(-50%); */
 }
 
 .vertical-center-align-parent {

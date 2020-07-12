@@ -4,15 +4,22 @@ export class Dropdown {
     /**
      * @brief Class that helps manage dropdown menus
      * @param {String} dropdownId The id of the '<select>' tag element
+     * @param {Boolean} hasPlaceholder Does the '<select>' element already have a placeholder option
      */
-    constructor(dropdownId) {
+    constructor(dropdownId, hasPlaceholder) {
         this._dropdownId = dropdownId
         this._dropdownEl = document.getElementById(this._dropdownId)
         const placeholderExt = "-placeholder"
         this._placeholderId = `${dropdownId}${placeholderExt}`
         const placeholderCandidate = document.getElementById(this._placeholderId)
         this._placeholderExists = placeholderCandidate != null
-        console.assert(this._placeholderExists, `Invalid placeholder id. Should be '${this._placeholderId}'`)
+
+        // Make sure the placeholder exists if user says it does (causes issues if not true)
+        console.assert(
+            this._placeholderExists || !hasPlaceholder,
+            `Invalid placeholder id. Should be '${this._placeholderId}'`
+        )
+
         // deep copy if exists
         this._placeholder = placeholderCandidate != null ? placeholderCandidate.cloneNode(true) : ""
         this._data = {} // can be used to hold misc data (like emailList)
@@ -119,15 +126,40 @@ export class Dropdown {
     /**
      * @brief Adds a new <option> to the dropdown menu
      * @note value & text can be the same
+     * @note If no placeholder exists, makes this new one a placeholder & selects it
      * @param {String} value The desired value & id (not visible)
      * @param {String} text The desired text (visible on ui)
      */
     addOption(value, text) {
+        const numCurrOpts = this._dropdownEl.options.length
         const newOpt = document.createElement("option")
         newOpt.id = value
         newOpt.value = value
         newOpt.text = text
+
+        // if no options or placeholders, make this option be the placeholder and select it
+        if (numCurrOpts == 0 || !this._placeholderExists) {
+            newOpt.id = this._placeholderId
+            newOpt.selected = true
+            this._placeholderExists = true
+        }
         this._dropdownEl.appendChild(newOpt)
+    }
+
+    /**
+     * @Brief Helper function that will fill in a dropdown with options (only if using Numbers)
+     * @param {Number} startVal The placeholder option's amount (default = null = 0)
+     * @param {Number} optIncrement The amount each option is incremented by (default = 5)
+     * @param {Number} maxOpt The maximum value present within the dropdown (default = 100)
+     */
+    fillDropdown(startVal=null, optIncrement=5, maxOpt=100) {
+        // if does not divide evenly, round down and add the 'max' at the end
+        // (101 / 5 = 20.2 -> 20)
+        const needExtraOpt = (maxOpt - startVal) % optIncrement != 0
+        const numOpts = Math.floor(maxOpt / optIncrement)
+        const optsList = Array.from(Array(numOpts), (val, idx) => (idx+1)*optIncrement)
+        if (needExtraOpt) optsList.push(maxOpt)
+        optsList.forEach((optVal) => this.addOption(optVal, optVal))
     }
 
     /**

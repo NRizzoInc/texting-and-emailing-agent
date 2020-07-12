@@ -5,8 +5,8 @@ import { parseForm/*, loadEmailDropdown*/ } from "./formProcessor.js"
 import { loadResource, writeResizeTextarea, isVisible } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
 
-const emailSelDropdown = new Dropdown("email-id-selector")
-const numFetchSelDropdown = new Dropdown("num-email-fetch-selector")
+const emailSelDropdown = new Dropdown("email-id-selector", true)
+const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false)
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
 const defaultDisplayDict = {
@@ -53,6 +53,9 @@ $(document).ready( () => {
     formEl.addEventListener("submit", (event) => {
         event.preventDefault()
     }, true)
+
+    // fill in the dropdown (5-100 incrementing by 5)
+    numFetchSelDropdown.fillDropdown(5, 5, 100)
 })
 
 /**

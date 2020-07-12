@@ -3,6 +3,8 @@
     Allows individual options to grow to their size
 */
 .dropdown-min-width {
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
     max-width: fit-content;
 }

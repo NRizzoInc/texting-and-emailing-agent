@@ -51,3 +51,59 @@ export function isHidden(elId) {
 export function isVisible(elId) {
     return $(`#${elId}`).is(":visible")
 }
+
+/********************************************** GET & POST FUNCTIONS **********************************************/
+
+/**
+ * @brief Helper function that sends POST request containing information about the selected email
+ * @param {{
+    *   emailId: String,
+    *   authKey: String,
+    *   idDict: {'<email id>': {idx: '<list index>', desc: ''}, ...},
+    *   emailList: [{To, From, DateTime, Subject, Body, idNum, unread}, ...],
+    * } | {}} data The data to post for backend to parse
+    * @param {String} url The site to post the data to
+    * @returns The POST request's response.
+    * What you really want is the "emailContent" field as it contains the full email
+*/
+export async function postData(data, url) {
+    const reqResponse = {}
+    try {
+        const resData = await $.ajax({
+            url: url,
+            type: 'POST',
+            // need both for flask to understand MIME Type
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+        })
+        Object.assign(reqResponse, reqResponse, resData) // merge dicts
+    } catch (err) {
+        console.log(`Failed to POST to '${url}': ${JSON.stringify(err)}`);
+    }
+    return reqResponse
+}
+
+/**
+* @brief Generic GET request wrapper that returns result
+* @param {JSON} data Additional data to pass along in request
+* @param {String} url The url to get
+* @returns The GET request's response
+*/
+export async function getData(data, url) {
+    const reqResponse = {}
+    try {
+        const resData = await $.ajax({
+            url: url,
+            type: 'GET',
+            // need both for flask to understand MIME Type
+            dataType: "json",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+        })
+        Object.assign(reqResponse, reqResponse, resData) // merge dicts
+    } catch (err) {
+        console.log(`Failed to GET to '${url}': ${JSON.stringify(err)}`);
+    }
+    return reqResponse
+}

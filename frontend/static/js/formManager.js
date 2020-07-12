@@ -2,7 +2,7 @@
 // This file contains all the button commands
 
 import { parseForm/*, loadEmailDropdown*/ } from "./formProcessor.js"
-import { loadResource, writeResizeTextarea, isVisible } from "./utils.js"
+import { loadResource, writeResizeTextarea, isVisible, postData, getData } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector", true)
@@ -190,7 +190,8 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
         }
 
         // post collated data about selected email to allow backend to fully fetch
-        const resDict = await postSelectedEmailData(selEmailData)
+        const emailDataPage = urls.infoSites.emailData
+        const resDict = await postData(selEmailData, emailDataPage)
 
         // hide everything besides textarea (for emails) & email selector dropdown
         const displayDict = {}
@@ -209,36 +210,6 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
         // immediately go back if not receiving
         exitForm()
     }
-}
-
-/**
- * @brief Helper function that sends POST request containing information about the selected email
- * @param {{
- *   emailId: String,
- *   authKey: String,
- *   idDict: {'<email id>': {idx: '<list index>', desc: ''}, ...},
- *   emailList: [{To, From, DateTime, Subject, Body, idNum, unread}, ...],
- * }} data The data to post for backend to parse
- * @returns The POST request's response. What you really want is the "emailContent" field as it contains the full email
- */
-async function postSelectedEmailData(data) {
-    const urls = await loadResource(urlsPath)
-    const emailDataPage = urls.infoSites.emailData
-    const reqResponse = {}
-    try {
-        const resData = await $.ajax({
-            url: emailDataPage,
-            type: 'POST',
-            // need both for flask to understand MIME Type
-            dataType: "json",
-            contentType: "application/json",
-            data: JSON.stringify(data),
-        })
-        Object.assign(reqResponse, reqResponse, resData) // merge dicts
-    } catch (err) {
-        console.log(`Failed to post to '${emailDataPage}': ${JSON.stringify(err)}`);
-    }
-    return reqResponse
 }
 
 /**

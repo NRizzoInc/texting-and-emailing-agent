@@ -27,4 +27,6 @@ fi
 # now pip necessary packages
 $pipLocation install flask
 $pipLocation install pyinstaller # to turn python to .exe
-$pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py 
+$pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py
+$pipLocation install flask-login
+$pipLocation install flask-wtf

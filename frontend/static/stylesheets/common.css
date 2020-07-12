@@ -1,0 +1,57 @@
+
+.vertical-center-align-child {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.vertical-center-align-parent {
+    position: relative;
+}
+
+.flex-center-align {
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.flex-right-align {
+    align-items: right;
+    justify-content: flex-end;
+}
+
+.flex-left-align {
+    align-items: left;
+    justify-content: flex-start;
+}
+
+/* should be used by row class */
+.vertical-margins {
+    margin-top: 1%;
+    margin-bottom: 1%;
+}
+
+/* Clear floats after the columns */
+.row .flex-container {
+    display: flex;
+    flex-flow: row;
+}
+
+.child-shink-fit {
+    width: auto; /* auto resize to fit line*/
+}
+
+.block {
+    display: inline-block;
+    margin: 2%;
+}
+
+.sidebar-neighbor {
+    /*For side bar, need to offset position*/
+    position: fixed;
+    left: 23%; 
+}
+
+.grow-full-width {
+    width: 100%;
+}

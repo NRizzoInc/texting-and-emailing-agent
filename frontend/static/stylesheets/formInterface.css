@@ -17,7 +17,6 @@
     top: 0;
     bottom: 0;
     right: 0;
-    left: 23%; /*For side bar*/   
     border-radius: 5px;
     background-color: #f2f2f2;
     padding: 20px;
@@ -53,48 +52,6 @@ input[type=submit]:hover, input[type=button]:hover {
 .input-padding {
     padding: 12px 20px;
     float: left; /* Keeps all inputs starting from the same point*/
-}
-
-.vertical-center-align-child {
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.vertical-center-align-parent {
-    position: relative;
-}
-
-.flex-center-align {
-    align-items: center;
-    justify-content: center;
-    vertical-align: middle;
-}
-
-.flex-right-align {
-    align-items: right;
-    justify-content: flex-end;
-}
-
-.flex-left-align {
-    align-items: left;
-    justify-content: flex-start;
-}
-
-/* should be used by row class */
-.vertical-margins {
-    margin-top: 1%;
-    margin-bottom: 1%;
-}
-
-/* Clear floats after the columns */
-.row {
-    display: flex;
-    flex-flow: row;
-}
-
-.child-shink-fit {
-    width: auto; /* auto resize to fit line*/
 }
 
 .col-25 {

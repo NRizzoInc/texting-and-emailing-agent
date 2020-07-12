@@ -40,7 +40,7 @@ class EmailAgent():
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
-        \n@Note:The helper high level api functions are: updateContactList(), self.EmailAgent.printContactListPretty(),
+        \n@Note:The helper high level api functions are: updateContactInfo(), self.EmailAgent.printContactListPretty(),
         self.EmailAgent.setDefaultState(bool), getReceiverContactInfo(firstName, lastName)
     """
     # static helper varaibles to remove magic strings
@@ -66,8 +66,8 @@ class EmailAgent():
 
         # Open the contact list file (create new file if it does not exist)
         if not os.path.exists(self.pathToContactList):
-            with open(self.pathToContactList, 'w+') as writeFile:
-                json.dump({}, writeFile) #write empty dictionary to file (creates the file)
+            # write empty dictionary to file (creates the file)
+            utils.writeJson(self.pathToContactList, {})
         self.contactList = utils.loadJson(self.pathToContactList)
 
         # information to login
@@ -458,24 +458,32 @@ class EmailAgent():
 
         return dictToRtn
 
-    def connectToEmailServers(self)->str():
+    def connectToEmailServers(self, emailAddr=None, password=None, endPastConnection=True)->str():
         """
             \n@Brief: This function is responsible for connecting to the email server.
-            \n@Param: hostAddress- contains information about host address of email server 
-            \n@Param: purpose- str that is either "send" or "receive" which is needed to determine which protocol to use
-            \n@Param: portNum- contains information about the port # of email server (defaults to 465)
+            \n@Param: emailAddr- (optional) The email address to connect to
+            \n@Param: password- (optional) The password for the email address
+            \n@Param: endPastConnection- (optional) If object already logged in, should it logout before logging in
             \n@Return: None if success. String error message if error
         """
 
+        if endPastConnection: self.logoutEmail()
+
         # Get email login
-        if self.useDefault == False and self.loginAlreadySet == False:
+        if emailAddr != None and password != None:
+            self.myEmailAddress = emailAddr
+            self.password = password
+        elif self.loginAlreadySet == False:
+            # already have logins, don't need to ask for it again
+            pass
+        elif self.useDefault == False:
             # if false then make user use their own email username and password
             self.myEmailAddress = input("Enter your email address: ")
             self.password = getpass.getpass(prompt="Password for user {0}: ".format(self.myEmailAddress))
-            self.loginAlreadySet = True # set to true so next time the user will not have to retype login info
         else:
             print("Using default gmail account created for this program to login to an email\n")
             # I created a dummy gmail account that this program can login to
+        self.loginAlreadySet = True # set to true so next time the user will not have to retype login info
 
         
         emailServiceProviderInfo = self.getEmailProviderInfo(emailWebsite=self.myEmailAddress)
@@ -596,15 +604,14 @@ class EmailAgent():
         return emailServiceProviderInfo
     
     def addContact(self, firstName, lastName, email, carrier, phoneNumber):
-        '''
-            This function is responsible for adding another contact to the contact list by processing the inputs
-            Args:\n
-                firstName: first name of the person being added
-                lastName: last name of the person being added
-                email: email of the person being added
-                carrier: carrier of the person being added
-                phoneNumber: phone number of the person being added
-        '''
+        """
+            \n@Brief: This function is responsible for adding another contact to the contact list by processing the inputs
+            \n@Param: firstName - first name of the person being added
+            \n@Param: lastName - last name of the person being added
+            \n@Param: email - email of the person being added
+            \n@Param: carrier - carrier of the person being added
+            \n@Param: phoneNumber - phone number of the person being added
+        """
         
         commonDataDict = {
             'email': email,
@@ -657,8 +664,7 @@ class EmailAgent():
         pprint.pprint(self.contactList)
 
         # In either case, write updated version of contact list to the json file
-        with open(self.pathToContactList, 'w+') as writeFile:
-            json.dump(newContactList, writeFile, indent=4)
+        utils.writeJson(self.pathToContactList, newContactList)
 
     def updateContactInfo(self, firstName=None, lastName=None, addingExternally=True):
         '''
@@ -750,8 +756,7 @@ class EmailAgent():
             print("The updated contacts list is:\n")
             pprint.pprint(self.contactList)
 
-            with open(self.pathToContactList, 'w+') as writeFile:
-                json.dump(updatedContactList, writeFile, indent=4)
+            utils.writeJson(self.pathToContactList, updatedContactList)
 
         return updatedContactList
 

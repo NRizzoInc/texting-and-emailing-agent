@@ -8,10 +8,12 @@
     },
     "formSites": {
         "textForm"      :   "/textForm",
-        "emailForm"     :   "/emailForm"
+        "emailForm"     :   "/emailForm",
+        "webAppLogin"   :   "/login",
+        "webAppLogout"  :   "/logout",
+        "webAppRegister":   "/register"
     },
     "infoSites": {
-        "emailData"     :   "/emailData",
-        "logout"        :   "/logout"
+        "emailData"     :   "/emailData"
     }
 }

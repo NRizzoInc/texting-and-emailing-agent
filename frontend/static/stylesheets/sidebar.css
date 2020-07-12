@@ -10,7 +10,8 @@
     padding-top: 20px;
     width: 17%; /* Set the width of the sidebar */
     display: block;
-    
+    margin-right: 3%;
+    padding-right: 1%;
   }
   
   /* The navigation menu links */

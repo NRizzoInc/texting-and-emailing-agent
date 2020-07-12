@@ -1,0 +1,32 @@
+<head>
+    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png"> 
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/common.css">
+    <title>{{ title }}</title>
+</head>
+
+<body>
+    <div class="flex-container">
+        <!-- Sidebar navigation -->
+        {% include "sidebar.html" %}
+        <div id="login-container" class="block child-shink-fit sidebar-neighbor grow-full-width flex-left-align">
+            {% include "flashedMessages.html" %}
+            <p>New User? <a href="{{ formLinks.webAppRegister }}">Click to Register!</a></p>
+            {% block content %}
+                <h1>Sign In</h1>
+                <form action="" method="post" novalidate>
+                    {{ form.hidden_tag() }}
+                    <p>
+                        {{ form.username.label }}<br>
+                        {{ form.username(size=32) }}
+                    </p>
+                    <p>
+                        {{ form.password.label }}<br>
+                        {{ form.password(size=32) }}
+                    </p>
+                    <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
+                    <p>{{ form.submit() }}</p>
+                </form>
+            {% endblock %}
+        </div>
+    </div>
+</body>

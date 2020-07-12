@@ -1,12 +1,13 @@
 #!/bin/bash
 # this script enables user to run the code in this repo 
 # using the virtual environment
-THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
-virtualEnvironDir=$THIS_FILE_DIR/$virtualEnvironName
-pythonLocation=$virtualEnvironDir/Scripts/python.exe
+THIS_FILE_DIR="$(readlink -fm $0/..)"
+rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+virtualEnvironDir=${rootDir}/${virtualEnvironName}
+pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 
-$pythonLocation -c """
+${pythonLocation} -c """
 import os, sys
 from backend.src.emailAgent import sys, EmailAgent
 while (len(sys.argv) < 4):

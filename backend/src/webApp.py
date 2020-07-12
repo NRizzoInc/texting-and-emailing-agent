@@ -19,12 +19,12 @@ from flask import Flask, templating, render_template, request, redirect
 from flask_socketio import SocketIO
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import emailAgent
-import utils
+from . import emailAgent
+from . import utils
 
 class WebApp():
     def __init__(self, isDebug=False):
-        self.emailAgent = emailAgent.emailAgent(displayContacts=True, isCommandLine=False)
+        self.emailAgent = emailAgent.EmailAgent(displayContacts=True, isCommandLine=False)
         self.host_ip = self.getIP()
         self.host_port = '5000' # port 5000 allowed through firewall
         self.host_address = 'http://' + self.host_ip + ':' + self.host_port
@@ -32,8 +32,11 @@ class WebApp():
 
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.app.static_folder = os.path.join(self.__pathToThisDir, "frontend", "static") 
-        self.app.template_folder = os.path.join(self.__pathToThisDir, "frontend", "htmlTemplates")
+        self.__backendDir = os.path.join(self.__pathToThisDir, "..")
+        self.__rootDir = os.path.join(self.__backendDir, "..")
+        self.__frontendDir = os.path.join(self.__rootDir, "frontend")
+        self.app.static_folder = os.path.join(self.__frontendDir, "static") 
+        self.app.template_folder = os.path.join(self.__frontendDir, "htmlTemplates")
         # needs to be kept within the static folder so it can be loaded
         _urls = utils.loadJson(os.path.join(self.app.static_folder, "urls.json"))
         self.sites = _urls["sites"]
@@ -115,6 +118,15 @@ class WebApp():
             emailContents = self.emailAgent.openEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])
             toRtn["emailContent"] = emailContents.strip()
             return self.returnSuccessResp(additionalDict=toRtn)
+        
+        @self.app.route(self.infoSites["logout"], methods=["POST"])
+        def logoutEmailAccount()->dict():
+            """
+                \n@Brief:   Logouts of email
+                \n@Returns: {rtnCode: bool} rtnCode - 0 == success, -1 == fail
+            """
+            self.emailAgent.logoutEmail()
+            return self.returnSuccessResp({"rtnCode": 0})
 
     # form submissions get posted here (only accessible)
     def generateFormResultsSites(self):

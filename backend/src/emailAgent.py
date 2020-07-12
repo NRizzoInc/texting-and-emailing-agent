@@ -34,14 +34,14 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import utils
+from . import utils
 
-class emailAgent():
+class EmailAgent():
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
-        \n@Note:The helper high level api functions are: updateContactList(), self.emailAgent.printContactListPretty(),
-        self.emailAgent.setDefaultState(bool), getReceiverContactInfo(firstName, lastName)
+        \n@Note:The helper high level api functions are: updateContactList(), self.EmailAgent.printContactListPretty(),
+        self.EmailAgent.setDefaultState(bool), getReceiverContactInfo(firstName, lastName)
     """
     # static helper varaibles to remove magic strings
     _unreadEmailFilter = "(UNSEEN)"
@@ -57,9 +57,11 @@ class emailAgent():
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
         """
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.__backendDir = os.path.join(self.__pathToThisDir, "backend")
+        self.__srcDir = self.__pathToThisDir
+        self.__backendDir = os.path.join(self.__srcDir, "..")
+        self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
-        self.pathToContactList = os.path.join(self.__backendDir, "emailData", "contacts.json")
+        self.pathToContactList = os.path.join(self.__emailDataDir, "contacts.json")
 
 
         # Open the contact list file (create new file if it does not exist)
@@ -69,7 +71,7 @@ class emailAgent():
         self.contactList = utils.loadJson(self.pathToContactList)
 
         # information to login
-        self.emailProvidersInfo = utils.loadJson(os.path.join(self.__backendDir, "emailData", "emailProvidersInfo.json"))
+        self.emailProvidersInfo = utils.loadJson(os.path.join(self.__emailDataDir, "emailProvidersInfo.json"))
         self.sendToPhone = False
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP
@@ -517,7 +519,7 @@ class emailAgent():
 
             if (self.isCommandLine):
                 print(errorMsg)
-                sys.exit(emailAgent.__error)
+                sys.exit(EmailAgent.__error)
             else:
                 return errorMsg
 
@@ -766,7 +768,7 @@ class emailAgent():
         phoneNumber = input("Please enter their phone number: ")
 
         # call function that handles the actual adding
-        emailAgent(displayContacts=False).addContact(
+        EmailAgent(displayContacts=False).addContact(
             firstName, lastName, myEmail, carrier, phoneNumber)
 
     def _waitForNewMessage(self, startedBySendingEmail:bool):
@@ -825,7 +827,7 @@ class emailAgent():
                 return [] # return empty list to not cause other errors
 
         # verify correct input entered
-        if emailFilter != emailAgent._unreadEmailFilter and emailFilter != emailAgent._allEmailFilter:
+        if emailFilter != EmailAgent._unreadEmailFilter and emailFilter != EmailAgent._allEmailFilter:
             print("WARNING UNKNOWN EMAIL FILTER ENTERED- may result in undefined behavior")
 
         # opens folder/label you want to read from
@@ -876,9 +878,9 @@ class emailAgent():
             \n@Note: call 'processEmailDict()' on the returned list to print the emails and their ids nicely
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
-        idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
-        idListALL = self.getEmailListIDs(emailFilter=emailAgent._allEmailFilter)
-        if emailFilter == emailAgent._unreadEmailFilter:
+        idListUnread = self.getEmailListIDs(emailFilter=EmailAgent._unreadEmailFilter)
+        idListALL = self.getEmailListIDs(emailFilter=EmailAgent._allEmailFilter)
+        if emailFilter == EmailAgent._unreadEmailFilter:
             idList = idListUnread
         else:
             idList = idListALL
@@ -902,7 +904,7 @@ class emailAgent():
             \n@return: List of dictionaries: {To, From, DateTime, Subject, Body, idNum, unread}} 
             \n@Note: call 'processEmailDict()' on the returned dict to print the email nicely
         """
-        emailList = self.getEmailListWithContent(emailFilter=emailAgent._allEmailFilter)
+        emailList = self.getEmailListWithContent(emailFilter=EmailAgent._allEmailFilter)
         return emailList
 
     def getUnreadEmails(self)->list():
@@ -980,9 +982,9 @@ class emailAgent():
             \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>': {idx: '<list index>', desc: ''}}
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
-        idListUnread = self.getEmailListIDs(emailFilter=emailAgent._unreadEmailFilter)
-        idListALL = self.getEmailListIDs(emailFilter=emailAgent._allEmailFilter)
-        if emailFilter == emailAgent._unreadEmailFilter:
+        idListUnread = self.getEmailListIDs(emailFilter=EmailAgent._unreadEmailFilter)
+        idListALL = self.getEmailListIDs(emailFilter=EmailAgent._allEmailFilter)
+        if emailFilter == EmailAgent._unreadEmailFilter:
             idList = idListUnread
         else:
             idList = idListALL
@@ -1116,9 +1118,9 @@ class emailAgent():
 
         # input error checking
         if onlyUnread:
-            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._unreadEmailFilter, maxFetchCount=maxFetchCount)
+            emailList, idDict = self.getEmailsGradually(emailFilter=EmailAgent._unreadEmailFilter, maxFetchCount=maxFetchCount)
         elif not onlyUnread: 
-            emailList, idDict = self.getEmailsGradually(emailFilter=emailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
+            emailList, idDict = self.getEmailsGradually(emailFilter=EmailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
 
         toRtn["idDict"] = idDict
         toRtn["emailList"] = emailList
@@ -1478,12 +1480,13 @@ class emailAgent():
             pass
         self.connectedToServers = False
 
+
     def start(self):
         '''
             Wrapper around run() function that jump starts the email process
         '''
         run()
-        
+
 
 def run():
     argLength = len(sys.argv)
@@ -1495,17 +1498,17 @@ def run():
 
     # use this phrase to easily add more contacts to the contact list
     if 'addContact' in sys.argv:
-        emailer = emailAgent(displayContacts=True, isCommandLine=True)
+        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
         emailer.simpleAddContact()
         sys.exit()
     
     if 'updateContact' in sys.argv:
-        emailer = emailAgent(displayContacts=True, isCommandLine=True)
+        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
         emailer.updateContactInfo()
         sys.exit()
 
     # Create a class obj for this file
-    emailer = emailAgent(displayContacts=False, isCommandLine=True)
+    emailer = EmailAgent(displayContacts=False, isCommandLine=True)
 
     if 'default' in ''.join(sys.argv):
         emailer.setDefaultState(True)
@@ -1582,4 +1585,3 @@ def run():
 
 if __name__ == "__main__":
     run() # starts the code
-

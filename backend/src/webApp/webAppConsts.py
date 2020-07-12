@@ -3,10 +3,11 @@
 """
 
 import os
-from . import utils
+from .. import utils
 
 pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-backendDir = os.path.join(pathToThisDir, "..")
+srcDir = os.path.join(pathToThisDir, "..")
+backendDir = os.path.join(srcDir, "..")
 userDataDir = os.path.join(backendDir, "userData")
 cookieDataPath = os.path.join(userDataDir, "cookies.json")
 rootDir = os.path.join(backendDir, "..")

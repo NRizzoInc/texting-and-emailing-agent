@@ -9,6 +9,6 @@ pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 
 ${pythonLocation} -c """
 import os, sys
-from backend.src.webApp import sys, WebApp
+from backend.src.webApp.webApp import sys, WebApp
 client = WebApp()
 """

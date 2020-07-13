@@ -67,6 +67,19 @@ else
     echo "export emailWebAppRootDir=${rootDir}" >> ~/.bashrc
     source ~/.bashrc
     echo "emailWebAppRootDir: ${emailWebAppRootDir}"
+
+    echo "#1.6 Deploying Service File"
+    sysServiceDir=/etc/systemd/system
+    serviceFileDir=${rootDir}/install${sysServiceDir}
+    serviceFile=$(find ${serviceFileDir} -maxdepth 1 -name "*web-app*" -print)
+    serviceFileName=$(basename "${serviceFile}")
+    cp ${serviceFile} ${sysServiceDir}/
+    echo "-- Deployed ${serviceFile} -> ${sysServiceDir}/${serviceFileName}"
+
+    echo "#1.7 Starting Service"
+    sudo systemctl daemon-reload # refresh service daemons
+    sudo systemctl start ${serviceFileName} # start daemon
+    echo "-- Started ${serviceFileName} Daemon"
 fi
 
 # update pip to latest

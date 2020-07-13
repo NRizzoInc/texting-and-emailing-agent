@@ -1,7 +1,10 @@
+#!/bin/bash
 # create virtual environment to install desired packages (i.e. flask)
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
-virtualEnvironDir=$THIS_FILE_DIR/$virtualEnvironName
+rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+virtualEnvironDir=${rootDir}/${virtualEnvironName}
+pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 pipLocation="" # make global
 
 # check OS... (decide how to activate virtual environment)
@@ -24,4 +27,6 @@ fi
 # now pip necessary packages
 $pipLocation install flask
 $pipLocation install pyinstaller # to turn python to .exe
-$pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py 
+$pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py
+$pipLocation install flask-login
+$pipLocation install flask-wtf

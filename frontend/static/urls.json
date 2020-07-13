@@ -1,0 +1,22 @@
+{
+    "sites":  {
+        "landingpage"   :   "/",
+        "textpage"      :   "/textpage",
+        "emailpage"     :   "/emailpage",
+        "aboutpage"     :   "/aboutpage",
+        "sidebarpage"   :   "/sidebarpage"
+    },
+    "formSites": {
+        "textForm"      :   "/textForm",
+        "emailForm"     :   "/emailForm",
+        "webAppLogin"   :   "/login",
+        "webAppLogout"  :   "/logout",
+        "webAppRegister":   "/register"
+    },
+    "infoSites": {
+        "emailData"     :   "/emailData"
+    },
+    "settingsSites": {
+        "numFetch"      :   "/settings/numFetch"
+    }
+}

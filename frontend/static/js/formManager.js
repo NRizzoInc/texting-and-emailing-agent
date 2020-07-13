@@ -24,6 +24,28 @@ const defaultDisplayDict = {
     "task":         null
 }
 
+const receiveDisplayDict = Object.assign({}, defaultDisplayDict, {
+    "fname"     : false,
+    "lname"     : false,
+    "message"   : false,
+    "phone"     : false,
+    "carrier"   : false,
+    "numFetch"  : true, // need to select num emails to fetch
+    "task"      : "receiving"
+})
+
+const sendDisplayDict = Object.assign({}, defaultDisplayDict, {
+    "phone"     : false,
+    "carrier"   : false,
+    "task"      : "sending"
+})
+
+const addContactDisplayDict = Object.assign({}, defaultDisplayDict, {
+    "message"   : false,
+    "password"  : false,
+    "task"      : "adding-contact"
+})
+
 $(document).ready( async () => {
     const urls = await loadResource(urlsPath)
 
@@ -47,7 +69,7 @@ $(document).ready( async () => {
         const isReceiving = document.getElementById('Texting-Form').getAttribute("task") == "receiving"
         // only visible if currently selecting email from dropdown
         const isSelectingEmail = isVisible("email-id-selector")
-        submitFormBtn(submitBtn, isReceiving, isSelectingEmail)
+        onSubmitClick(submitBtn, isReceiving, isSelectingEmail)
     })
 
     // prevent page from automatically returning to main page from form
@@ -72,28 +94,18 @@ async function onFormBtnClick(id) {
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
 
-    const displayDict = Object.assign({}, defaultDisplayDict) // deep copy
     // set name attributes to match task of button
     // make non-necessary form lines disappear
+    let displayDict = {}
     if (id == 'text-receive-button') {
-        displayDict.fname = false
-        displayDict.lname = false
-        displayDict.message = false
-        displayDict.phone = false
-        displayDict.carrier = false
-        displayDict.numFetch = true // need to select num emails to fetch
-        displayDict.task = "receiving"
+        displayDict = receiveDisplayDict
         emailSelDropdown.clearDropdown()
     } 
     else if (id == 'text-send-button') {
-        displayDict.phone = false
-        displayDict.carrier = false
-        displayDict.task = "sending"
+        displayDict = sendDisplayDict
     }
     else if (id == 'add-contact-button') {
-        displayDict.message = false
-        displayDict.password = false
-        displayDict.task = "adding-contact"
+        displayDict = addContactDisplayDict
     }
     else {
         console.error("ID Does Not Mean Anything");
@@ -149,7 +161,7 @@ function setDisplays(displayDict, newSubmitBtnText=null) {
  * @param {Boolean} isReceiving True if trying to receive emails
  * @param {Boolean} isSelectingEmail True if email dropdown is showing to allow user to pick email to fetch
  */
-async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
+async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
     // has id of submit button (need to extrapolate form id parent)
     const triggerID = submitBtn.closest("form").id
 
@@ -172,14 +184,12 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
         // hide everything besides dropdown menu & buttons
         // hide immediately or else there is a large delay in hidding it bc parse takes awhile
         if (isReceiving) {
-            const displayDict = {}
-            const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
-            for (const key of Object.keys(defaultDisplayDict)) {
+            const displayDict = Object.assign({}, receiveDisplayDict, {
+                "selector"  :   true,
                 // TODO: get 'numFetch' box to work after already fetched once
                 // (need to tie in with onChange callback & current recv step state var)
-                displayDict[key] = key == "selector" // || key == "numFetch"
-            }
-            displayDict.task = currTask
+                // "numFetch": true,
+            })
             setDisplays(displayDict, "Refresh")
         }
 
@@ -285,14 +295,15 @@ async function onChooseEmail(dropdownObj) {
     const emailDataPage = urls.infoSites.emailData
     const resDict = await postData(selEmailData, emailDataPage)
 
-    // hide everything besides textarea (for emails) & email selector dropdown
-    const displayDict = {}
-    const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
-    for (const key of Object.keys(defaultDisplayDict)) {
-        displayDict[key] = key == "selector" || key == "textarea"
-    }
-    displayDict.task = currTask
-    setDisplays(displayDict)
+    // show textarea in addition to other items for receiving
+    const displayDict = Object.assign({}, receiveDisplayDict, {
+        "selector"  :   true,
+        "textarea"  :   true
+        // TODO: get 'numFetch' box to work after already fetched once
+        // (need to tie in with onChange callback & current recv step state var)
+        // "numFetch": true,
+    })
+    setDisplays(displayDict, "Refresh")
 
     // write email in textarea
     writeResizeTextarea("terminal-text", resDict.emailContent)

@@ -67,9 +67,19 @@ else
     emailWebAppRootDir=${rootDir}
 
     # make environment variable for path global (if already exists -> replace it, but keep backup)
-    sed -i.bak '/emailWebAppRootDir=/d' ~/.bashrc
-    echo "export emailWebAppRootDir=${rootDir}" >> ~/.bashrc
-    source ~/.bashrc
+    # https://serverfault.com/a/413408 -- safest way to create & use environment vars with services
+    environDir=/etc/sysconfig
+    environFile=${environDir}/webAppEnviron
+    echo "Environment File: ${environFile}"
+
+    # if dir & file do not exist, add them before trying to scan & create backup
+    test -d ${environDir} && echo "${environDir} Already Exists" || mkdir ${environDir}
+    test -f ${environFile} && echo "${environFile} Already Exists" || touch ${environFile}
+
+    # create backup & save new version with updated path
+    sed -i.bak '/emailWebAppRootDir=/d' ${environFile}
+    echo "emailWebAppRootDir=${rootDir}" >> ${environFile}
+    source ${environFile}
     echo "emailWebAppRootDir: ${emailWebAppRootDir}"
 
     echo "#1.6 Deploying Service File"
@@ -79,11 +89,6 @@ else
     serviceFileName=$(basename "${serviceFile}")
     cp ${serviceFile} ${sysServiceDir}/
     echo "-- Deployed ${serviceFile} -> ${sysServiceDir}/${serviceFileName}"
-
-    echo "#1.7 Starting Service"
-    sudo systemctl daemon-reload # refresh service daemons
-    sudo systemctl start ${serviceFileName} # start daemon
-    echo "-- Started ${serviceFileName} Daemon"
 
     echo "#1.8 Getting Path to Virtual Environment's Python"
     pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
@@ -102,3 +107,11 @@ $pipLocation install fleep # to identify file types based on content -  https://
 $pipLocation install flask-login
 $pipLocation install flask-wtf
 $pipLocation install flask-socketio
+
+# Start service after everything installed if linux
+if [[ "${isWindows}" = false ]]; then
+    echo "#4 Starting Service"
+    systemctl daemon-reload # refresh service daemons
+    systemctl start ${serviceFileName} # start daemon
+    echo "-- Started ${serviceFileName} Daemon"
+fi

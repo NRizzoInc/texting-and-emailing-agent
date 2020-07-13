@@ -4,6 +4,7 @@ After=network-online.target
 Requires=network-online.target
 
 [Service]
+EnvironmentFile=/etc/sysconfig/webAppEnviron
 ExecStart=/bin/bash ${emailWebAppRootDir}/startScripts/startWebApp.sh
 RestartSec=1min
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Email & Texting Agent Web Application
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+ExecStart=/bin/bash ${emailWebAppRootDir}/startScripts/startWebApp.sh
+RestartSec=1min
+
+[Install]
+WantedBy=multi-user.target

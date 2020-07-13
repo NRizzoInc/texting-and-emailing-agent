@@ -57,6 +57,10 @@ else
     ${pythonName} -m venv ${virtualEnvironDir} # actually create the virtual environment
     source ${virtualEnvironDir}/bin/activate
     pipLocation=${virtualEnvironDir}/bin/pip${pythonVersion}
+
+    echo "#1.5 Exporting Path to Source Code"
+    echo "export emailWebAppRootDir=${rootDir}" >> ~/.bashrc
+    source ~/.bashrc
 fi
 
 # update pip to latest

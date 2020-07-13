@@ -71,6 +71,14 @@
                 <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
             </select>
         </div>
+        <div class="row vertical-margins" id="terminal-text-container">
+            <div class="col-25 flex-center-align">
+                <label for="terminal-text">Email Message:</label>
+            </div>
+            <div class="col-75">
+                <textarea class="terminal-textarea input-padding" id="terminal-text" name="terminal-text" placeholder="Waiting to fetch email (submit selected option)..." readonly=true></textarea>
+            </div>
+        </div>
         <div class="row vertical-margins" id="helper-row">
             <div class="flex-inline"> <!--Combine multiple items on same flex line-->
                 <div class="col-25 flex-center-align">
@@ -80,14 +88,6 @@
                     <input type="button" class="input-padding flex-no-grow" value="Go Back" id="Go-Back-Btn">
                     <input type="submit" class="input-padding flex-no-grow margin-left" value="Submit" id="Submit-Button">
                 </div>
-            </div>
-        </div>
-        <div class="row vertical-margins" id="terminal-text-container">
-            <div class="col-25 flex-center-align">
-                <label for="terminal-text">Email Message:</label>
-            </div>
-            <div class="col-75">
-                <textarea class="terminal-textarea input-padding" id="terminal-text" name="terminal-text" placeholder="Waiting to fetch email (submit selected option)..." readonly=true></textarea>
             </div>
         </div>
         <div class="row vertical-margins" id="num-email-fetch-container">

@@ -171,6 +171,7 @@ class User(UserMixin):
         self.lname = None
         self.emailAddress = None
         self.password = None
+        self.numEmailsToFetch = 5 # default to 5
         
     def updateEmailLogin(self, firstname, lastname, emailAddress=None, password=None):
         """Updates class info about email/text sender"""
@@ -179,7 +180,6 @@ class User(UserMixin):
         self.emailAddress = emailAddress
         self.password = password
         needDefault = emailAddress == None or password == None
-        print("needDefault: {0}".format(needDefault))
         self.client.setDefaultState(needDefault)
         
     def checkPassword(self, password)->bool():
@@ -246,6 +246,12 @@ class User(UserMixin):
 
     def getContactList(self):
         return self.client.printContactListPretty(printToTerminal=False)
+    
+    def getNumFetch(self):
+        return self.numEmailsToFetch
+    
+    def setNumFetch(self, newVal):
+        self.numEmailsToFetch = newVal
     
     # def updateContactList(self, firstname, lastname):
     #     self.client.updateContactInfo(firstName=firstname, lastName=lastname, addingExternally=True)

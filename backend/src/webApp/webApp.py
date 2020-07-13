@@ -49,6 +49,7 @@ class WebApp():
         self.sites = webAppConsts.sites
         self.formSites = webAppConsts.formSites
         self.infoSites = webAppConsts.infoSites
+        self.settingsSites = webAppConsts.settingsSites
         # TODO: find less kludgy way to combine 3 dicts into one
         self._urls = utils.mergeDicts(utils.mergeDicts(self.sites, self.formSites), self.infoSites)
 
@@ -56,6 +57,7 @@ class WebApp():
         self.initializingStatus = True
         self.generateSites()
         self.createInfoSites()
+        self.createSettingsSites()
         self.generateFormResultsSites()
         self.printSites()
         self.initializingStatus = False
@@ -87,6 +89,18 @@ class WebApp():
                 print("Found ip: {0}".format(ip))
                 return ip
 
+    def createSettingsSites(self):
+        """Helper function for creating "settingsSites' that provides closure for 'self' variables"""
+        @self.app.route(self.settingsSites["numFetch"], methods=["GET", "POST"])
+        @login_required
+        def createNumFetchSetting():
+            if flask.request.method == "GET":
+                currNumFetch = current_user.getNumFetch()
+                return self.returnSuccessResp({"numFetch": currNumFetch})
+            elif flask.request.method == "POST":
+                newNumFetch = int(flask.request.get_json()["numFetch"])
+                current_user.setNumFetch(newNumFetch)
+                return self.returnSuccessResp({"numFetch": newNumFetch})
 
     def generateSites(self):
         '''
@@ -205,7 +219,6 @@ class WebApp():
 
                 # check if receive if sending/receiving message form
                 if (proccessData['task'] == "sending"):
-                    # TODO: eventually dynamically get send method (email or text)
                     sendErr = current_user.send("text", proccessData["message"])
                     if (sendErr != None):
                         print(sendErr)
@@ -215,7 +228,7 @@ class WebApp():
                     # responsible for login to get preliminary email data
                     # use ui dropdown to select which email to fully fetch
                     print("receiving")
-                    numToFetch = 5 # TODO: stub -- add select box in frontend
+                    numToFetch = current_user.getNumFetch()
                     preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)
                     # TODO: somehow inform user on webpage of send error (return should have error message)

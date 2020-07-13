@@ -18,3 +18,4 @@ urls = utils.loadJson(os.path.join(staticDir, "urls.json"))
 sites = urls["sites"]
 formSites = urls["formSites"]
 infoSites = urls["infoSites"]
+settingsSites = urls["settingsSites"]

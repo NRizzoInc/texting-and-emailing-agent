@@ -15,5 +15,8 @@
     },
     "infoSites": {
         "emailData"     :   "/emailData"
+    },
+    "settingsSites": {
+        "numFetch"      :   "/settings/numFetch"
     }
 }

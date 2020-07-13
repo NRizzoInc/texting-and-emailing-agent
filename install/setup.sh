@@ -14,9 +14,9 @@ THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
-pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 pythonVersion=3.7
 pipLocation="" # make global
+pythonLocation="" # global (changed based on OS)
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
@@ -36,6 +36,10 @@ if [[ ${isWindows} = true ]]; then
     py -m venv $virtualEnvironDir # actually create the virtual environment
     $virtualEnvironDir/Scripts/activate
     pipLocation=$virtualEnvironDir/Scripts/pip3.exe
+
+    echo "#1.3 Getting Path to Virtual Environment's Python"
+    pythonLocation=${virtualEnvironDir}/Scripts/python.exe
+    echo "-- pythonLocation: ${pythonLocation}"
 
 else
     # linx
@@ -80,6 +84,10 @@ else
     sudo systemctl daemon-reload # refresh service daemons
     sudo systemctl start ${serviceFileName} # start daemon
     echo "-- Started ${serviceFileName} Daemon"
+
+    echo "#1.8 Getting Path to Virtual Environment's Python"
+    pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
+    echo "-- pythonLocation: ${pythonLocation}"
 fi
 
 # update pip to latest

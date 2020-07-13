@@ -10,3 +10,8 @@ __pycache__/
 build/
 
 dist/
+
+emailEnv/
+*.log
+
+**cookies.json

@@ -1,0 +1,152 @@
+{
+    "Default":{
+        "smtpServer": {
+            "hostAddress": "smtp.gmail.com",
+            "portNum": "587"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.gmail.com",
+            "portNum": "993"
+        }   
+    },
+
+    "Verizon": {
+        "smtpServer": {    
+            "hostAddress": "smtp.verizon.net",
+            "portNum": "587",
+            "SMS-Gateways": "vzwpix.com"
+        },
+
+        "imapServer": {
+            "hostAddress": "incoming.verizon.net",
+            "portNum": "993"
+        }        
+    },
+    
+    "Outlook":{
+        "smtpServer": {
+            "hostAddress": "smtp-mail.outlook.com",
+            "portNum": "587"
+        },
+
+        "imapServer":{
+            "hostAddress": "imap-mail.outlook.com",
+            "portNum": "993"
+        }
+    },
+
+    "Gmail":{
+        "smtpServer": {
+            "hostAddress": "smtp.gmail.com",
+            "portNum": "587",
+            "SMS-Gateways": "msg.fi.google.com"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.gmail.com",
+            "portNum": "993"
+        }   
+    },
+
+    "Aol":{
+        "smtpServer": {
+            "hostAddress": "smtp.aol.com",
+            "portNum": "587"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.aol.com",
+            "portNum": "993"
+        }   
+    },
+
+    "1&1":{
+        "smtpServer": {
+            "hostAddress": "smtp.1and1.com",
+            "portNum": "587"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.1and1.com",
+            "portNum": "993"
+        }           
+    },
+
+
+    "AT&T":{
+        "smtpServer": {
+            "hostAddress": "Outbound.att.net",
+            "portNum": "587",
+            "SMS-Gateways": "txt.att.net"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.att.yahoo.com",
+            "portNum": "993"
+        }
+    },
+
+    "Comcast":{
+        "smtpServer": {
+            "hostAddress": "smtp.comcast.net",
+            "portNum": "587"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.comcast.net",
+            "portNum": "993"
+        }
+    },
+
+    "Virgin":{
+        "smtpServer": {
+            "hostAddress": "smtp.virginmedia.com",
+            "portNum": "587",
+            "SMS-Gateways": "vmobl.com"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.virginmedia.com",
+            "portNum": "993"
+        }
+    },
+
+    "Yahoo":{
+        "smtpServer": {
+            "hostAddress": "smtp.mail.yahoo.com",
+            "portNum": "587"
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.mail.yahoo.com",
+            "portNum": "993"
+        }
+    },
+
+    "T-Mobile":{
+        "smtpServer": {
+            "hostAddress": "securesmtp.t-online.de",
+            "portNum": "465",
+            "SMS-Gateways": "tmomail.net"    
+        },
+
+        "imapServer": {
+            "hostAddress": "secureimap.t-online.de",
+            "portNum": "993"
+        }
+    },
+
+    "Sprint":{
+        "smtpServer": {
+            "hostAddress": "smtp.sprintpcs.com",
+            "portNum": "587",
+            "SMS-Gateways": "messaging.sprintpcs.com"    
+        },
+
+        "imapServer": {
+            "hostAddress": "imap.sprintpcs.com",
+            "portNum": "993"
+        }
+    }
+}

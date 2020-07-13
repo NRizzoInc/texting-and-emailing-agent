@@ -1,0 +1,20 @@
+<head>
+    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png"> 
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/common.css">
+</head>
+
+<body>
+    <div id="flashed-messages">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <!-- <h1>Alerts:</h1> -->
+            <ul class=flashes>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        {% endwith %}
+        {% block body %}{% endblock %}
+    </div>
+</body>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Tab's Texting Icon (favicon) -->
+    <link rel="icon" href="http://www.newdesignfile.com/postpic/2014/09/mobile-phone-text-message-icon_216794.png">
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/button.css">
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/contactList.css">
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/dropdown.css">
+    <title>{{ title }}</title>
+</head>
+
+<body>
+    <div class="button-wrapper">
+        <button class="myBtn" id="text-send-button">Send Text</button>
+        <button class="myBtn" id="text-receive-button">Receive Text</button>
+        <button class="myBtn" id="add-contact-button">Add Contact</button>
+        <div class="contact-list" id="Contact-List">
+            <div>Current Contact List:</div>
+            <!-- TODO: REMOVE CONTACT/LIST LIMIT WHO SEES BASED ON IP (WILL SHOW SAME LIST TO EVERYONE) -->
+            <pre class="contact-list-json">{{ contacts }}</pre>
+        </div>
+    </div> <!-- End of container -->
+    {% include "TextingForm.html" %}
+    {% include "sidebar.html" %}
+    
+</body>
+
+<script type="module" src="../static/js/external/jquery.js"></script>
+<script src="../static/js/external/socket.io.min.js"></script>
+<script type="module" src="../static/js/socketHandler.js"></script>
+<script type="module" src="../static/js/formManager.js"></script>
+<script type="module" src="../static/js/dropdown.js"></script>
+<script type="module" src="../static/js/utils.js"></script>
+<script type="module" src="../static/js/contactList.js"></script>
+<script type="application/json" src="../static/urls.json"></script>
+
+</html>

@@ -1,0 +1,51 @@
+body {
+   height: 90vh; /* Ensures the button fills the entire body height*/
+}
+
+/** 
+  * Add wrapper div around a button in order to center it 
+  * DONT CHANGE THIS: it maintains the position of the button 
+  * in the center and not touching the sidebar
+  */
+.button-wrapper {
+    justify-content: center;
+    align-items: center;
+    width: 80%;
+    height: 100%;
+    position: relative;
+    left: 20%; /*For side bar*/
+    
+}
+
+/** 
+  * Modify existing button class
+  * Change 'width' and 'height' to modify the size of the button
+  */
+.myBtn {
+    background:url("https://cdn.pixabay.com/photo/2016/05/31/12/42/red-button-1426817_960_720.png") no-repeat;
+    background-size: cover;
+    cursor: grab;
+    border: none;
+    /*Size of button*/
+    width: 25%;
+    height: 30%;
+    /* So that image on buttons dont touch sidebar and have space between themselves*/
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin: 2%; /*between buttons*/
+    /*Button text is centered*/
+    text-align: center; 
+    /*Allows multiple buttons on same page to automatically not overlap*/
+    position: relative; 
+    display: inline-block;
+    text-emphasis: bold;
+}
+
+/* When clicked by user*/
+.myBtn:active {
+    /* background:url("https://www.nationalgeographic.com/content/dam/animals/thumbs/rights-exempt/mammals/d/domestic-dog_thumb.jpg") no-repeat; */
+    background-image: none;
+    cursor: grabbing;
+        
+}

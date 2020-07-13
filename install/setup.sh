@@ -15,13 +15,24 @@ virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonLocation=${virtualEnvironDir}/Scripts/python.exe
+pythonVersion=3.7
 pipLocation="" # make global
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
 if [[ ${isWindows} = true ]]; then
     # windows
-    echo "#1.1 Creating Virtual Environment"
+    echo "#1.1 Checking Python Version"
+    currVersionText=$(python3 --version)
+    currVersionMinor=$(echo "$currVersionText" | awk '{print $2}')
+    currVersion=$(echo "${currVersionMinor}" | sed -r 's/\.[0-9]$//') # strips away minor version (3.7.2 -> 3.7)
+
+    echo "Using python${currVersion} to build virtual environment"
+    if [[ ${pythonVersion} != ${currVersion} ]]; then
+        echo "WARNING: Wrong version of python being used. Expects python${pythonVersion}. This might affect results"
+    fi
+
+    echo "#1.2 Creating Virtual Environment"
     py -m venv $virtualEnvironDir # actually create the virtual environment
     $virtualEnvironDir/Scripts/activate
     pipLocation=$virtualEnvironDir/Scripts/pip3.exe
@@ -29,7 +40,6 @@ if [[ ${isWindows} = true ]]; then
 else
     # linx
     # needed to get specific versions of python
-    pythonVersion=3.7
     pythonName=python${pythonVersion}
     echo "#1.1 Adding python ppa"
     add-apt-repository -y ppa:deadsnakes/ppa

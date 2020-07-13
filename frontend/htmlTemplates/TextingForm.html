@@ -9,76 +9,79 @@
     <!--Use POST to make site inaccessible and protect data by not adding it to url-->
     <form id='Texting-Form'>
         <div class="row vertical-margins" id="firstname-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="firstName">First Name</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="text" id="firstName" name="firstname" placeholder="First name..." autocomplete="on">
+                <input class="input-padding flex-grow-item" type="text" id="firstName" name="firstname" placeholder="First name..." autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="lastname-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="lastName">Last Name</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="text" id="lastName" name="lastname" placeholder="Last name..." autocomplete="on">
+                <input class="input-padding flex-grow-item" type="text" id="lastName" name="lastname" placeholder="Last name..." autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="email-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="emailAddress">Email Address</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)" autocomplete="on">
+                <input class="input-padding flex-grow-item" type="text" id="emailAddress" name="emailAddress" placeholder="Your Email address (leave blank to use default sender)" autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="password-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="password">Password</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)" autocomplete="on">
+                <input class="input-padding flex-grow-item" type="password" id="password" name="password" placeholder="Your Password (leave blank if using default sender)" autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="message-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="message">Your Message</label>
             </div>
             <div class="col-75">
-                <textarea class="input-padding" id="message" name="message" placeholder="Write something..."
+                <textarea class="input-padding flex-grow-item" id="message" name="message" placeholder="Write something..."
                 style="height:200px"></textarea>
             </div>
         </div>
         <!-- Fields only needed for adding a new contact -->
         <div class="row vertical-margins" id="phone-number-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="phoneNumber">Phone Number</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number..." autocomplete="on">
+                <input class="input-padding flex-grow-item" type="text" id="phoneNumber" name="phoneNumber" placeholder="New contacts phone number..." autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="carrier-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="carrier">Phone carrier</label>
             </div>
             <div class="col-75">
-                <input class="input-padding" type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
+                <input class="input-padding flex-grow-item" type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
             </div>
         </div>
         <div class="row vertical-margins" id="helper-row">
-            <div class="col-25"></div>
-            <div class="col-75 flex-right-align vertical-center-align-parent">
-                <select class="child-shink-fit input-padding vertical-center-align-child" id="email-id-selector">
-                    <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
-                </select>
+            <div class="flex-inline"> <!--Combine multiple items on same flex line-->
+                <div class="col-25 flex-center-align">
+                    <select class="dropdown dropdown-ellipsis input-padding" id="email-id-selector">
+                        <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
+                    </select>
+                </div>
                 <!--Use submit button's id in js to know when to get data-->
-                <input type="button" class="child-shink-fit input-padding vertical-center-align-child" value="Go Back" id="Go-Back-Btn">
-                <input type="submit" class="child-shink-fit input-padding vertical-center-align-child" value="Submit" id="Submit-Button">
+                <div class="col-75 flex-right-align" id="btn-container">
+                    <input type="button" class="input-padding flex-no-grow" value="Go Back" id="Go-Back-Btn">
+                    <input type="submit" class="input-padding flex-no-grow margin-left" value="Submit" id="Submit-Button">
+                </div>
             </div>
         </div>
         <div class="row vertical-margins" id="terminal-text-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="terminal-text">Email Message:</label>
             </div>
             <div class="col-75">
@@ -86,12 +89,12 @@
             </div>
         </div>
         <div class="row vertical-margins" id="num-email-fetch-container">
-            <div class="col-25">
+            <div class="col-25 flex-center-align">
                 <label for="num-email-fetch-selector"># To Fetch:</label>
             </div>
             <div class="col-75 flex-right-align">
                 <!-- options filled by js code -->
-                <select class="input-padding dropdown-min-width" id="num-email-fetch-selector"></select>
+                <select class="input-padding dropdown-ellipsis dropdown-min-content-width" id="num-email-fetch-selector"></select>
             </div>
         </div>
     </form>

@@ -1,10 +1,19 @@
-/* 
-    Purpose make the selected option in dropdown small and include "..." for leftover 
-    Allows individual options to grow to their size
-*/
-.dropdown-min-width {
+.dropdown {
+    /*Tries to fill width (basis) to parent (col-25) but shrink (higher priority) bc too big*/
+    display: flex;
+    flex-wrap: nowrap;
+    flex-basis: auto;
+    flex-grow: 1;
+    flex-shrink: 2;
+}
+
+.dropdown-ellipsis {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/**Expands the dropdown until it encompasses the largest item within it*/
+.dropdown-min-content-width {
     max-width: fit-content;
 }

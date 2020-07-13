@@ -23,7 +23,7 @@
 }
 
 input[type=text], input[type=password], select, textarea {
-    width: inherit;
+    width: 100%;
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: vertical;
@@ -39,7 +39,6 @@ label {
 input[type=submit], input[type=button] {
     background-color: #4CAF50;
     color: white;
-    margin-left: 2%;
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -49,28 +48,53 @@ input[type=submit]:hover, input[type=button]:hover {
     background-color: #45a049;
 }
 
+/*Flex grows item to fit container*/
 .input-padding {
+    display: flex;
+    flex-grow: 2;
     padding: 12px 20px;
-    float: left; /* Keeps all inputs starting from the same point*/
+    /*float: left; /* Keeps all inputs starting from the same point*/
+    flex-basis: inherit;
+    /*width: auto*/; /* auto resize to fit line*/
+    max-width: auto; /* auto resize to fit line*/
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
+/* Clear floats after the columns */
+.row .flex-container {
+    display: flex;
+    flex-flow: row;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 100%;
+    width: 100%;
+    max-height: 10%;
+    justify-content: space-between;
+}
+
+/*Flex item within a flex item (flex-container or row)*/
 .col-25 {
-    float: left;
+    display: flex;
+    flex-flow: row;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    flex-basis: 25%;
+    max-width: 25%;
     width: 25%;
 }
 
+/*Flex item within a flex item (flex-container or row)*/
 .col-75 {
     display: flex;
-    float: left;
-    width: 75%;
     flex-flow: row;
-    left: 25%;
-}
-
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
+    flex-wrap: nowrap;
+    flex-basis: 75%;
+    align-items: flex-start;
+    justify-content: flex-start;
+    max-width: 75%;
 }
   
 /* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */

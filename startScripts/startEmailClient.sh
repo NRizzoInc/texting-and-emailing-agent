@@ -4,8 +4,18 @@
 virtualEnvironName="emailEnv"
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
-virtualEnvironDir=${rootDir}/${virtualEnvironName}
-pythonLocation=${virtualEnvironDir}/Scripts/python.exe
+virtualEnvironDir="${rootDir}/${virtualEnvironName}"
+pythonLocation="" # global (changed based on OS)
+
+# check OS... (decide how to call python)
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    # windows
+    pythonLocation=${virtualEnvironDir}/Scripts/python.exe
+else
+    # linux
+    activateLocation=${virtualEnvironDir}/bin/activate
+    pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
+fi
 
 # have to be in root dir for this to work
 cd ${rootDir}

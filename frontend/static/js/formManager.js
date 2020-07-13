@@ -6,7 +6,7 @@ import { loadResource, writeResizeTextarea, isVisible, postData, getData } from 
 import { Dropdown } from "./dropdown.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector", true)
-const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false)
+const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false, updateNumEmailFetch)
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
 const defaultDisplayDict = {
@@ -23,7 +23,9 @@ const defaultDisplayDict = {
     "task":         null
 }
 
-$(document).ready( () => {
+$(document).ready( async () => {
+    const urls = await loadResource(urlsPath)
+
     // add event listener for each form button element
     const formBtnList = document.getElementsByClassName("myBtn")
     for (const btn of formBtnList) {
@@ -56,6 +58,8 @@ $(document).ready( () => {
 
     // fill in the dropdown (5-100 incrementing by 5)
     numFetchSelDropdown.fillDropdown(5, 5, 100)
+    const userCurrNumFetch = (await getData(urls.settingsSites.numFetch)).numFetch
+    numFetchSelDropdown.setSelectBoxByValue(userCurrNumFetch)
 })
 
 /**
@@ -124,7 +128,7 @@ function setDisplays(displayDict) {
     document.getElementById('carrier-container').style.display =            displayDict.carrier   ? display : hide
     document.getElementById('terminal-text-container').style.display =      displayDict.textarea  ? display : hide
     document.getElementById('email-id-selector').style.display =            displayDict.selector  ? display : hide
-    document.getElementById('num-email-fetch-container').style.display =     displayDict.numFetch  ? display : hide
+    document.getElementById('num-email-fetch-container').style.display =    displayDict.numFetch  ? display : hide
 
     // use name attribute in formProcessor to determine some actions
     document.getElementById('Texting-Form').setAttribute("task", displayDict.task)
@@ -165,7 +169,9 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
             const displayDict = {}
             const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
             for (const key of Object.keys(defaultDisplayDict)) {
-                displayDict[key] = key == "selector"
+                // TODO: get 'numFetch' box to work after already fetched once
+                // (need to tie in with onChange callback & current recv step state var)
+                displayDict[key] = key == "selector" // || key == "numFetch"
             }
             displayDict.task = currTask
             setDisplays(displayDict)
@@ -267,4 +273,16 @@ function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
 function exitForm() {
     document.getElementsByClassName('button-wrapper')[0].style.display = "block"
     document.getElementById('Texting-Form-Wrapper').style.display = "none"
+}
+
+/**
+ * @Brief Helper function for the numFetch dropdown's 'onChange' callback.
+ * Does a POST request to update user's backend settings for 'numFetch'
+ * @param {Dropdown} dropdownObj Reference to the Dropdown object
+ */
+async function updateNumEmailFetch(dropdownObj) {
+    const urls = await loadResource(urlsPath)
+    const numFetchUrl = urls.settingsSites.numFetch
+    const newVal = dropdownObj.getSelected().value
+    postData({"numFetch": newVal}, numFetchUrl)
 }

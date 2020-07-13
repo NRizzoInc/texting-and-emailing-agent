@@ -5,10 +5,13 @@ export class Dropdown {
      * @brief Class that helps manage dropdown menus
      * @param {String} dropdownId The id of the '<select>' tag element
      * @param {Boolean} hasPlaceholder Does the '<select>' element already have a placeholder option
+     * @param {Function} onChange (optional) Callback function for when a new option is selected in the dropdown
+     * Passes one item -- reference to the current 'Dropdown' object
      */
-    constructor(dropdownId, hasPlaceholder) {
+    constructor(dropdownId, hasPlaceholder, onChange=null) {
         this._dropdownId = dropdownId
-        this._dropdownEl = document.getElementById(this._dropdownId)
+        this._dropdownElJquery = $(`#${this._dropdownId}`)
+        this._dropdownEl = this._dropdownElJquery[0]
         const placeholderExt = "-placeholder"
         this._placeholderId = `${dropdownId}${placeholderExt}`
         const placeholderCandidate = document.getElementById(this._placeholderId)
@@ -23,6 +26,9 @@ export class Dropdown {
         // deep copy if exists
         this._placeholder = placeholderCandidate != null ? placeholderCandidate.cloneNode(true) : ""
         this._data = {} // can be used to hold misc data (like emailList)
+
+        // create event listener based on input
+        this._dropdownElJquery.change(() => onChange(this))
     }
 
     /**

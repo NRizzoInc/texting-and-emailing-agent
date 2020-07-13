@@ -86,11 +86,11 @@ export async function postData(data, url) {
 
 /**
 * @brief Generic GET request wrapper that returns result
-* @param {JSON} data Additional data to pass along in request
 * @param {String} url The url to get
+* @param {JSON} data (optional) Additional data to pass along in request
 * @returns The GET request's response
 */
-export async function getData(data, url) {
+export async function getData(url, data={}) {
     const reqResponse = {}
     try {
         const resData = await $.ajax({

@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] Fix start emailAgent bash script -- issue is the __name__ is different than expected when running from same dir
 - [ ] have webApp auto log out email after some time (currently stays logged in indefinitely, which causes error in backend at timeout)
   - [ ] make sure emailAgent handles that correctly & sets everything
   - [ ] if user is idle on page > 3 min, auto redirect to mainpage with alert describing why
@@ -37,4 +36,3 @@
 - [ ] Get correct python Location for run.sh
 - [ ] MATT: make run.bat (same as run.sh) but for windows users
 - [ ] Make run.bat go to right spot based on os (/bin) in the emailEnv
-- [ ] Fix shebang in run.sh

@@ -7,6 +7,9 @@ rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 
+# have to be in root dir for this to work
+cd ${rootDir}
+
 ${pythonLocation} -c """
 import os, sys
 from backend.src.emailAgent import sys, EmailAgent

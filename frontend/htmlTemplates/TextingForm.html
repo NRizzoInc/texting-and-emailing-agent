@@ -67,11 +67,13 @@
             </div>
         </div>
         <div class="row vertical-margins" id="helper-row">
+            <select class="dropdown dropdown-ellipsis input-padding" id="email-id-selector">
+                <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
+            </select>
+        </div>
+        <div class="row vertical-margins" id="helper-row">
             <div class="flex-inline"> <!--Combine multiple items on same flex line-->
                 <div class="col-25 flex-center-align">
-                    <select class="dropdown dropdown-ellipsis input-padding" id="email-id-selector">
-                        <option id="email-id-selector-placeholder" value="placeholder" disabled selected>Select email to open</option>
-                    </select>
                 </div>
                 <!--Use submit button's id in js to know when to get data-->
                 <div class="col-75 flex-right-align" id="btn-container">

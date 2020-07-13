@@ -5,7 +5,7 @@ import { parseForm/*, loadEmailDropdown*/ } from "./formProcessor.js"
 import { loadResource, writeResizeTextarea, isVisible, postData, getData } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
 
-const emailSelDropdown = new Dropdown("email-id-selector", true)
+const emailSelDropdown = new Dropdown("email-id-selector", true, onChooseEmail)
 const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false, updateNumEmailFetch)
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
@@ -181,37 +181,9 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
         
         // fill dropdown so user can select which email to show
         if (isReceiving) parseEmailData(resData)
-        // wait for another submit (after dropdown option is selected)
-        // do not continue if default option is chosen (i.e. have not selected one)
-        // this function will be called again and routed to case that does POST request
-    } else if (isSelectingEmail && isReceiving) {
-        // step #2 of receiving
-        // case when need to do POST request to get backend to fully fetch selected email
-        const dropdownData = emailSelDropdown.getData()
-        const selEmailData = {
-            emailId     : emailSelDropdown.getSelected().value,
-            idDict      : dropdownData.idDict,
-            emailList   : dropdownData.emailList,
-            authKey     : dropdownData.authKey
-        }
-
-        // post collated data about selected email to allow backend to fully fetch
-        const emailDataPage = urls.infoSites.emailData
-        const resDict = await postData(selEmailData, emailDataPage)
-
-        // hide everything besides textarea (for emails) & email selector dropdown
-        const displayDict = {}
-        const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
-        for (const key of Object.keys(defaultDisplayDict)) {
-            displayDict[key] = key == "selector" || key == "textarea"
-        }
-        displayDict.task = currTask
-        setDisplays(displayDict)
-
-        // write email in textarea
-        writeResizeTextarea("terminal-text", resDict.emailContent)
+        // wait for another submit (after a dropdown option is selected using callback)
     }
-    
+
     if (!isReceiving) {
         // immediately go back if not receiving
         exitForm()
@@ -285,4 +257,37 @@ async function updateNumEmailFetch(dropdownObj) {
     const numFetchUrl = urls.settingsSites.numFetch
     const newVal = dropdownObj.getSelected().value
     postData({"numFetch": newVal}, numFetchUrl)
+}
+
+/**
+ * @Brief Helper function for the email selector dropdown's 'onChange' callback.
+ * Fetches the clicked on email (step #2 of receiving)
+ * @param {Dropdown} dropdownObj Reference to the Dropdown object
+ */
+async function onChooseEmail(dropdownObj) {
+    // case when need to do POST request to get backend to fully fetch selected email
+    const dropdownData = dropdownObj.getData()
+    const selEmailData = {
+        emailId     : dropdownObj.getSelected().value,
+        idDict      : dropdownData.idDict,
+        emailList   : dropdownData.emailList,
+        authKey     : dropdownData.authKey
+    }
+
+    // post collated data about selected email to allow backend to fully fetch
+    const urls = await loadResource(urlsPath)
+    const emailDataPage = urls.infoSites.emailData
+    const resDict = await postData(selEmailData, emailDataPage)
+
+    // hide everything besides textarea (for emails) & email selector dropdown
+    const displayDict = {}
+    const currTask = document.getElementById('Texting-Form').getAttribute("task") // maintain state
+    for (const key of Object.keys(defaultDisplayDict)) {
+        displayDict[key] = key == "selector" || key == "textarea"
+    }
+    displayDict.task = currTask
+    setDisplays(displayDict)
+
+    // write email in textarea
+    writeResizeTextarea("terminal-text", resDict.emailContent)
 }

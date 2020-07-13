@@ -20,6 +20,7 @@ const defaultDisplayDict = {
     "textarea":     false,
     "selector":     false,
     "numFetch":     false, // only show this in receiving
+    "submitText":   "Submit",
     "task":         null
 }
 
@@ -103,20 +104,22 @@ async function onFormBtnClick(id) {
 /**
  * Helper function to set fields' visibility
  * @param {{
-        "fname":        true,
-        "lname":        true,
-        "email":        true,
-        "password":     true,
-        "message":      true,
-        "phone":        true,
-        "carrier":      true,
-        "textarea":     false,
-        "selector":     false,
-        "numFetch":     false,
-        "task":         null
-    }} displayDict If a field is true, show it
+ *      "fname":        true,
+ *      "lname":        true,
+ *      "email":        true,
+ *      "password":     true,
+ *      "message":      true,
+ *      "phone":        true,
+ *      "carrier":      true,
+ *      "textarea":     false,
+ *      "selector":     false,
+ *      "numFetch":     false,
+ *      "submitText":   "Submit",
+ *      "task":         null
+ *  }} displayDict If a field is true, show it
+ * @param {String} newSubmitBtnText (default = current value) The text to be set to within the submit button
  */
-function setDisplays(displayDict) {
+function setDisplays(displayDict, newSubmitBtnText=null) {
     const display = "flex"
     const hide    = "none"
     document.getElementById('firstname-container').style.display =          displayDict.fname     ? display : hide
@@ -129,6 +132,9 @@ function setDisplays(displayDict) {
     document.getElementById('terminal-text-container').style.display =      displayDict.textarea  ? display : hide
     document.getElementById('email-id-selector').style.display =            displayDict.selector  ? display : hide
     document.getElementById('num-email-fetch-container').style.display =    displayDict.numFetch  ? display : hide
+
+    // update submit button text (keep same in param is null)
+    document.getElementById('Submit-Button').value = newSubmitBtnText == null ? defaultDisplayDict.submitText : newSubmitBtnText
 
     // use name attribute in formProcessor to determine some actions
     document.getElementById('Texting-Form').setAttribute("task", displayDict.task)
@@ -174,7 +180,7 @@ async function submitFormBtn(submitBtn, isReceiving, isSelectingEmail) {
                 displayDict[key] = key == "selector" // || key == "numFetch"
             }
             displayDict.task = currTask
-            setDisplays(displayDict)
+            setDisplays(displayDict, "Refresh")
         }
 
         const resData = await parseForm(triggerID, formAddr)

@@ -8,6 +8,7 @@ pythonLocation=${virtualEnvironDir}/Scripts/python.exe
 pipLocation="" # make global
 
 # check OS... (decide how to activate virtual environment)
+echo "#1 Creating Virtual Environment"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     # windows
     py -m venv $virtualEnvironDir # actually create the virtual environment
@@ -24,7 +25,12 @@ else
     pipLocation=$virtualEnvironDir/bin/pip3
 fi
 
+# update pip to latest
+echo "#2 Upgrading pip to latest"
+$pythonLocation -m pip install --upgrade pip
+
 # now pip necessary packages
+echo "#3 Installing all packages"
 $pipLocation install flask
 $pipLocation install pyinstaller # to turn python to .exe
 $pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py

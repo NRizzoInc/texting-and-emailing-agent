@@ -18,7 +18,28 @@ else
 fi
 
 ${pythonLocation} -c """
-import os, sys
+import os, sys, pathlib, platform
+
+# if windows, need to modify path
+myPlatform = platform.system()
+isWindows = myPlatform == 'Windows'
+
+# get root dir path based on string collected in bash script
+rootDir = str(pathlib.Path('${rootDir}'))
+
+# for windows, current path looks like: D:\test\readme.md 
+# current path from bash script: \d\test\readme.md
+# need to convert \d\test\readme.md -> D:\test\readme.md
+if (isWindows):
+    rootDirNoFrontSlash = rootDir[1:] # d\..
+    rootDirCapital = rootDirNoFrontSlash.capitalize() # D\..
+    rootDir = rootDirCapital[:1] + ':' + rootDirCapital[1:] # insert ':' after drive letter
+
+# Navigate to correct directory to import
+print('Running from {0}'.format(rootDir))
+os.chdir(rootDir)
+
+# Finally actually import the src code
 from backend.src.webApp.webApp import sys, WebApp
 client = WebApp()
 """

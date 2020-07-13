@@ -1,5 +1,15 @@
 #!/bin/bash
 # create virtual environment to install desired packages (i.e. flask)
+[[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]] && isWindows=true || isWindows=false
+
+# if linux, need to check if using correct permissions
+if [[ "${isWindows}" = false ]]; then
+    if [ "$EUID" -ne 0 ]; then
+        echo "Please run as root ('sudo')"
+        exit
+    fi
+fi
+
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
@@ -9,7 +19,7 @@ pipLocation="" # make global
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+if [[ ${isWindows} = true ]]; then
     # windows
     echo "#1.1 Creating Virtual Environment"
     py -m venv $virtualEnvironDir # actually create the virtual environment
@@ -22,14 +32,14 @@ else
     pythonVersion=3.7
     pythonName=python${pythonVersion}
     echo "#1.1 Adding python ppa"
-    sudo add-apt-repository -y ppa:deadsnakes/ppa
+    add-apt-repository -y ppa:deadsnakes/ppa
 
     echo "#1.2 Updating..."
-    sudo apt update -y
+    apt update -y
 
     echo "#1.3 Upgrading..."
-    sudo apt upgrade -y
-    sudo apt install -y \
+    apt upgrade -y
+    apt install -y \
         ${pythonName} \
         ${pythonName}-venv
 

@@ -59,8 +59,14 @@ else
     pipLocation=${virtualEnvironDir}/bin/pip${pythonVersion}
 
     echo "#1.5 Exporting Path to Source Code"
+    # set it locally
+    emailWebAppRootDir=${rootDir}
+
+    # make environment variable for path global (if already exists -> replace it, but keep backup)
+    sed -i.bak '/emailWebAppRootDir=/d' ~/.bashrc
     echo "export emailWebAppRootDir=${rootDir}" >> ~/.bashrc
     source ~/.bashrc
+    echo "emailWebAppRootDir: ${emailWebAppRootDir}"
 fi
 
 # update pip to latest

@@ -1,6 +1,22 @@
 # Description
 
-## Running code
+* This repo contains a command line email client utility that can also send text messages
+  * Advantages: 
+    * No need to use a web browser to access your mail
+    * Can access/send mail on a GUI-less or server environment
+    * Can text someone from your laptop without needing to pull out your phone
+  * Disadvantages:
+    * Requires python on local machine to run it
+* Non-developer (laypeople) who do not have python, but stil want to text people can use the web app version of this code
+  * Currently running at `http://71.167.9.135:65501/` (contact me at `nickmike55@gmail.com` if site is down)
+  * Advantages:
+    * Can text people from anywhere
+    * Do not need to have any special software on your computer to use it
+  * Disadvantages:
+    * Requires you to register & login to an account before sending a text (need to keep data private)
+* see the [`running code section`](#running-code) for how to actually use the code in this repo
+
+## Running Code
 
 If you do not want to deal with starting and stopping the python virtual environment, look no further!
 

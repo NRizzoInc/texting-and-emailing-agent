@@ -12,8 +12,6 @@
   - [ ] Implement receive email/text messages-WIP!->refactored the receive code to provide more ins/hooks for webapp to use
 - [ ] Send attachments that include env variables (%{VAR}% or ${VAR} or ${VAR})
 - [ ] Sending messages longer than 120 with no spaces is stuck in "appending"
-- [ ] Add command line flags
-  - [ ] Add flag for changing port/ip address 
 
 ## Nice to haves
 
@@ -31,9 +29,5 @@
 - [X] Add ability to press enter when sending messages (keep concatting inputs until keyboard exception- 'control-c')
 - [ ] Download all icons/pictures to use locally (saves fetch time)
 - [ ] Failed to send D:\\.ssh\id_rsa.pub
-- [ ] Fix ./setup.sh for linux to "sudo apt-get install python3-venv" -> otherwise cant create virtual environment
-- [ ] Shebang doesnt have '!' in run.sh
-- [ ] Get correct python Location for run.sh
 - [ ] MATT: make run.bat (same as run.sh) but for windows users
-- [ ] Make run.bat go to right spot based on os (/bin) in the emailEnv
 - [ ] login via CLI

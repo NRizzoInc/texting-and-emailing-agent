@@ -34,6 +34,7 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 from emailCLIManager import CLIManager
 
@@ -58,7 +59,7 @@ class EmailAgent():
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
         """
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.__srcDir = self.__pathToThisDir
+        self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
         self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")

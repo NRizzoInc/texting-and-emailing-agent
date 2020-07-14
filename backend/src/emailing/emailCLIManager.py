@@ -10,6 +10,7 @@ import os, sys
 import argparse # for CLI Flags
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 
 class CLIManager():

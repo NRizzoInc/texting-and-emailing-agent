@@ -18,8 +18,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-# Note: the number of '.' means the number of dirs to go up (1 means this dir)
-import emailAgent
+from emailing import emailAgent
 import utils
 import webAppConsts
 

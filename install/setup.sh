@@ -111,7 +111,11 @@ $pipLocation install flask-socketio
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then
     echo "#4 Starting Service"
+    echo "-- Stopping ${serviceFileName} Daemon"
+    systemctl stop ${serviceFileName} # stop daemon
+    echo "-- Stopped ${serviceFileName} Daemon"
     systemctl daemon-reload # refresh service daemons
+    echo "-- Reloaded ${serviceFileName} Daemon"
     systemctl start ${serviceFileName} # start daemon
     echo "-- Started ${serviceFileName} Daemon"
 fi

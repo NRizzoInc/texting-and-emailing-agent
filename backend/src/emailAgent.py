@@ -36,6 +36,7 @@ import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
+from emailCLIManager import CLIManager
 
 class EmailAgent():
     """
@@ -49,6 +50,13 @@ class EmailAgent():
     _allEmailFilter = "ALL"
     __success = 0
     __error = -1
+    
+    # prevent magic numbers for service types
+    serviceTypes = {
+        "send": CLIManager.sendText,
+        "receive": CLIManager.getText,
+        "None": CLIManager.sendText # if non-entered, default to sending
+    }
 
     def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
         """
@@ -1461,6 +1469,21 @@ class EmailAgent():
             print("NOT A VALID URL")
             return False
 
+    @classmethod
+    def getServiceType(cls):
+        """Helps to determine what user wants to do via terminal inputs"""
+        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
+        keysString = reduce(createPrompt, list(cls.serviceTypes.keys()))
+        prompt = "Type {0}".format(keysString)
+
+        isValidType = False
+        while not isValidType:
+            serviceType = input(prompt).lower()
+            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
+            # return or print error based on if entered value is valid
+            if (not isValidType):   print("Please Enter a Valid Option!")
+            else:                   return serviceType
+
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
         self.contactList = self.getContactList()
@@ -1532,16 +1555,56 @@ if __name__ == "__main__":
     ##################################################################################################################
     # Service Types (Send & Receiving)
     ##################################################################################################################
+    serviceDest = "serviceType" # Both send & receive set their value in the args['serviceType']
+    serviceGroup = parser.add_argument_group(
+        title="Services",
+        description="Helps to choose what you want to do",
+    )
+    serviceGroup.add_argument(
+        "-s", "--send",
+        action="store_const",
+        const="send",
+        dest=serviceDest,
+        required=False,
+        help="Send an email/text messages",
+    )
+    serviceGroup.add_argument(
+        "-r", "--receive",
+        action="store_const",
+        const="receive",
+        dest=serviceDest,
+        required=False,
+        help="Receive email/text messages",
+    )
+
+    ##################################################################################################################
+    # Receipient Managers (First & Last Name)
+    # If first or last name not entered, stored as None
+    ##################################################################################################################
+    nameMetaVar="<name>"
+    receipientManagerGroup = parser.add_argument_group(
+        title="Receipient",
+        description="Helps choose who to send the email to",
+    )
+    receipientManagerGroup.add_argument(
+        "-f", "--firstname",
+        metavar=nameMetaVar,
+        default=None,
+        dest="fname",
+        required=False,
+        help="The receipient's firstname",
+    )
+    receipientManagerGroup.add_argument(
+        "-l", "--lastname",
+        metavar=nameMetaVar,
+        default=None,
+        dest="lname",
+        required=False,
+        help="The receipient's lastname",
+    )
 
     # Actually Parse Flags (turn into dictionary)
     args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
-
-    argLength = len(sys.argv)
-    # the order of arguments is: 
-    # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
-    # "add contact" will help user to add a contact to the contact list
-    # "update contact" will help user update a contact's info
-
 
     # use this phrase to easily add more contacts to the contact list
     if args["addContact"]:
@@ -1561,66 +1624,13 @@ if __name__ == "__main__":
     emailer.setDefaultState(args["useDefault"])
 
     # determine what the user wants to use the emailing agent for
-    serviceType = input("To send an email type 'send'. To check your inbox type 'get': ").lower()
+    # dont ask if user already specified via CLI flags
+    serviceType = args[serviceDest] if utils.keyExists(args, serviceDest) else EmailAgent.getServiceType()
 
-    if "send" in serviceType:
-
-        # First check that enough arguments were provided (if not do it manually)
-        if argLength < 3: 
-            print("""\
-                \nInvalid number of arguments entered! \
-                \nProvide first and last name seperated by spaces when running this script!
-                \nThe existing contact list includes:""")
-
-            emailer.printContactListPretty()
-
-            addContact = input("Do you want to add a new contact to this list(y/n): ")
-            if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()
-            
-            sendMsg = input("Do you want to send a message to one of these contacts (y/n): ")
-            # error check for invalid input
-            if sendMsg == 'n': sys.exit(0)
-            else:
-                fullName = list()
-                while len(fullName) < 2:
-                    fullName = input("Enter their first name followed by their last name: ").split(' ')
-                
-                firstName = fullName[0]
-                lastName = fullName[1]
-                
-        else:
-            # Get arguments from when script is called
-            firstName = sys.argv[1]
-            lastName = sys.argv[2]
-            # receiverContactInfo contains firstName, lastName, email, carrier, phone number
-
-        # get contact info regardless of method to reach this point
-        receiverContactInfo = emailer.getReceiverContactInfo(firstName, lastName)
-
-        # argLength- if all arguments given when calling script
-        if argLength == 4:
-            # if there is a third argument, then use default email account (dont need to login)
-            emailer.setDefaultState(True)
-
-        emailer.sendMsg(receiverContactInfo)
-    
-        waitForReply = input("Do you want to wait for a reply (y/n): ")
-        if 'n' not in waitForReply:
-            emailer.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
-
-    elif "get" in serviceType:
-        # Entering something in the second argument signifies that you want to use the default login
-        filterInput = ""
-        while filterInput != "n" and filterInput != "y":
-            filterInput = input("Do you want to see only unopened emails (y/n): ")
-            if filterInput == "y": emailer.receiveEmail(onlyUnread=True)
-            elif filterInput == "n": emailer.receiveEmail(onlyUnread=False)
-            else: print("Invalid Arg Entered!")
-
-        
-            
-    else:
-        print("Please Enter a Valid Option!")
+    # each function takes the email agent as first arg, and have optional for the rest
+    # firstname, lastname, etc...
+    selectedFn = EmailAgent.serviceTypes[str(serviceType)]
+    selectedFn(emailer, firstname=args['fname'], lastname=args['lname'])
 
     # logout
     emailer.logoutEmail()

@@ -2,6 +2,7 @@
 import os, sys
 import json
 import re
+import platform # needed to determine which OS is being used
 import socket # used to get local network exposible IP
 
 def loadJson(pathToJson):
@@ -22,14 +23,21 @@ def keyExists(thisDict, key):
 def mergeDicts(dict1, dict2):
     return {**dict1, **dict2}
 
+def isWindows():
+    myPlatform = platform.system()
+    return myPlatform == "Windows"
+
+def isLinux():
+    myPlatform = platform.system()
+    return myPlatform == "Linux"
+
 def getIP():
     """Returns your computer's ip address that is accessible by your router"""
-    myPlatform = platform.system()
-    if myPlatform == "Windows":
+    if isWindows():
         hostname = socket.gethostname()
         IPAddr = socket.gethostbyname(hostname)
         return IPAddr
-    elif myPlatform == "Linux":
+    elif isLinux():
         ipExpr = r'inet ([^.]+.[^.]+.[^.]+.[^\s]+)'
         output = subprocess.check_output("ifconfig").decode()
         matches = re.findall(ipExpr, output)
@@ -41,3 +49,7 @@ def getIP():
         IPAddr = list(filter(narrowMatches, matches))[0]
         print("Found ip: {0}".format(IPAddr))
         return IPAddr
+
+def keyExists(myDict, key):
+    """Returns True or False if 'key' is in 'myDict'"""
+    return key in list(myDict.keys())

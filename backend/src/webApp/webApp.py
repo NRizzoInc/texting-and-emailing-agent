@@ -5,7 +5,6 @@
 import os, sys
 import json # to get data from POST only forms
 import urllib.request
-import platform
 import subprocess
 import logging # used to disable printing of each POST/GET request
 import secrets # needed to generate secure secret key for flask app
@@ -40,7 +39,7 @@ class WebApp():
             \n@Param: post - The port to connect the flask app on
         """
         self.hostIP = utils.getIP()
-        self.hostPost = port if port != None else '5000'
+        self.hostPost = port if port != None and len(port) > 0 else '5000'
         self.hostAddr = 'http://' + self.hostIP + ':' + self.hostPost
         self.app = Flask(__name__)
         self.userManager = UserManager(self.app)
@@ -316,20 +315,21 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--port",
         type=str,
-        help="The port to run the emailing web app from"
-        
+        required=False,
+        help="The port to run the emailing web app from",
     )
 
     # defaults debugMode to false (only true if flag exists)
     parser.add_argument(
         "--debugMode", 
         action="store_true",
-        help="Use debug mode for development environments"
+        required=False,
+        help="Use debug mode for development environments",
     )
 
     # Actually Parse Flags (turn into dictionary)
     args = vars(parser.parse_args())
-    port = args["port"]
-    debugMode = args["debugMode"]
+    port = args["port"] if utils.keyExists(args, "port") else None
+    debugMode = args["debugMode"] if utils.keyExists(args, "debugMode") else False
 
     ui = WebApp(port=port, isDebug=debugMode)

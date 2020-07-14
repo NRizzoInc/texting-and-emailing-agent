@@ -30,7 +30,7 @@ print_flags () {
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -p | --port )
-            port="$2"
+            port="--port $2"
             shift
             ;;
         -h | --help )
@@ -54,4 +54,6 @@ else
     pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
 fi
 
-${pythonLocation} ${executePath} --port ${port}
+# cannot pass empty strings to flag variables, hence have to add flags as needed
+# ${port} contains both the flag and the value
+${pythonLocation} ${executePath} ${port}

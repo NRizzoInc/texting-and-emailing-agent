@@ -1485,15 +1485,7 @@ class EmailAgent():
             pass
         self.connectedToServers = False
 
-
-    def start(self):
-        '''
-            Wrapper around run() function that jump starts the email process
-        '''
-        run()
-
-
-def run():
+if __name__ == "__main__":
     argLength = len(sys.argv)
     # the order of arguments is: 
     # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
@@ -1586,7 +1578,3 @@ def run():
     emailer.logoutEmail()
 
     print("Closing Program")
-    
-
-if __name__ == "__main__":
-    run() # starts the code

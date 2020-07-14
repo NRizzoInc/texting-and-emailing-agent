@@ -73,7 +73,7 @@ class WebApp():
         self.app.config["TEMPLATES_AUTO_RELOAD"] = True # refreshes flask if html files change
         self.app.config["SECRET_KEY"] = secrets.token_urlsafe(64) # needed to keep data secure
         self.flaskSocket = SocketIO(self.app, async_mode="threading")
-        webbrowser.open(self._getSiteUrl(self.sites["landingpage"]))
+        # webbrowser.open(self._getSiteUrl(self.sites["landingpage"])) # wont work in deploy setting
         self.app.run(host=self.host_ip, port=self.host_port, debug=self.__isDebug)
     
     def getIP(self):

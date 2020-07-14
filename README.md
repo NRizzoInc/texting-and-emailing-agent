@@ -1,32 +1,58 @@
-# How to Use:
+# Description
 
-1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#To-Add-a-Contact:)
+## Running code
 
-2. To run the script simply type:
+If you do not want to deal with starting and stopping the python virtual environment, look no further!
 
-> 1. **python emailAgent.py** - simplest way to run the script with instructions provided during runtime
+The `start.sh` bash script within this directory is meant to help you run the python code while automatically
 
-> 2. **python emailAgent.py [optional: reciever first-name last-name]** - choose who to send message to prior to running script
+using the virtual environment so your global python system is not messed up
 
-> 3. **python emailAgent.py [optional: type 'default' as one of the arguments]** - tells the program to use the built in account to send the message from
+### Starting Code with Start Script (`start.sh`)
 
-> 4. **python emailAgent.py [optional: reciever first-name last-name] [optional: default]** - use both of the features listed above
+* To run the email agent (the command line version of the web app): `<path to this dir>/start.sh --mode cli`
+* To run the web app: `<path to this dir>/start.sh --mode web`
+* Additional help can be found at `<path to this dir>/start.sh --help`
+* All command line flags used from the bash scripts will transfer over to the python scripts
 
-3. Once inside the program it will guide you step by step **FYI (y = yes, n = no)**
+### Starting Code Directly (with Python)
 
-# To Add a Contact (2 ways):
+**(Not recommended as you will have to deal with virtual environment shenanigans yourself)**
 
-1. Use the simple method (#1) and try to send a message to a user who does not exist. The program will ask you if you want to add the contact to the list and go through it with you step by step.
+1. Activate the virtual environment (located in `emailEnv` directory after install)
+2. Run either the GUI (`webApp`) or command line version (`emailAgent`)
 
-2. To skip directly to the add contact step, simply type **python emailAgent.py add_contact**
+  > GUI: `python <path to repo root>/backend/src/webApp/webApp.py`
 
-# To Update the Contact List (2 ways):
+  > Command Line: `python <path to repo root>/backend/src/emailing/emailAgent.py`
 
-1. Use the simple method (#1) and try to send a message to a user who already exist. The program will ask you if you want to update the contacts info and go through it with you step by step.
+## How to Use (Flags)
 
-2. To skip directly to the add contact step, simply type **python emailAgent.py update_contact**
+1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#To-Add-a-Contact-(2-ways):)
 
-# To Run This On a Computer Without Python:
+2. To run the code:
+  1. Easiest Way: [`start.sh`](#Starting-Code-with-Start-Script-(`start.sh`))
+  2. Manual Way: [`python`](#Starting-Code-Directly-(with-Python))
+
+3. Use `--help` flag with either start option to understand your options
+
+4. Once inside the program it will guide you step by step **FYI (y = yes, n = no)**
+
+## To Add a Contact (2 ways)
+
+1. Try to send a message to a user who does not exist. The program will ask you if you want to add the contact to the list and go through it with you step by step.
+
+2. To skip directly to the add contact step, simply use the `emailAgent` flag `--add-contact`
+
+## To Update the Contact List (2 ways)
+
+1. Try to send a message to a user who already exist. The program will ask you if you want to update the contacts info and go through it with you step by step.
+
+2. To skip directly to the add contact step, simply the `emailAgent` flag `--update-contact`
+
+## To Make Code Executable on a Computer Without Python
+
+**TODO:** This needs to be updated when better scripted up
 
 1. In your terminal type: `pip install pyinstaller`
 

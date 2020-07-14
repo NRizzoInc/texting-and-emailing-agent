@@ -1,5 +1,6 @@
 # TODO
 
+- [ ] Need to make contact list private to each User (at least for web app)
 - [ ] have webApp auto log out email after some time (currently stays logged in indefinitely, which causes error in backend at timeout)
   - [ ] make sure emailAgent handles that correctly & sets everything
   - [ ] if user is idle on page > 3 min, auto redirect to mainpage with alert describing why

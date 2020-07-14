@@ -16,6 +16,7 @@ import argparse # for CLI Flags
 import flask
 from flask import Flask, templating, render_template, request, redirect, flash, url_for
 from flask_socketio import SocketIO
+import werkzeug.serving # needed to make production worthy app that's secure
 
 # decorate app.route with "@login_required" to make sure user is logged in before doing anything
 # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader -- "flask_login.login_required"
@@ -79,7 +80,7 @@ class WebApp():
         self.app.config["SECRET_KEY"] = secrets.token_urlsafe(64) # needed to keep data secure
         self.flaskSocket = SocketIO(self.app, async_mode="threading")
         # webbrowser.open(self._getSiteUrl(self.sites["landingpage"])) # wont work in deploy setting
-        self.app.run(host=self.hostIP, port=self.hostPost, debug=self.__isDebug)
+        werkzeug.serving.run_simple(hostname=self.hostIP, port=int(self.hostPost), application=self.app, use_debugger=self.__isDebug)
 
     def createSettingsSites(self):
         """Helper function for creating "settingsSites' that provides closure for 'self' variables"""

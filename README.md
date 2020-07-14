@@ -28,7 +28,7 @@ using the virtual environment so your global python system is not messed up
 
 ## How to Use (Flags)
 
-1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#To-Add-a-Contact-(2-ways):)
+1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#To-Add-a-Contact-(3-ways):)
 
 2. To run the code:
   1. Easiest Way: [`start.sh`](#Starting-Code-with-Start-Script-(`start.sh`))
@@ -38,11 +38,13 @@ using the virtual environment so your global python system is not messed up
 
 4. Once inside the program it will guide you step by step **FYI (y = yes, n = no)**
 
-## To Add a Contact (2 ways)
+## To Add a Contact (3 ways)
 
 1. Try to send a message to a user who does not exist. The program will ask you if you want to add the contact to the list and go through it with you step by step.
 
 2. To skip directly to the add contact step, simply use the `emailAgent` flag `--add-contact`
+
+3. Via the web app -- click "Add Contact"
 
 ## To Update the Contact List (2 ways)
 

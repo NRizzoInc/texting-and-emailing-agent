@@ -94,9 +94,14 @@ class WebApp():
             ipExpr = r'inet ([^.]+.[^.]+.[^.]+.[^\s]+)'
             output = subprocess.check_output("ifconfig").decode()
             matches = re.findall(ipExpr, output)
-            for ip in matches:
-                print("Found ip: {0}".format(ip))
-                return ip
+
+            # based on system's setup, might have multiple ip loops running
+            # the only one the router actually sees is the one starting with 192.168
+            # https://qr.ae/pNs807
+            narrowMatches = lambda match: match.startswith("192.168.")
+            IPAddr = list(filter(narrowMatches, matches))[0]
+            print("Found ip: {0}".format(IPAddr))
+            return IPAddr
 
     def createSettingsSites(self):
         """Helper function for creating "settingsSites' that provides closure for 'self' variables"""

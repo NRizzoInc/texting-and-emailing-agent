@@ -26,14 +26,16 @@ fi
 
 # CLI Flags
 print_flags () {
+    echo "=========================================================================================================="
     echo "Usage: start.sh"
     echo "=========================================================================================================="
     echo "Helper utility to start up the email application (via either web app form or command line)"
     echo "Starts up the virtual environment via bash."
     echo "User does not need to have python locally installed or worry about activating the virtual environment"
+    echo "=========================================================================================================="
     echo "How to use:" 
-    echo "To Start: ./start.sh --mode <mode> [options]"
-    echo "To Stop: control+c"
+    echo "  To Start: ./start.sh --mode <mode> [options]"
+    echo "  To Stop: control+c"
     echo "=========================================================================================================="
     echo "Available Flags:"
     echo "  -m,--mode <mode>: Either 'web' or 'cli'"

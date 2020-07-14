@@ -5,7 +5,8 @@
 # Get paths to everything
 virtualEnvironName="emailEnv"
 THIS_FILE_DIR="$(readlink -fm $0/..)"
-rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+# rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)" # if script moved down a dir
+rootDir=${THIS_FILE_DIR}
 virtualEnvironDir="${rootDir}/${virtualEnvironName}"
 backendPath=${rootDir}/backend
 srcPath=${backendPath}/src

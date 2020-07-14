@@ -21,4 +21,5 @@ else
     pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
 fi
 
-${pythonLocation} ${executePath} $1 $2 $3
+# use "$@" to pass on all parameter the same way to python script
+${pythonLocation} ${executePath} "$@"

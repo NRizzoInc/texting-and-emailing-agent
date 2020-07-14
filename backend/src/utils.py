@@ -1,9 +1,11 @@
-
 import os, sys
 import json
+# needed to determine which OS is being used
 import re
-import platform # needed to determine which OS is being used
-import socket # used to get local network exposible IP
+import platform
+import subprocess
+# used to get local network exposible IP
+import socket
 
 def loadJson(pathToJson):
     """Wrapper function that makes it easy to load a json"""

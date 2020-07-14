@@ -12,6 +12,7 @@ import socket # used to get local network exposible IP
 import logging # used to disable printing of each POST/GET request
 import secrets # needed to generate secure secret key for flask app
 import webbrowser # allows opening of new tab on start
+import argparse # for CLI Flags
 
 # This file is responsible for creating a flask Web App UI 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
@@ -32,10 +33,17 @@ from webAppLoginForm import LoginForm
 import webAppConsts
 
 class WebApp():
-    def __init__(self, isDebug=False):
-        self.host_ip = self.getIP()
-        self.host_port = '5000' # port 5000 allowed through firewall
-        self.host_address = 'http://' + self.host_ip + ':' + self.host_port
+    def __init__(self, isDebug:bool=False, port:str=None):
+        """
+            \n@Brief: Creates a web application that provides a GUI for running the email app
+            \n@Note: Automatically finds and uses your publically exposed ip address (not localhost)
+            \n@Note: Calling this class will spin up the web app and block your programs executation
+            \n@Param: isDebug - Should the flask app run with debug mode on
+            \n@Param: post - The port to connect the flask app on
+        """
+        self.hostIP = self.getIP()
+        self.hostPost = port if port != None else '5000'
+        self.hostAddr = 'http://' + self.hostIP + ':' + self.hostPost
         self.app = Flask(__name__)
         self.userManager = UserManager(self.app)
 
@@ -74,7 +82,7 @@ class WebApp():
         self.app.config["SECRET_KEY"] = secrets.token_urlsafe(64) # needed to keep data secure
         self.flaskSocket = SocketIO(self.app, async_mode="threading")
         # webbrowser.open(self._getSiteUrl(self.sites["landingpage"])) # wont work in deploy setting
-        self.app.run(host=self.host_ip, port=self.host_port, debug=self.__isDebug)
+        self.app.run(host=self.hostIP, port=self.hostPost, debug=self.__isDebug)
     
     def getIP(self):
         myPlatform = platform.system()
@@ -208,7 +216,7 @@ class WebApp():
         def createTextForm():
             optDataDict = {} # add keys to be returned at end of post request
             if (not self.initializingStatus):
-                url = self.host_address + self.formSites['textForm']
+                url = self.hostAddr + self.formSites['textForm']
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
                 current_user.updateEmailLogin(
@@ -305,7 +313,7 @@ class WebApp():
             \n@Brief: Helper function that gets full url to a page
             \n@Param: site - the part that comes after the ip/host (localhost/index.html)
         """
-        return "{0}{1}".format(self.host_address, site)
+        return "{0}{1}".format(self.hostAddr, site)
     
     def returnSuccessResp(self, additionalDict={}):
         """
@@ -318,4 +326,26 @@ class WebApp():
 
 
 if __name__ == "__main__":
-    ui = WebApp()
+    # Create all CLI Flags
+    # https://docs.python.org/3/library/argparse.html
+    parser = argparse.ArgumentParser(description="Start up a web app GUI for the emailing agent")
+    parser.add_argument(
+        "-p", "--port",
+        type=str,
+        help="The port to run the emailing web app from"
+        
+    )
+
+    # defaults debugMode to false (only true if flag exists)
+    parser.add_argument(
+        "--debugMode", 
+        action="store_true",
+        help="Use debug mode for development environments"
+    )
+
+    # Actually Parse Flags (turn into dictionary)
+    args = vars(parser.parse_args())
+    port = args["port"]
+    debugMode = args["debugMode"]
+
+    ui = WebApp(port=port, isDebug=debugMode)

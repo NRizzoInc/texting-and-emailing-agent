@@ -29,6 +29,7 @@ from string import Template # needed to send a template txt file
 import urllib
 from urllib import request 
 from urllib.parse import urlparse # WARNING: python3 only
+import argparse # for CLI Flags
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 import fleep # to identify file types
@@ -1486,6 +1487,55 @@ class EmailAgent():
         self.connectedToServers = False
 
 if __name__ == "__main__":
+    # Create all CLI Flags
+    parser = argparse.ArgumentParser(description="Emailing & Texting Application CLI", )
+    
+    ##################################################################################################################
+    # contact managing group - should be exclusive (should not add & update contacts at same time)
+    ##################################################################################################################
+    contactManagerGroup = parser.add_argument_group(
+        title="Contacts Managers",
+        description="Helps to add, update, & remove contacts"
+    )
+    contactManagerGroup.add_argument(
+        "-a", "--add-contact",
+        action="store_true", # defaults to false
+        required=False,
+        dest="addContact",
+        help="Add a contact to the contact list",
+    )
+    contactManagerGroup.add_argument(
+        "-u", "--update-contact",
+        action="store_true", # defaults to false
+        required=False,
+        dest="updateContact",
+        help="Update a contact in the contact list",
+    )
+
+    ##################################################################################################################
+    # Login Group
+    # TODO: eventually add flags to specific username & password
+    ##################################################################################################################
+    contactManagerGroup = parser.add_argument_group(
+        title="Login Helpers",
+        description="Helps log in to your email account (or use default)"
+    )
+    # check if using default email account
+    contactManagerGroup.add_argument(
+        "-d", "--use-default-sender",
+        action="store_true", # defaults to false
+        required=False,
+        dest="useDefault",
+        help="If used, will login to default account that does not require user interaction",
+    )
+
+    ##################################################################################################################
+    # Service Types (Send & Receiving)
+    ##################################################################################################################
+
+    # Actually Parse Flags (turn into dictionary)
+    args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
+
     argLength = len(sys.argv)
     # the order of arguments is: 
     # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
@@ -1494,26 +1544,24 @@ if __name__ == "__main__":
 
 
     # use this phrase to easily add more contacts to the contact list
-    if 'addContact' in sys.argv:
+    if args["addContact"]:
         emailer = EmailAgent(displayContacts=True, isCommandLine=True)
         emailer.simpleAddContact()
-        sys.exit()
+        sys.exit(0)
     
-    if 'updateContact' in sys.argv:
+    elif args["updateContact"]:
         emailer = EmailAgent(displayContacts=True, isCommandLine=True)
         emailer.updateContactInfo()
-        sys.exit()
+        sys.exit(0)
 
     # Create a class obj for this file
     emailer = EmailAgent(displayContacts=False, isCommandLine=True)
 
-    if 'default' in ''.join(sys.argv):
-        emailer.setDefaultState(True)
-    else:
-        emailer.setDefaultState(False)
+    # based on if CLI flag is used, set the default's state
+    emailer.setDefaultState(args["useDefault"])
 
     # determine what the user wants to use the emailing agent for
-    serviceType = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
+    serviceType = input("To send an email type 'send'. To check your inbox type 'get': ").lower()
 
     if "send" in serviceType:
 

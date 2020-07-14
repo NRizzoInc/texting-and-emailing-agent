@@ -28,11 +28,11 @@ using the virtual environment so your global python system is not messed up
 
 ## How to Use (Flags)
 
-1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#To-Add-a-Contact-(3-ways):)
+1. To send messages (either text or emails) you need to [add a contact to your personalized contact list](#to-add-a-contact-3-ways)
 
 2. To run the code:
-  1. Easiest Way: [`start.sh`](#Starting-Code-with-Start-Script-(`start.sh`))
-  2. Manual Way: [`python`](#Starting-Code-Directly-(with-Python))
+  1. Easiest Way: [`start.sh`](#starting-code-with-start-script-startsh)
+  2. Manual Way: [`python`](#starting-code-directly-with-python)
 
 3. Use `--help` flag with either start option to understand your options
 

@@ -5,10 +5,8 @@
 import os, sys
 import json # to get data from POST only forms
 import urllib.request
-import re
 import platform
 import subprocess
-import socket # used to get local network exposible IP
 import logging # used to disable printing of each POST/GET request
 import secrets # needed to generate secure secret key for flask app
 import webbrowser # allows opening of new tab on start
@@ -41,7 +39,7 @@ class WebApp():
             \n@Param: isDebug - Should the flask app run with debug mode on
             \n@Param: post - The port to connect the flask app on
         """
-        self.hostIP = self.getIP()
+        self.hostIP = utils.getIP()
         self.hostPost = port if port != None else '5000'
         self.hostAddr = 'http://' + self.hostIP + ':' + self.hostPost
         self.app = Flask(__name__)
@@ -83,25 +81,6 @@ class WebApp():
         self.flaskSocket = SocketIO(self.app, async_mode="threading")
         # webbrowser.open(self._getSiteUrl(self.sites["landingpage"])) # wont work in deploy setting
         self.app.run(host=self.hostIP, port=self.hostPost, debug=self.__isDebug)
-    
-    def getIP(self):
-        myPlatform = platform.system()
-        if myPlatform == "Windows":
-            hostname = socket.gethostname()
-            IPAddr = socket.gethostbyname(hostname)
-            return IPAddr
-        elif myPlatform == "Linux":
-            ipExpr = r'inet ([^.]+.[^.]+.[^.]+.[^\s]+)'
-            output = subprocess.check_output("ifconfig").decode()
-            matches = re.findall(ipExpr, output)
-
-            # based on system's setup, might have multiple ip loops running
-            # the only one the router actually sees is the one starting with 192.168
-            # https://qr.ae/pNs807
-            narrowMatches = lambda match: match.startswith("192.168.")
-            IPAddr = list(filter(narrowMatches, matches))[0]
-            print("Found ip: {0}".format(IPAddr))
-            return IPAddr
 
     def createSettingsSites(self):
         """Helper function for creating "settingsSites' that provides closure for 'self' variables"""

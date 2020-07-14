@@ -3,7 +3,7 @@
 """
 
 import os
-from .. import utils
+import utils
 
 pathToThisDir = os.path.dirname(os.path.abspath(__file__))
 srcDir = os.path.join(pathToThisDir, "..")

@@ -24,11 +24,12 @@ from flask_socketio import SocketIO
 from flask_login import login_user, current_user, login_required, logout_user
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from .. import utils
-from .webAppUsers import User, UserManager
-from .webAppRegistration import RegistrationForm
-from .webAppLoginForm import LoginForm
-from . import webAppConsts
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import utils
+from webAppUsers import User, UserManager
+from webAppRegistration import RegistrationForm
+from webAppLoginForm import LoginForm
+import webAppConsts
 
 class WebApp():
     def __init__(self, isDebug=False):

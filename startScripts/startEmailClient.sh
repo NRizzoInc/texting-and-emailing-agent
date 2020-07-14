@@ -10,7 +10,7 @@ virtualEnvironDir="${rootDir}/${virtualEnvironName}"
 pythonLocation="" # global (changed based on OS)
 backendPath=${rootDir}/backend
 srcPath=${backendPath}/src
-executePath=${srcPath}/emailAgent.py
+executePath=${srcPath}/emailing/emailAgent.py
 
 # check OS... (decide how to call python)
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then

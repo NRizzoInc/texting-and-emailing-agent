@@ -34,6 +34,7 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
+sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 from emailCLIManager import CLIManager

@@ -36,3 +36,4 @@
 - [ ] Get correct python Location for run.sh
 - [ ] MATT: make run.bat (same as run.sh) but for windows users
 - [ ] Make run.bat go to right spot based on os (/bin) in the emailEnv
+- [ ] login via CLI

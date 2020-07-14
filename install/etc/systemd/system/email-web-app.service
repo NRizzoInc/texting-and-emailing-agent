@@ -5,7 +5,7 @@ Requires=network-online.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/webAppEnviron
-ExecStart=/bin/bash ${emailWebAppRootDir}/startScripts/startWebApp.sh
+ExecStart=/bin/bash ${emailWebAppRootDir}/startScripts/startWebApp.sh --port 65501
 RestartSec=1min
 
 [Install]

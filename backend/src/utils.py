@@ -53,3 +53,22 @@ def getIP():
 def keyExists(myDict, key):
     """Returns True or False if 'key' is in 'myDict'"""
     return key in list(myDict.keys())
+
+def containsConfirmation(response):
+    """Helper function that returns if 'y' or 'n' is contained within the argument"""
+    return 'y' in response or 'n' in response
+
+def promptUntilSuccess(message, successCondition=None):
+    """
+        \n@Brief: Keeps prompting user with 'message' until they respond correctly
+        \n@Param: message - The message to prompt users with repetitively
+        \n@Param: successCondition - (optional) Comparison function that returns a bool -> true means return
+        \n@Returns: The validated response
+    """
+    isValidResponse = False
+    while isValidResponse == False:
+        response = input(message)
+        if response != None and len(response) > 0: 
+            if successCondition == None:        return response # if no comparison fn, return checked response
+            elif successCondition(response):    return response # if returns true, can return valid response
+        else: print("Not a valid response")

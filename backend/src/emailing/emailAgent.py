@@ -34,7 +34,10 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
+from emailCLIManager import CLIManager
 
 class EmailAgent():
     """
@@ -57,7 +60,7 @@ class EmailAgent():
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
         """
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
-        self.__srcDir = self.__pathToThisDir
+        self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
         self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
@@ -1460,6 +1463,21 @@ class EmailAgent():
             print("NOT A VALID URL")
             return False
 
+    @classmethod
+    def getServiceType(cls):
+        """Helps to determine what user wants to do via terminal inputs"""
+        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
+        keysString = reduce(createPrompt, list(cls.serviceTypes.keys()))
+        prompt = "Type {0}".format(keysString)
+
+        isValidType = False
+        while not isValidType:
+            serviceType = input(prompt).lower()
+            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
+            # return or print error based on if entered value is valid
+            if (not isValidType):   print("Please Enter a Valid Option!")
+            else:                   return serviceType
+
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
         self.contactList = self.getContactList()
@@ -1485,108 +1503,7 @@ class EmailAgent():
             pass
         self.connectedToServers = False
 
-
-    def start(self):
-        '''
-            Wrapper around run() function that jump starts the email process
-        '''
-        run()
-
-
-def run():
-    argLength = len(sys.argv)
-    # the order of arguments is: 
-    # 0-file name, 1-first name, 2-last name, 3-skip login(optional- only activates if anything is typed)
-    # "add contact" will help user to add a contact to the contact list
-    # "update contact" will help user update a contact's info
-
-
-    # use this phrase to easily add more contacts to the contact list
-    if 'addContact' in sys.argv:
-        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-        emailer.simpleAddContact()
-        sys.exit()
-    
-    if 'updateContact' in sys.argv:
-        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-        emailer.updateContactInfo()
-        sys.exit()
-
-    # Create a class obj for this file
-    emailer = EmailAgent(displayContacts=False, isCommandLine=True)
-
-    if 'default' in ''.join(sys.argv):
-        emailer.setDefaultState(True)
-    else:
-        emailer.setDefaultState(False)
-
-    # determine what the user wants to use the emailing agent for
-    serviceType = input("\nTo send an email type 'send'. To check your inbox type 'get': ").lower()
-
-    if "send" in serviceType:
-
-        # First check that enough arguments were provided (if not do it manually)
-        if argLength < 3: 
-            print("""\
-                \nInvalid number of arguments entered! \
-                \nProvide first and last name seperated by spaces when running this script!
-                \nThe existing contact list includes:""")
-
-            emailer.printContactListPretty()
-
-            addContact = input("Do you want to add a new contact to this list(y/n): ")
-            if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()
-            
-            sendMsg = input("Do you want to send a message to one of these contacts (y/n): ")
-            # error check for invalid input
-            if sendMsg == 'n': sys.exit(0)
-            else:
-                fullName = list()
-                while len(fullName) < 2:
-                    fullName = input("Enter their first name followed by their last name: ").split(' ')
-                
-                firstName = fullName[0]
-                lastName = fullName[1]
-                
-        else:
-            # Get arguments from when script is called
-            firstName = sys.argv[1]
-            lastName = sys.argv[2]
-            # receiverContactInfo contains firstName, lastName, email, carrier, phone number
-
-        # get contact info regardless of method to reach this point
-        receiverContactInfo = emailer.getReceiverContactInfo(firstName, lastName)
-
-        # argLength- if all arguments given when calling script
-        if argLength == 4:
-            # if there is a third argument, then use default email account (dont need to login)
-            emailer.setDefaultState(True)
-
-        emailer.sendMsg(receiverContactInfo)
-    
-        waitForReply = input("Do you want to wait for a reply (y/n): ")
-        if 'n' not in waitForReply:
-            emailer.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
-
-    elif "get" in serviceType:
-        # Entering something in the second argument signifies that you want to use the default login
-        filterInput = ""
-        while filterInput != "n" and filterInput != "y":
-            filterInput = input("Do you want to see only unopened emails (y/n): ")
-            if filterInput == "y": emailer.receiveEmail(onlyUnread=True)
-            elif filterInput == "n": emailer.receiveEmail(onlyUnread=False)
-            else: print("Invalid Arg Entered!")
-
-        
-            
-    else:
-        print("Please Enter a Valid Option!")
-
-    # logout
-    emailer.logoutEmail()
-
-    print("Closing Program")
-    
-
 if __name__ == "__main__":
-    run() # starts the code
+    # Create all CLI Flags & spin off code
+    # have to pass reference to the EmailAgent class (cannot directly import or else get circular chain)
+    flagManager = CLIManager(EmailAgent)

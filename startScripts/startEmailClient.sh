@@ -10,7 +10,7 @@ virtualEnvironDir="${rootDir}/${virtualEnvironName}"
 pythonLocation="" # global (changed based on OS)
 backendPath=${rootDir}/backend
 srcPath=${backendPath}/src
-executePath=${srcPath}/emailAgent.py
+executePath=${srcPath}/emailing/emailAgent.py
 
 # check OS... (decide how to call python)
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
@@ -21,4 +21,5 @@ else
     pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
 fi
 
-${pythonLocation} ${executePath} $1 $2 $3
+# use "$@" to pass on all parameter the same way to python script
+${pythonLocation} ${executePath} "$@"

@@ -34,7 +34,7 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from . import utils
+import utils
 
 class EmailAgent():
     """

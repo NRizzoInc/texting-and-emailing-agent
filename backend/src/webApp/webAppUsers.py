@@ -19,9 +19,9 @@ from wtforms import StringField, PasswordField, SubmitField
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 # Note: the number of '.' means the number of dirs to go up (1 means this dir)
-from .. import emailAgent
-from .. import utils
-from . import webAppConsts
+import emailAgent
+import utils
+import webAppConsts
 
 class UserManager():
     __userDataDir = webAppConsts.userDataDir

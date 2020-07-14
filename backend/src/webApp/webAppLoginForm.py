@@ -5,7 +5,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from flask import flash
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from .webAppUsers import UserManager
+from webAppUsers import UserManager
 
 #-----------------------------------Validators-----------------------------------#
 def validateUsername(form, field)->bool():

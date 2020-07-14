@@ -29,7 +29,6 @@ from string import Template # needed to send a template txt file
 import urllib
 from urllib import request 
 from urllib.parse import urlparse # WARNING: python3 only
-import argparse # for CLI Flags
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 import fleep # to identify file types
@@ -50,13 +49,6 @@ class EmailAgent():
     _allEmailFilter = "ALL"
     __success = 0
     __error = -1
-    
-    # prevent magic numbers for service types
-    serviceTypes = {
-        "send": CLIManager.sendText,
-        "receive": CLIManager.getText,
-        "None": CLIManager.sendText # if non-entered, default to sending
-    }
 
     def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
         """
@@ -1510,129 +1502,6 @@ class EmailAgent():
         self.connectedToServers = False
 
 if __name__ == "__main__":
-    # Create all CLI Flags
-    parser = argparse.ArgumentParser(description="Emailing & Texting Application CLI", )
-    
-    ##################################################################################################################
-    # contact managing group - should be exclusive (should not add & update contacts at same time)
-    ##################################################################################################################
-    contactManagerGroup = parser.add_argument_group(
-        title="Contacts Managers",
-        description="Helps to add, update, & remove contacts"
-    )
-    contactManagerGroup.add_argument(
-        "-a", "--add-contact",
-        action="store_true", # defaults to false
-        required=False,
-        dest="addContact",
-        help="Add a contact to the contact list",
-    )
-    contactManagerGroup.add_argument(
-        "-u", "--update-contact",
-        action="store_true", # defaults to false
-        required=False,
-        dest="updateContact",
-        help="Update a contact in the contact list",
-    )
-
-    ##################################################################################################################
-    # Login Group
-    # TODO: eventually add flags to specific username & password
-    ##################################################################################################################
-    contactManagerGroup = parser.add_argument_group(
-        title="Login Helpers",
-        description="Helps log in to your email account (or use default)"
-    )
-    # check if using default email account
-    contactManagerGroup.add_argument(
-        "-d", "--use-default-sender",
-        action="store_true", # defaults to false
-        required=False,
-        dest="useDefault",
-        help="If used, will login to default account that does not require user interaction",
-    )
-
-    ##################################################################################################################
-    # Service Types (Send & Receiving)
-    ##################################################################################################################
-    serviceDest = "serviceType" # Both send & receive set their value in the args['serviceType']
-    serviceGroup = parser.add_argument_group(
-        title="Services",
-        description="Helps to choose what you want to do",
-    )
-    serviceGroup.add_argument(
-        "-s", "--send",
-        action="store_const",
-        const="send",
-        dest=serviceDest,
-        required=False,
-        help="Send an email/text messages",
-    )
-    serviceGroup.add_argument(
-        "-r", "--receive",
-        action="store_const",
-        const="receive",
-        dest=serviceDest,
-        required=False,
-        help="Receive email/text messages",
-    )
-
-    ##################################################################################################################
-    # Receipient Managers (First & Last Name)
-    # If first or last name not entered, stored as None
-    ##################################################################################################################
-    nameMetaVar="<name>"
-    receipientManagerGroup = parser.add_argument_group(
-        title="Receipient",
-        description="Helps choose who to send the email to",
-    )
-    receipientManagerGroup.add_argument(
-        "-f", "--firstname",
-        metavar=nameMetaVar,
-        default=None,
-        dest="fname",
-        required=False,
-        help="The receipient's firstname",
-    )
-    receipientManagerGroup.add_argument(
-        "-l", "--lastname",
-        metavar=nameMetaVar,
-        default=None,
-        dest="lname",
-        required=False,
-        help="The receipient's lastname",
-    )
-
-    # Actually Parse Flags (turn into dictionary)
-    args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
-
-    # use this phrase to easily add more contacts to the contact list
-    if args["addContact"]:
-        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-        emailer.simpleAddContact()
-        sys.exit(0)
-    
-    elif args["updateContact"]:
-        emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-        emailer.updateContactInfo()
-        sys.exit(0)
-
-    # Create a class obj for this file
-    emailer = EmailAgent(displayContacts=False, isCommandLine=True)
-
-    # based on if CLI flag is used, set the default's state
-    emailer.setDefaultState(args["useDefault"])
-
-    # determine what the user wants to use the emailing agent for
-    # dont ask if user already specified via CLI flags
-    serviceType = args[serviceDest] if utils.keyExists(args, serviceDest) else EmailAgent.getServiceType()
-
-    # each function takes the email agent as first arg, and have optional for the rest
-    # firstname, lastname, etc...
-    selectedFn = EmailAgent.serviceTypes[str(serviceType)]
-    selectedFn(emailer, firstname=args['fname'], lastname=args['lname'])
-
-    # logout
-    emailer.logoutEmail()
-
-    print("Closing Program")
+    # Create all CLI Flags & spin off code
+    # have to pass reference to the EmailAgent class (cannot directly import or else get circular chain)
+    flagManager = CLIManager(EmailAgent)

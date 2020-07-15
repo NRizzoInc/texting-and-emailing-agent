@@ -15,8 +15,7 @@ from webAppUsers import UserManager
 
 def validateUsername(form, field)->bool():
     """
-        \n@Returns True = Not Taken & False = Taken
-        \n@Note: To validate successfully, has to raise ValidationError(<msg>) on return False
+        \n@Note: To validate successfully, has to raise ValidationError(<msg>) on taken
     """
     # prove that username is not already taken (if taken != None & not taken == None)
     username = field.data
@@ -29,7 +28,6 @@ def validateUsername(form, field)->bool():
         raise ValidationError(f"{msgToPrint}, choose another one")
     else:
         print(f"Username '{username} is free!")
-    return not usernameInUse
 
 
 class RegistrationForm(FlaskForm):

@@ -15,3 +15,6 @@ emailEnv/
 *.log
 
 **cookies.json
+
+# Extern Downloads
+extern/*-signed.msi

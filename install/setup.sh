@@ -13,10 +13,15 @@ fi
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+installDir=${rootDir}/install
+mangoInstallScript=${installDir}/install-mangoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonVersion=3.7
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
+
+bash ${mangoInstallScript} --root-dir ${rootDir}
+exit # REMOVE AFTER DONE WITH MANGO
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

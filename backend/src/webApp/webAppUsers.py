@@ -122,6 +122,11 @@ class UserManager():
         UserManager.userDatabase[userToken].logoutClient()
         del UserManager.userDatabase[userToken]
 
+    @classmethod
+    def isUsernameInUse(cls, username):
+        """Wrapper for dbManager.isUsernameInUse so multiple classes can use this function"""
+        return cls.dbManager.isUsernameInUse(username)
+
     # ------------------------- OBSOLETE CODE ---------------------- #
     # @classmethod
     # def setUserToken(cls, username, password, userObj:User)->str():

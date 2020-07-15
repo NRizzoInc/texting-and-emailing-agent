@@ -19,7 +19,7 @@ def validateUsername(form, field)->bool():
     """
     # prove that username is not already taken (if taken != None & not taken == None)
     username = field.data
-    usernameInUse = UserManager.dbManager.isUsernameInUse(username)
+    usernameInUse = UserManager.isUsernameInUse(username)
     print(f"validating username: {username}")
     if usernameInUse:
         msgToPrint = f"Username '{username}' is already taken"

@@ -46,6 +46,25 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+# $1 is path to convert
+# returns windows path -- capture with res=$(linuxToWinPath <path>)
+function linuxToWinPath() {
+    # get arg
+    local pathLinux=$1
+
+    # remove first '/' (/d/...)
+    local pathDrive=${pathLinux:1}
+    # capitalize drive letter -- https://stackoverflow.com/a/12487455
+    local pathDrive="${pathDrive^}"
+    # insert ':' between first & second char
+    local pathDriveColon=${pathDrive:0:1}:${pathDrive:1}
+    # replace all '/' with '\' -- https://stackoverflow.com/a/13210909 - ${parameter//pattern/string}
+    local pathWin=${pathDriveColon////\\}
+
+    # return
+    echo "${pathWin}"
+}
+
 # vars needed for both linux & windows
 externDir=${rootDir}/extern
 mangoDir=${externDir}/MangoDB
@@ -64,14 +83,7 @@ if [[ ${isWindows} == true ]]; then
     curl --url ${winDownloadURL} --output ${downloadPath}
 
     ##### get windows download path for .msi install command (convert from linux -> windows)
-    # remove first '/' (/d/...)
-    downloadPathDrive=${downloadPath:1}
-    # capitalize drive letter -- https://stackoverflow.com/a/12487455
-    downloadPathDrive="${downloadPathDrive^}"
-    # insert ':' between first & second char
-    downloadPathDriveColon=${downloadPathDrive:0:1}:${downloadPathDrive:1}
-    # replace all '/' with '\' -- https://stackoverflow.com/a/13210909 - ${parameter//pattern/string}
-    downloadPathWin=${downloadPathDriveColon////\\}
+    downloadPathWin=$(linuxToWinPath ${downloadPath})
 
     # call batch script (cannot call it directly due to differences between bash and batch)
     # need to encapsualte command in quotes, but rightmost quote cannot be escaped and is added to the path

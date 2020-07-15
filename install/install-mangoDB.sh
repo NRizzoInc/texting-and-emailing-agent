@@ -113,6 +113,20 @@ if [[ ${isWindows} == true ]]; then
         $(linuxToWinPath ${mangoInstallDir}) \
         ${startMongoScript} \
         ${stopMongoScript}
+
+    # Create & Register the Database Dir (default path)
+    dbDataDir=$(linuxToWinPath ${userDataDir})
+    echo "dbDataDir: ${dbDataDir}"
+    # fill in path variables in config file
+    # <<dbDataDir>> = value of ${dbDataDir}
+    # have to escape '\' characters
+    filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath})
+    echo "${filledInTemplate}" > ${mongoConfigPath}
+    "C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
+
+    # Start MangoDB to Create the Database
+    bash ${startMongoScript}
+
 else
     #### linux
     # import the MongoDB public GPG key −
@@ -124,18 +138,5 @@ else
     # Update and install will occur later on
 fi
 
-# Create & Register the Database Dir (default path)
-dbDataDir=$(linuxToWinPath ${userDataDir})
-echo "dbDataDir: ${dbDataDir}"
-# fill in path variables in config file
-# <<dbDataDir>> = value of ${dbDataDir}
-# have to escape '\' characters
-filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath})
-echo "${filledInTemplate}" > ${mongoConfigPath}
-"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
-
-# Start MangoDB to Create the Database
-bash ${startMongoScript}
-
-# Inform user how to stop it
+# Inform user how to stop MangoDB Daemon
 echo "Stop MangoDB Server/Daemon with '${stopMongoScript}'"

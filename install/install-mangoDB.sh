@@ -11,37 +11,63 @@ print_flags () {
     echo "How to use:" 
     echo "  To Start: ./install-mangoDB.sh [flags]"
     echo "=========================================================================================================="
-    echo "Available Flags:"
+    echo "Needed Flags:"
     echo "  --root-dir <dir> : Absolute path to the root of the repo"
+    echo "  --install-dir <dir> Absolute path to the install directory of the repo (this folder)"
     echo "=========================================================================================================="
 }
 
 # parse command line args
 rootDir=""
+installDir=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --root-dir )
             rootDir="$2"
             shift
+            ;;
+        --install-dir )
+            installDir="$2"
             shift
             ;;
-
         -h | --help )
             print_flags
             exit 0
             ;;
         * )
-            echo "... Unrecognized command"
+            echo "... Unrecognized Command: $1"
             print_flags
             exit 1
     esac
     shift
 done
 
-# might need Admin Privelages for windows
+if [[ ${isWindows} == true ]]; then
+    # might need Admin Privelages for windows
 
-downloadName="mongodb-win32-x86_64-enterprise-windows-64-4.2.8-signed.msi"
-externDir=${rootDir}/extern
-downloadPath=${externDir}/${downloadName}
-winDownloadURL=https://downloads.mongodb.com/win32/${downloadName}
-curl --url ${winDownloadURL} --output ${downloadPath}
+    # basic paths for download
+    downloadName="mongodb-win32-x86_64-enterprise-windows-64-4.2.8-signed.msi"
+    winDownloadURL=https://downloads.mongodb.com/win32/${downloadName}
+    externDir=${rootDir}/extern
+    downloadPath=${externDir}/${downloadName} # needed for curl command
+    installBatchScript=${installDir}/install-mangoDB.bat
+
+    # download the .msi install file
+    curl --url ${winDownloadURL} --output ${downloadPath}
+
+    ##### get windows download path for .msi install command (convert from linux -> windows)
+    # remove first '/' (/d/...)
+    downloadPathDrive=${downloadPath:1}
+    # insert ':' between first & second char
+    downloadPathDriveColon=${downloadPathDrive:0:1}:${downloadPathDrive:1}
+    # replace all '/' with '\' -- https://stackoverflow.com/a/13210909 - ${parameter//pattern/string}
+    downloadPathWin=${downloadPathDriveColon////\\}
+
+    # call batch script (cannot call it directly due to differences between bash and batch)
+    # need to encapsualte command in quotes, but rightmost quote cannot be escaped and is added to the path
+    # accepts arguments: 1st = path to download
+    ${installBatchScript} ${downloadPathWin}
+else
+    # linux - TODO
+    echo "IMPLEMENT LINUX"
+fi

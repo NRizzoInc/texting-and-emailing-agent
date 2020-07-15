@@ -42,14 +42,18 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+# vars needed for both linux & windows
+externDir=${rootDir}/extern
+mangoDir=${externDir}/MangoDB
+mangoInstallDirname="Server" # root/extern/mangoDB/Server
+
 if [[ ${isWindows} == true ]]; then
     # might need Admin Privelages for windows
 
     # basic paths for download
     downloadName="mongodb-win32-x86_64-enterprise-windows-64-4.2.8-signed.msi"
     winDownloadURL=https://downloads.mongodb.com/win32/${downloadName}
-    externDir=${rootDir}/extern
-    downloadPath=${externDir}/${downloadName} # needed for curl command
+    downloadPath=${mangoDir}/${downloadName} # needed for curl command
     installBatchScript=${installDir}/install-mangoDB.bat
 
     # download the .msi install file
@@ -66,7 +70,7 @@ if [[ ${isWindows} == true ]]; then
     # call batch script (cannot call it directly due to differences between bash and batch)
     # need to encapsualte command in quotes, but rightmost quote cannot be escaped and is added to the path
     # accepts arguments: 1st = path to download
-    ${installBatchScript} ${downloadPathWin}
+    ${installBatchScript} ${downloadPathWin} ${mangoInstallDirname}
 else
     # linux - TODO
     echo "IMPLEMENT LINUX"

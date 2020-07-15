@@ -12,6 +12,8 @@ emailEnv/
 # User Data Files (Should never be committed)
 contacts\.json
 **cookies.json
+**/userData/*
+extern/MangoDB/mongod.cfg
 
 # Extern Downloads
 **-signed.msi

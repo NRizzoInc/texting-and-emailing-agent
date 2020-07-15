@@ -13,6 +13,8 @@ fi
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+backendDir=${rootDir}/backend
+userDataDir=${backendDir}/userData
 installDir=${rootDir}/install
 mangoInstallScript=${installDir}/install-mangoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
@@ -23,7 +25,8 @@ pythonLocation="" # global (changed based on OS)
 echo "#0 Downloading/Installing Prerequisite Software"
 
 echo "#0.1 Downloading/Installing MangoDB -- Database"
-bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir}
+bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
+exit
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

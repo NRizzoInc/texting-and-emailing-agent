@@ -18,12 +18,14 @@ print_flags () {
     echo "Needed Flags:"
     echo "  --root-dir <dir> : Absolute path to the root of the repo"
     echo "  --install-dir <dir> Absolute path to the install directory of the repo (this folder)"
+    echo "  --user-data-dir <dir> Absolute path to the user data directory of the repo"
     echo "=========================================================================================================="
 }
 
 # parse command line args
 rootDir=""
 installDir=""
+userDataDir=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --root-dir )
@@ -32,6 +34,11 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --install-dir )
             installDir="$2"
+            shift
+            ;;
+        --user-data-dir )
+            userDataDir="$2"
+            shift
             shift
             ;;
         -h | --help )
@@ -64,6 +71,16 @@ function linuxToWinPath() {
     # return
     echo "${pathWin}"
 }
+# $1 is path to convert
+# returns windows path with double backslash ('\\') -- capture with res=$(escapeBackslash <path>)
+function escapeBackslash() {
+    local originalPath=$1
+    # find and replace each '\' with '\\'
+    doubleBackslash=${originalPath//\\/\\\\}
+
+    # return
+    echo "${doubleBackslash}"
+}
 
 # vars needed for both linux & windows
 startScriptsDir=${rootDir}/serviceScripts
@@ -72,6 +89,8 @@ mangoDir=${externDir}/MangoDB
 mangoInstallDir=${mangoDir}/"Server"
 startMongoScript=${startScriptsDir}/startMangoDB.sh
 stopMongoScript=${startScriptsDir}/stopMangoDB.sh
+mongoConfigPath=${mangoDir}/mongod.cfg
+mongoConfigTemplatePath=${mongoConfigPath}.bak
 
 if [[ ${isWindows} == true ]]; then
     # might need Admin Privelages for windows
@@ -98,6 +117,16 @@ else
     # linux - TODO
     echo "IMPLEMENT LINUX"
 fi
+
+# Create & Register the Database Dir (default path)
+dbDataDir=$(linuxToWinPath ${userDataDir})
+echo "dbDataDir: ${dbDataDir}"
+# fill in path variables in config file
+# <<dbDataDir>> = value of ${dbDataDir}
+# have to escape '\' characters
+filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath})
+echo "${filledInTemplate}" > ${mongoConfigPath}
+"C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
 
 # Start MangoDB to Create the Database
 bash ${startMongoScript}

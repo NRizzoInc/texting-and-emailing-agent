@@ -14,7 +14,7 @@ emailEnv/
 contacts\.json
 **cookies.json
 **/userData/*
-extern/MangoDB/mongod.cfg
+extern/MongoDB/mongod.cfg
 
 # Extern Downloads
 **-signed.msi

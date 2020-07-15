@@ -8,12 +8,12 @@
 # CLI Flags
 print_flags () {
     echo "=========================================================================================================="
-    echo "Usage: install-mangoDB.sh"
+    echo "Usage: install-mongoDB.sh"
     echo "=========================================================================================================="
-    echo "Helper utility to download the correct version of mangoDB"
+    echo "Helper utility to download the correct version of mongoDB"
     echo "=========================================================================================================="
     echo "How to use:" 
-    echo "  To Start: ./install-mangoDB.sh [flags]"
+    echo "  To Start: ./install-mongoDB.sh [flags]"
     echo "=========================================================================================================="
     echo "Needed Flags:"
     echo "  --root-dir <dir> : Absolute path to the root of the repo"
@@ -85,12 +85,12 @@ function escapeBackslash() {
 # vars needed for both linux & windows
 startScriptsDir=${rootDir}/serviceScripts
 externDir=${rootDir}/extern
-mangoDir=${externDir}/MangoDB
-mangoInstallDir=${mangoDir}/"Server"
-dbLogPath=${mangoDir}/log/mongod.log
-startMongoScript=${startScriptsDir}/startMangoDB.sh
-stopMongoScript=${startScriptsDir}/stopMangoDB.sh
-mongoConfigPath=${mangoDir}/mongod.cfg
+mongoDir=${externDir}/mongoDB
+mongoInstallDir=${mongoDir}/"Server"
+dbLogPath=${mongoDir}/log/mongod.log
+startMongoScript=${startScriptsDir}/startMongoDB.sh
+stopMongoScript=${startScriptsDir}/stopMongoDB.sh
+mongoConfigPath=${mongoDir}/mongod.cfg
 mongoConfigTemplatePath=${mongoConfigPath}.bak
 
 if [[ ${isWindows} == true ]]; then
@@ -99,8 +99,8 @@ if [[ ${isWindows} == true ]]; then
     # basic paths for download
     downloadName="mongodb-win32-x86_64-enterprise-windows-64-4.2.8-signed.msi"
     winDownloadURL=https://downloads.mongodb.com/win32/${downloadName}
-    downloadPath=${mangoDir}/${downloadName} # needed for curl command
-    installBatchScript=${installDir}/install-mangoDB.bat
+    downloadPath=${mongoDir}/${downloadName} # needed for curl command
+    installBatchScript=${installDir}/install-mongoDB.bat
 
     # download the .msi install file
     curl --url ${winDownloadURL} --output ${downloadPath}
@@ -110,8 +110,8 @@ if [[ ${isWindows} == true ]]; then
     # see the script for all its arguments
     ${installBatchScript} \
         $(linuxToWinPath ${downloadPath}) \
-        $(linuxToWinPath ${mangoDir}) \
-        $(linuxToWinPath ${mangoInstallDir}) \
+        $(linuxToWinPath ${mongoDir}) \
+        $(linuxToWinPath ${mongoInstallDir}) \
         ${startMongoScript} \
         ${stopMongoScript}
 
@@ -128,9 +128,6 @@ if [[ ${isWindows} == true ]]; then
     echo "${filledInTemplate}" > ${mongoConfigPath}
     "C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
 
-    # Start MangoDB to Create the Database
-    bash ${startMongoScript}
-
 else
     #### linux
     # import the MongoDB public GPG key −
@@ -141,5 +138,8 @@ else
     # Update and install will occur later on
 fi
 
-# Inform user how to stop MangoDB Daemon
-echo -e "Stop MangoDB Server/Daemon with '${stopMongoScript}'\n"
+# Start mongoDB to Create the Database
+bash ${startMongoScript}
+
+# Inform user how to stop mongoDB Daemon
+echo -e "Stop mongoDB Server/Daemon with '${stopMongoScript}'\n"

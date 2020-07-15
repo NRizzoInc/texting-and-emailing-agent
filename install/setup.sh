@@ -16,7 +16,7 @@ rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
 backendDir=${rootDir}/backend
 userDataDir=${backendDir}/userData
 installDir=${rootDir}/install
-mangoInstallScript=${installDir}/install-mangoDB.sh
+mongoInstallScript=${installDir}/install-mongoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonVersion=3.7
 pipLocation="" # make global
@@ -24,8 +24,8 @@ pythonLocation="" # global (changed based on OS)
 
 echo "#0 Downloading/Installing Prerequisite Software"
 
-echo "#0.1 Downloading/Installing MangoDB -- Database"
-bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
+echo "#0.1 Downloading/Installing MongoDB -- Database"
+bash ${mongoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
 # exit # REMOVE ME!!
 
 # check OS... (decide how to activate virtual environment)
@@ -118,7 +118,7 @@ $pipLocation install fleep # to identify file types based on content -  https://
 $pipLocation install flask-login
 $pipLocation install flask-wtf
 $pipLocation install flask-socketio
-$pipLocation install pymongo # for MangoDB
+$pipLocation install pymongo # for mongoDB
 
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then

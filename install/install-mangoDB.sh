@@ -87,6 +87,7 @@ startScriptsDir=${rootDir}/serviceScripts
 externDir=${rootDir}/extern
 mangoDir=${externDir}/MangoDB
 mangoInstallDir=${mangoDir}/"Server"
+dbLogPath=${mangoDir}/log/mongod.log
 startMongoScript=${startScriptsDir}/startMangoDB.sh
 stopMongoScript=${startScriptsDir}/stopMangoDB.sh
 mongoConfigPath=${mangoDir}/mongod.cfg
@@ -116,11 +117,14 @@ if [[ ${isWindows} == true ]]; then
 
     # Create & Register the Database Dir (default path)
     dbDataDir=$(linuxToWinPath ${userDataDir})
-    echo "dbDataDir: ${dbDataDir}"
+    dbLogPathWin=$(linuxToWinPath ${dbLogPath})
+    echo "Database Data Directory: ${dbDataDir}"
+    echo "Database Log File: ${dbLogPathWin}"
     # fill in path variables in config file
     # <<dbDataDir>> = value of ${dbDataDir}
     # have to escape '\' characters
-    filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath})
+    filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath} | sed "s/<<dbLogPathWin>>/$(escapeBackslash ${dbLogPathWin})/g")
+
     echo "${filledInTemplate}" > ${mongoConfigPath}
     "C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
 
@@ -138,4 +142,4 @@ else
 fi
 
 # Inform user how to stop MangoDB Daemon
-echo "Stop MangoDB Server/Daemon with '${stopMongoScript}'"
+echo -e "Stop MangoDB Server/Daemon with '${stopMongoScript}'\n"

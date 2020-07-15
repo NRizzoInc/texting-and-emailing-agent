@@ -18,7 +18,7 @@ storage:
 systemLog:
   destination: file
   logAppend: true
-  path:  C:\Program Files\MongoDB\Server\4.2\log\mongod.log
+  path:  <<dbLogPathWin>>
 
 # network interfaces
 net:

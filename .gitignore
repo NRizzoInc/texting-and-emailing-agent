@@ -3,6 +3,7 @@ __pycache__/
 build/
 dist/
 emailEnv/
+# exclude all log Files
 *.log
 
 

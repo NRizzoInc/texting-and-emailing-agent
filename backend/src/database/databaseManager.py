@@ -78,6 +78,6 @@ class DatabaseManager():
 
     def _exists(self, query:dict):
         """Returns true if an item exists with your desired traits (both key and value)"""
-        match = self.dbColl.find(query)
+        match = list(self.dbColl.find(query))
         numMatches = len(match)
         return numMatches > 0

@@ -16,11 +16,20 @@ from webAppUsers import UserManager
 def validateUsername(form, field)->bool():
     """
         \n@Returns True = Not Taken & False = Taken
+        \n@Note: To validate successfully, has to raise ValidationError(<msg>) on return False
     """
     # prove that username is not already taken (if taken != None & not taken == None)
-    inUse = UserManager.isUsernameInUse(field.data)
-    if inUse: ValidationError("Username already taken, choose another one")
-    return not inUse
+    username = field.data
+    usernameInUse = UserManager.dbManager.isUsernameInUse(username)
+    print(f"validating username: {username}")
+    if usernameInUse:
+        msgToPrint = f"Username '{username}' is already taken"
+        print(msgToPrint)
+        flash(msgToPrint)
+        raise ValidationError(f"{msgToPrint}, choose another one")
+    else:
+        print(f"Username '{username} is free!")
+    return not usernameInUse
 
 
 class RegistrationForm(FlaskForm):

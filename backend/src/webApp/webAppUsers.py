@@ -102,7 +102,7 @@ class UserManager():
             \n@Brief: Add a user
             \n@Param: webAppUsername - The user's username on the site
             \n@Param: webAppPassword - The user's password on the site
-            
+            \n@Note: Username has already been checked to not be a repeat
         """
         # do-while loop to make sure non-colliding unique id is made
         while True:
@@ -111,14 +111,8 @@ class UserManager():
             if not inUse: break # leave loop once new id is found
             else: print(f"userToken '{userToken}' is already taken")
 
-        # if webAppUsername already used, block it
-        if UserManager.dbManager.isUsernameInUse(webAppUsername):
-            # self.removeUser(userToken)
-            print(f"Username '{Username}' is already taken")
-            flash("Username is already in use")
-        else:
-            # create new email agent for each user
-            UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword)
+        # create new email agent for each user
+        UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword)
 
     def removeUser(self, userToken):
         """

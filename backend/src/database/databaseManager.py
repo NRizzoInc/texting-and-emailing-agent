@@ -29,6 +29,26 @@ class DatabaseManager():
         else:
             print(f"Database '{self._dbName}' already exists")
 
+    def addUser(self, userToken, username, password):
+        """
+            \n@Brief: High level api function call to add a user to the database
+            \n@Param: userToken - The user's unique safe id (aka id)
+            \n@Param: username - The user's chosen username
+            \n@Param: password - The user's chosen password
+        """
+        newUser = {
+            "id": userToken,
+            "username": username,
+            "password": password
+        }
+        self._insertData(newUser)
+
+    def isUsernameInUse(self, usernameToTest:str):
+        return False # stub
+    
+    def isIdInUse(self, idToTest:str):
+        return False # stub
+
     def _doesDBExist(self):
         dbNames = self.dbClient.list_database_names()
         print(f"Current Databases: {dbNames}")
@@ -36,7 +56,7 @@ class DatabaseManager():
 
     def _createDB(self):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
-        dummyData = {"username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
+        dummyData = {"id": "admin-account", "username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
         self._insertData(dummyData)
     
     def _insertData(self, data):

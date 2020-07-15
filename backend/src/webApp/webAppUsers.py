@@ -34,7 +34,7 @@ class UserManager():
     dbManager = databaseManager.DatabaseManager()
     
     # create database of User objects (maps tokenId -> User obj)
-    userDatabase = {}
+    userDatabase = {} # TODO: remove once MongoDB fully functional
 
     def __init__(self, app:Flask):
         self.flaskApp = app
@@ -81,10 +81,6 @@ class UserManager():
         return cookieJson[userToken]
 
     @classmethod
-    def isUsernameInUse(cls, username)->bool():
-        return cls.getUserByUsername(username) != None
-    
-    @classmethod
     def createSafeCookieId(cls):
         # https://docs.python.org/3/library/uuid.html -- safe random uuid
         return str(uuid.uuid4())
@@ -109,19 +105,18 @@ class UserManager():
             
         """
         # do-while loop to make sure non-colliding unique id is made
-        firstTime = True
-        userToken = ""
-        while firstTime or userToken in UserManager.userDatabase:
-            firstTime = False
+        while True:
             userToken = UserManager.createSafeCookieId()
+            inUse = UserManager.dbManager.isIdInUse(userToken)
+            if not inUse: break # leave loop once new id is found
 
         # if webAppUsername already used, block it
-        if UserManager.isUsernameInUse(webAppUsername):
+        if UserManager.dbManager.isUsernameInUse(webAppUsername):
             # self.removeUser(userToken)
             flash("Username is already in use")
-
-        # create new email agent for each user
-        UserManager.userDatabase[userToken] = User(webAppUsername, webAppPassword, userToken)
+        else:
+            # create new email agent for each user
+            UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword)
 
     def removeUser(self, userToken):
         """

@@ -29,6 +29,8 @@ class DatabaseManager():
         else:
             print(f"Database '{self._dbName}' already exists")
 
+############################################### HIGH LEVEL API FUNCTIONS ##############################################
+
     def addUser(self, userToken, username, password):
         """
             \n@Brief: High level api function call to add a user to the database
@@ -52,6 +54,9 @@ class DatabaseManager():
         idExists = self._exists({"id": idToTest})
         print(f"idExists: {idExists}")
         return idExists
+
+
+############################################### LOW LEVEL API FUNCTIONS ###############################################
 
     def _doesDBExist(self):
         dbNames = self.dbClient.list_database_names()

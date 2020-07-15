@@ -26,7 +26,7 @@ echo "#0 Downloading/Installing Prerequisite Software"
 
 echo "#0.1 Downloading/Installing MangoDB -- Database"
 bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
-exit
+# exit # REMOVE ME!!
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
@@ -66,7 +66,7 @@ else
     apt install -y \
         ${pythonName} \
         ${pythonName}-venv \
-        mongodb-10gen = 4.2
+        mongodb
 
     echo "#1.4 Creating Virtual Environment"
     ${pythonName} -m venv ${virtualEnvironDir} # actually create the virtual environment

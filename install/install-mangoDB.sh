@@ -1,4 +1,8 @@
 #!/bin/bash
+# @File: Downloads MongoDB
+# Note: Important Files are mongod.exe (daemon = server) & mongo.exe (client)
+# Windows: default download = C:\Program Files\MongoDB\Server\4.2\bin
+# Linux: ??
 
 [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]] && isWindows=true || isWindows=false
 # CLI Flags
@@ -62,6 +66,8 @@ if [[ ${isWindows} == true ]]; then
     ##### get windows download path for .msi install command (convert from linux -> windows)
     # remove first '/' (/d/...)
     downloadPathDrive=${downloadPath:1}
+    # capitalize drive letter -- https://stackoverflow.com/a/12487455
+    downloadPathDrive="${downloadPathDrive^}"
     # insert ':' between first & second char
     downloadPathDriveColon=${downloadPathDrive:0:1}:${downloadPathDrive:1}
     # replace all '/' with '\' -- https://stackoverflow.com/a/13210909 - ${parameter//pattern/string}

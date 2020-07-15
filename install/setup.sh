@@ -65,7 +65,8 @@ else
     apt upgrade -y
     apt install -y \
         ${pythonName} \
-        ${pythonName}-venv
+        ${pythonName}-venv \
+        mongodb-10gen = 4.2
 
     echo "#1.4 Creating Virtual Environment"
     ${pythonName} -m venv ${virtualEnvironDir} # actually create the virtual environment

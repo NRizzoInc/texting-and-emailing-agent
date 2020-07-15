@@ -8,8 +8,8 @@ if [[ ${isWindows} == false ]]; then
         echo "Please run as root ('sudo')"
         exit
     else # have sudo permissions
-        echo "IMPLEMENT LINUX START"
-        # linux start cmd
+        echo "Starting MongoDB"
+        systemctl start mongodb
     fi
 else # is windows
     # || denotes "on fail"

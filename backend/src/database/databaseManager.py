@@ -26,7 +26,7 @@ class DatabaseManager():
         # if db & collection don't exist, add dummy data to them to create it
         if not dbExists:
             print(f"Database '{self._dbName}' does not exist... creating")
-            self.createDB()
+            self._createDB()
         else:
             print(f"Database '{self._dbName}' already exists")
 
@@ -35,7 +35,7 @@ class DatabaseManager():
         print(f"Current Databases: {dbNames}")
         return self._dbName in dbNames
 
-    def createDB(self):
+    def _createDB(self):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
         dummyData = {"username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
         self._insertData(dummyData)

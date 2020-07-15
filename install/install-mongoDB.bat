@@ -5,10 +5,14 @@ REM accepts arguments:
 REM 1st = path to mongoDB Installer
 REM 2nd = path of install dir -- extern/mongoDB
 REM 3rd = path to mongo installation dir -- extern/mongoDB/Server, but not used/does not work
+REM 4th = path to mongo client
+REM tth = path to mongo daemon executable
 
 set mongoInstaller=%1
 set mongoInstallDir=%2
 set mongoInstallationDir=%3
+set mongoClientPath=%4
+set mongoDaemonPath=%5
 
 REM Print important information of where user's mongoDB was installed
 echo Path to mongoDB Installer: %mongoInstaller%
@@ -29,5 +33,5 @@ msiexec.exe ^
             SHOULD_INSTALL_COMPASS="1"
 
 REM Inform user of their downloads' binary paths
-echo mongoDB Client Path: "C:\Program Files\MongoDB\Server\4.2\bin\mongo.exe" -- use this to access via command line
-echo mongoDB Server/Daemon Path: "C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe"
+echo mongoDB Client Path: %mongoClientPath% -- use this to access via command line
+echo mongoDB Server/Daemon Path: %mongoDaemonPath%

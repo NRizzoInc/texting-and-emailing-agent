@@ -55,6 +55,7 @@ done
 
 # $1 is path to convert
 # returns windows path -- capture with res=$(linuxToWinPath <path>)
+# WARNING: Path cannot have spaces in it
 function linuxToWinPath() {
     # get arg
     local pathLinux=$1
@@ -93,6 +94,10 @@ stopMongoScript=${startScriptsDir}/stopMongoDB.sh
 mongoConfigPath=${mongoDir}/mongod.cfg
 mongoConfigTemplatePath=${mongoConfigPath}.bak
 
+mongoDefaultInstallDir="/c/Program Files/MongoDB/Server/4.2"
+mongoClientPath="${mongoDefaultInstallDir}/bin/mongo.exe"
+mongoDaemonPath="${mongoDefaultInstallDir}/bin/mongod.exe"
+
 if [[ ${isWindows} == true ]]; then
     # might need Admin Privelages for windows
 
@@ -112,8 +117,8 @@ if [[ ${isWindows} == true ]]; then
         $(linuxToWinPath ${downloadPath}) \
         $(linuxToWinPath ${mongoDir}) \
         $(linuxToWinPath ${mongoInstallDir}) \
-        ${startMongoScript} \
-        ${stopMongoScript}
+        "${mongoClientPath}" \
+        "${mongoDaemonPath}"
 
     # Create & Register the Database Dir (default path)
     dbDataDir=$(linuxToWinPath ${userDataDir})

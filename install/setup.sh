@@ -20,6 +20,9 @@ pythonVersion=3.7
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
 
+echo "#0 Downloading/Installing Prerequisite Software"
+
+echo "#0.1 Downloading/Installing MangoDB -- Database"
 bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir}
 
 # check OS... (decide how to activate virtual environment)

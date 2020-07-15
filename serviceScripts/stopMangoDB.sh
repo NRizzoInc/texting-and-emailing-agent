@@ -13,5 +13,6 @@ if [[ ${isWindows} == false ]]; then
     fi
 else # is windows
     # || denotes "on fail"
-    net stop MongoDB || echo "Run in Admin Command Prompt"
+    echo "Stopping MongoDB"
+    net stop MongoDB && echo "Successfully Stopped MongoDB" || echo "Run in Admin Command Prompt"
 fi

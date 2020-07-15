@@ -80,7 +80,8 @@ class WebApp():
         self.app.config["SECRET_KEY"] = secrets.token_urlsafe(64) # needed to keep data secure
         self.flaskSocket = SocketIO(self.app, async_mode="threading")
         # webbrowser.open(self._getSiteUrl(self.sites["landingpage"])) # wont work in deploy setting
-        werkzeug.serving.run_simple(hostname=self.hostIP, port=int(self.hostPost), application=self.app, use_debugger=self.__isDebug)
+        self.app.run(host=self.hostIP, port=self.hostPost, debug=self.__isDebug)
+        # werkzeug.serving.run_simple(hostname=self.hostIP, port=int(self.hostPost), application=self.app, use_debugger=self.__isDebug)
 
     def createSettingsSites(self):
         """Helper function for creating "settingsSites' that provides closure for 'self' variables"""

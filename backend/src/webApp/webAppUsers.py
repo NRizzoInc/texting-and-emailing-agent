@@ -163,7 +163,7 @@ class User(UserMixin):
         self.webAppUsername = webAppUsername
         self.webAppPassword = webAppPassword
         self.id = userToken # needed to extend UserMixin
-        self.client = emailAgent.EmailAgent(displayContacts=True, isCommandLine=False)
+        self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later
         self.fname = None

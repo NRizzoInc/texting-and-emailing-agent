@@ -1,20 +1,17 @@
-
-contacts\.json
-
-\.vscode/
-
-retrievedData/cellularData.html
-
+# Build/Run Remenants
 __pycache__/
-
 build/
-
 dist/
-
 emailEnv/
 *.log
 
+
+# Dev tools
+\.vscode/
+
+# User Data Files (Should never be committed)
+contacts\.json
 **cookies.json
 
 # Extern Downloads
-extern/*-signed.msi
+**-signed.msi

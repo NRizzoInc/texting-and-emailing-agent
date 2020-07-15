@@ -66,9 +66,12 @@ function linuxToWinPath() {
 }
 
 # vars needed for both linux & windows
+startScriptsDir=${rootDir}/serviceScripts
 externDir=${rootDir}/extern
 mangoDir=${externDir}/MangoDB
-mangoInstallDirname="Server" # root/extern/mangoDB/Server
+mangoInstallDir=${mangoDir}/"Server"
+startMongoScript=${startScriptsDir}/startMangoDB.sh
+stopMongoScript=${startScriptsDir}/stopMangoDB.sh
 
 if [[ ${isWindows} == true ]]; then
     # might need Admin Privelages for windows
@@ -82,14 +85,22 @@ if [[ ${isWindows} == true ]]; then
     # download the .msi install file
     curl --url ${winDownloadURL} --output ${downloadPath}
 
-    ##### get windows download path for .msi install command (convert from linux -> windows)
-    downloadPathWin=$(linuxToWinPath ${downloadPath})
-
     # call batch script (cannot call it directly due to differences between bash and batch)
     # need to encapsualte command in quotes, but rightmost quote cannot be escaped and is added to the path
-    # accepts arguments: 1st = path to download
-    ${installBatchScript} ${downloadPathWin} ${mangoInstallDirname}
+    # see the script for all its arguments
+    ${installBatchScript} \
+        $(linuxToWinPath ${downloadPath}) \
+        $(linuxToWinPath ${mangoDir}) \
+        $(linuxToWinPath ${mangoInstallDir}) \
+        ${startMongoScript} \
+        ${stopMongoScript}
 else
     # linux - TODO
     echo "IMPLEMENT LINUX"
 fi
+
+# Start MangoDB to Create the Database
+bash ${startMongoScript}
+
+# Inform user how to stop it
+echo "Stop MangoDB Server/Daemon with '${stopMongoScript}'"

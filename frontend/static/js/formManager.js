@@ -58,7 +58,7 @@ $(document).ready( async () => {
     }
 
     // return button
-    const returnBtn = document.getElementById("Go-Back-Btn")
+    const returnBtn = document.getElementById("Return-Home-Btn")
     returnBtn.addEventListener("click", () => {
         exitForm()
     })

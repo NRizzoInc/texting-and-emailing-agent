@@ -74,7 +74,6 @@ else
 
     echo "#1.5 Exporting Path to Source Code"
     # set it locally
-    emailWebAppRootDir=${rootDir}
 
     # make environment variable for path global (if already exists -> replace it, but keep backup)
     # https://serverfault.com/a/413408 -- safest way to create & use environment vars with services
@@ -90,7 +89,7 @@ else
     sed -i.bak '/emailWebAppRootDir=/d' ${environFile}
     echo "emailWebAppRootDir=${rootDir}" >> ${environFile}
     source ${environFile}
-    echo "emailWebAppRootDir: ${emailWebAppRootDir}"
+    echo "emailWebAppRootDir: ${rootDir}"
 
     echo "#1.6 Deploying Service File"
     sysServiceDir=/etc/systemd/system

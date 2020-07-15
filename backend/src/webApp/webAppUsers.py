@@ -21,6 +21,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from emailing import emailAgent
 import utils
 import webAppConsts
+from database import databaseManager
 
 class UserManager():
     __userDataDir = webAppConsts.userDataDir
@@ -28,6 +29,9 @@ class UserManager():
     # make dir and file if they do not exist (are not tracked by git)
     if not os.path.exists(__userDataDir): os.mkdir(__userDataDir)
     if not os.path.exists(__cookieDataPath): utils.writeJson(__cookieDataPath, {})
+
+    # MongoDB database manager
+    dbManager = databaseManager.DatabaseManager()
     
     # create database of User objects (maps tokenId -> User obj)
     userDatabase = {}

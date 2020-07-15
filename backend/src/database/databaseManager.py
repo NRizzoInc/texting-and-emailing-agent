@@ -19,12 +19,11 @@ class DatabaseManager():
         self._dbName = "email-web-app"
         self._dbCollectionName = "users"
         self.dbClient = pymongo.MongoClient("mongodb://localhost:27017/")
-        dbExists = self._doesDBExist()
         self.db = self.dbClient[self._dbName]
         self.dbColl = self.db[self._dbCollectionName]
 
         # if db & collection don't exist, add dummy data to them to create it
-        if not dbExists:
+        if not self._doesDBExist():
             print(f"Database '{self._dbName}' does not exist... creating")
             self._createDB()
         else:

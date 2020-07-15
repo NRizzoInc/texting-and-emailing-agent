@@ -16,7 +16,17 @@
     * Requires you to register & login to an account before sending a text (need to keep data private)
 * see the [`running code section`](#running-code) for how to actually use the code in this repo
 
+## Setup
+
+On Linux: `sudo ./install/setup.sh`
+On Windows (with Git Bash): `./install/setup.sh`
+
+That's it! Done!!
+(I tried to make it as straightforward as possible)
+
 ## Running Code
+
+[**Do the setup before moving on**](#setup)
 
 If you do not want to deal with starting and stopping the python virtual environment, look no further!
 

@@ -38,9 +38,9 @@ class DatabaseManager():
     def createDB(self):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
         dummyData = {"username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
-        self.insertData(dummyData)
+        self._insertData(dummyData)
     
-    def insertData(self, data):
+    def _insertData(self, data):
         """Accepts a list of dictionaries (or just one) to submit"""
         insertingMultiple = utils.isList(data)
         numEntries = len(data)

@@ -26,7 +26,6 @@ echo "#0 Downloading/Installing Prerequisite Software"
 
 echo "#0.1 Downloading/Installing MongoDB -- Database"
 bash ${mongoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
-# exit # REMOVE ME!!
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

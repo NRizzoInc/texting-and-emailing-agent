@@ -44,10 +44,14 @@ class DatabaseManager():
         self._insertData(newUser)
 
     def isUsernameInUse(self, usernameToTest:str):
-        return False # stub
+        usernameExists = self._exists({"username": usernameToTest})
+        print(f"usernameExists: {usernameExists}")
+        return usernameExists
     
     def isIdInUse(self, idToTest:str):
-        return False # stub
+        idExists = self._exists({"id": idToTest})
+        print(f"idExists: {idExists}")
+        return idExists
 
     def _doesDBExist(self):
         dbNames = self.dbClient.list_database_names()
@@ -66,3 +70,9 @@ class DatabaseManager():
         if not insertingMultiple:
             self.dbColl.insert_one(data)
         # else:               self.dbColl.insert_many(data)
+
+    def _exists(self, query:dict):
+        """Returns true if an item exists with your desired traits (both key and value)"""
+        match = self.dbColl.find(query)
+        numMatches = len(match)
+        return numMatches > 0

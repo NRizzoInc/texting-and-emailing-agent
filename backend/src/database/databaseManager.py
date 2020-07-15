@@ -47,12 +47,12 @@ class DatabaseManager():
 
     def isUsernameInUse(self, usernameToTest:str):
         usernameExists = self._exists({"username": usernameToTest})
-        print(f"usernameExists: {usernameExists}")
+        # print(f"usernameExists: {usernameExists}")
         return usernameExists
     
     def isIdInUse(self, idToTest:str):
         idExists = self._exists({"id": idToTest})
-        print(f"idExists: {idExists}")
+        # print(f"idExists: {idExists}")
         return idExists
 
 

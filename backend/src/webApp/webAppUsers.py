@@ -109,10 +109,12 @@ class UserManager():
             userToken = UserManager.createSafeCookieId()
             inUse = UserManager.dbManager.isIdInUse(userToken)
             if not inUse: break # leave loop once new id is found
+            else: print(f"userToken '{userToken}' is already taken")
 
         # if webAppUsername already used, block it
         if UserManager.dbManager.isUsernameInUse(webAppUsername):
             # self.removeUser(userToken)
+            print(f"Username '{Username}' is already taken")
             flash("Username is already in use")
         else:
             # create new email agent for each user

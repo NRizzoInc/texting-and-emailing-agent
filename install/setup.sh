@@ -21,7 +21,6 @@ pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
 
 bash ${mangoInstallScript} --root-dir ${rootDir} --install-dir ${installDir}
-exit # REMOVE AFTER DONE WITH MANGO
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

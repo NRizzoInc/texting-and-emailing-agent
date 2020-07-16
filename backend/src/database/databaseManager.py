@@ -13,7 +13,6 @@ from bson.binary import Binary # for serializing/derializing User objects
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
 import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
-from user import User
 
 class DatabaseManager():
     def __init__(self):

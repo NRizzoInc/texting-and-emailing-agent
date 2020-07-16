@@ -79,7 +79,7 @@ class EmailAgent():
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP
         self.IMAPClient = imaplib.IMAP4 
-        self.connectedToServers = False
+        self.isConnectedToServers = False
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
@@ -124,7 +124,7 @@ class EmailAgent():
         """            
 
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError): return err
@@ -507,7 +507,7 @@ class EmailAgent():
         try:
             self.SMTPClient.login(self.myEmailAddress, self.password)
             self.IMAPClient.login(self.myEmailAddress, self.password)
-            self.connectedToServers = True
+            self.isConnectedToServers = True
             print("Successfully logged into email account!\n")
             return None
             
@@ -827,7 +827,7 @@ class EmailAgent():
             \n@return: List of email ids matching the filter
         """
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError):
@@ -1116,7 +1116,7 @@ class EmailAgent():
         toRtn = {"error": False, "text": "", "idDict": {}, "emailList": []}
 
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError):
@@ -1492,16 +1492,17 @@ class EmailAgent():
             Need to make it a function due to the fact that logging out requires different code depening on the type of server 
         '''
         # depending on situation, one of them might not have logged in in the first place
-        try:
-            self.SMTPClient.quit()
-        except Exception as e:
-            pass
+        if self.isConnectedToServers:
+            try:
+                self.SMTPClient.quit()
+            except Exception as e:
+                pass
 
-        try:
-            self.IMAPClient.logout()
-        except Exception as e:
-            pass
-        self.connectedToServers = False
+            try:
+                self.IMAPClient.logout()
+            except Exception as e:
+                pass
+        self.isConnectedToServers = False
 
 if __name__ == "__main__":
     # Create all CLI Flags & spin off code

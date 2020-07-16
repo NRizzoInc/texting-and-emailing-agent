@@ -37,7 +37,6 @@ import fleep # to identify file types
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
-from emailCLIManager import CLIManager
 from database.databaseManager import DatabaseManager
 
 class EmailAgent(DatabaseManager):
@@ -1460,21 +1459,6 @@ class EmailAgent(DatabaseManager):
             print("NOT A VALID URL")
             return False
 
-    @classmethod
-    def getServiceType(cls):
-        """Helps to determine what user wants to do via terminal inputs"""
-        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
-        keysString = reduce(createPrompt, list(cls.serviceTypes.keys()))
-        prompt = "Type {0}".format(keysString)
-
-        isValidType = False
-        while not isValidType:
-            serviceType = input(prompt).lower()
-            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
-            # return or print error based on if entered value is valid
-            if (not isValidType):   print("Please Enter a Valid Option!")
-            else:                   return serviceType
-
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
         self.contactList = self.getContactList(self._userId)
@@ -1500,8 +1484,3 @@ class EmailAgent(DatabaseManager):
             except Exception as e:
                 pass
         self.isConnectedToServers = False
-
-if __name__ == "__main__":
-    # Create all CLI Flags & spin off code
-    # have to pass reference to the EmailAgent class (cannot directly import or else get circular chain)
-    flagManager = CLIManager(EmailAgent)

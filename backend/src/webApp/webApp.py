@@ -25,9 +25,9 @@ from flask_login import login_user, current_user, login_required, logout_user
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
-from webAppUsers import User, UserManager
-from webAppRegistration import RegistrationForm
-from webAppLoginForm import LoginForm
+from userManager import User, UserManager
+from registrationForm import RegistrationForm
+from loginForm import LoginForm
 import webAppConsts
 
 class WebApp():
@@ -138,18 +138,20 @@ class WebApp():
                 client-side form data. For example, WTForms is a library that will
                 handle this for us, and we use a custom LoginForm to validate.
             """
+            # do not attempt to login if already logged in
             if current_user.is_authenticated:
                 return redirect(self.sites["landingpage"])
+
             form = LoginForm()
             if form.validate_on_submit():
-                user = UserManager.getUserByUsername(form.username.data)
-                if user is None or not user.checkPassword(form.password.data):
-                    flash('Invalid username or password')
-                    return redirect(self.formSites["webAppLogin"])
                 # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
                 # -- "flask_login.login_user"
-                login_user(user, remember=True)
-                return redirect(self.sites["landingpage"])
+                user = UserManager.getUserByUsername(form.username.data)
+                login_user(user, remember=form.rememberMe.data)
+                return redirect(self.sites["landingpage"]) # TODO: eventually route back to start prior to login
+            else:
+                flash('Invalid username or password')
+                return redirect(self.formSites["webAppLogin"])
             return render_template('login.html', title='Sign In', form=form, 
                 links=self.sites, formLinks=self.formSites)
 

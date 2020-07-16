@@ -9,7 +9,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from flask import flash
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from webAppUsers import UserManager
+from userManager import UserManager
 
 #-----------------------------------Validators-----------------------------------#
 
@@ -18,16 +18,17 @@ def validateUsername(form, field)->bool():
         \n@Note: To validate successfully, has to raise ValidationError(<msg>) on taken
     """
     # prove that username is not already taken (if taken != None & not taken == None)
-    username = field.data
-    usernameInUse = UserManager.isUsernameInUse(username)
-    print(f"validating username: {username}")
+    typedUsername = field.data
+    usernameInUse = UserManager.isUsernameInUse(typedUsername)
+    # print(f"validating username: {typedUsername}")
     if usernameInUse:
-        msgToPrint = f"Username '{username}' is already taken"
-        print(msgToPrint)
+        errMsg = f"Username '{typedUsername}' is already taken"
+        # print(errMsg)
         flash(msgToPrint)
-        raise ValidationError(f"{msgToPrint}, choose another one")
+        raise ValidationError(f"{errMsg}, choose another one")
     else:
-        print(f"Username '{username} is free!")
+        # print(f"Username '{typedUsername} is free!")
+        pass
 
 
 class RegistrationForm(FlaskForm):

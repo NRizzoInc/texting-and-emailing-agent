@@ -61,7 +61,7 @@ class DatabaseManager():
         # print(f"idExists: {idExists}")
         return idExists
 
-    def findUser(self, userToken:User):
+    def findUser(self, userToken):
         """
             \n@Param: userToken - The user's unique token id
             \n@Return: The 'User' object
@@ -70,6 +70,24 @@ class DatabaseManager():
         serializedUserObj = match[0]["User"]
         userObj = self._deserializeData(serializedUserObj)
         return userObj
+
+    def getPasswordFromUsername(self, username:str)->str():
+        """
+            \n@Param: username - The password to find's username
+            \n@Returns: The matching password 
+        """
+        match = list(self.dbColl.find({"username": username}))
+        actualPassword = match[0]["password"]
+        return actualPassword
+
+    def getPasswordFromId(self, myId:str)->str():
+        """
+            \n@Param: myId - The password to find's id
+            \n@Returns: The matching password 
+        """
+        match = list(self.dbColl.find({"id": myId}))
+        actualPassword = match[0]["password"]
+        return actualPassword
 
 ############################################### LOW LEVEL API FUNCTIONS ###############################################
 

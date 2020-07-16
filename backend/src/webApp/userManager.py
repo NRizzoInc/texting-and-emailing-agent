@@ -182,9 +182,6 @@ class User(UserMixin):
         needDefault = emailAddress == None or password == None
         self.client.setDefaultState(needDefault)
 
-    def checkPassword(self, password)->bool():
-        return self.webAppPassword == password
-
     def send(self, sendMethod, message):
         """
             \n@Brief: Sends the email/text

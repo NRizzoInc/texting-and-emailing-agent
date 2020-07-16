@@ -5,7 +5,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from flask import flash
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from webAppUsers import UserManager
+from userManager import UserManager
 
 #-----------------------------------Validators-----------------------------------#
 def validateUsername(form, field)->bool():
@@ -13,18 +13,29 @@ def validateUsername(form, field)->bool():
         \n@Returns True = Exists
     """
     # prove that username is not already taken (if taken != None & not taken == None)
-    inUse = UserManager.isUsernameInUse(field.data)
-    if not inUse: ValidationError("Username does not exist, try again")
-    return inUse
+    typedUsername = field.data
+    inUse = UserManager.isUsernameInUse(typedUsername)
+    if not inUse:
+        errMsg = f"Username '{typedUsername}' does not exist"
+        raise ValidationError(f"{errMsg}, try again")
+    else:
+        return True
 
-# done in webApp
-# def validatePassword(form, field)->bool():
-#     potentialUser = UserManager.getUserByUsername(field.data.username)
-#     correctPassword = potentialUser.checkPassword(field.data.password)
+def validatePassword(form, field)->bool():
+    typedUsername = field.data.username
+    typedPassword = field.data.password
+    correctPassword = UserManager.getPasswordFromUsername(username)
+    isValidPassword = typedPassword == correctPassword
+    if not isValidPassword: 
+        errMsg = f"Invalid password for username '{typedUsername}"
+        print(errMsg)
+        raise ValidationError(errMsg)
+    else:
+        return True
 
 class LoginForm(FlaskForm):
     """Generates a quick and dirty login form to authenticate for the webapp"""
     username = StringField('Username', validators=[DataRequired(), validateUsername])
-    password = PasswordField('Password',  validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
+    password = PasswordField('Password',  validators=[DataRequired(), validatePassword])
+    rememberMe = BooleanField('Remember Me')
     submit = SubmitField('Submit')

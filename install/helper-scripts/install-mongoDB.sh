@@ -55,6 +55,8 @@ done
 # check if vars are unset
 trap "exit 1" TERM
 export TOP_PID=$$
+
+# NOTE: echo results with -e (echo -e $(exitIfUnset ${varToTest}))
 # $1 = variable
 function exitIfUnset() {
     toTest=$1
@@ -62,12 +64,16 @@ function exitIfUnset() {
         echo "Not all flags set... "
         print_flags
         kill -s TERM $TOP_PID # exit 1
+    else
+        # dont print newline if var exists
+        # escape once to make it through return's echo (when printed on other side, will have '\c')
+        echo -e "\\\c"
     fi
 }
 # actually check each variable
-echo -e "$(exitIfUnset ${rootDir})\c"
-echo -e "$(exitIfUnset ${installDir})\c"
-echo -e "$(exitIfUnset ${helperScriptDir})\c"
+echo -e "$(exitIfUnset ${rootDir})"
+echo -e "$(exitIfUnset ${installDir})"
+echo -e "$(exitIfUnset ${helperScriptDir})"
 
 # $1 is path to convert
 # returns windows path -- capture with res=$(linuxToWinPath <path>)

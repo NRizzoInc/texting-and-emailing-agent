@@ -5,6 +5,7 @@
 
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import json
+import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pymongo import MongoClient
@@ -12,7 +13,7 @@ from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
-import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
+import constants
 
 class DatabaseManager():
     def __init__(self):
@@ -20,9 +21,9 @@ class DatabaseManager():
             \n@Brief: This class is meant to help manage the database of users' information
             \n@Note: Will create the database if it does not already exist
         """
-        self._dbName = "email-web-app"
-        self._userCollectionName = "users"
-        self._contactsCollectionName = "contacts"
+        self._dbName = constants.dbName
+        self._userCollectionName = constants.userCollectionName
+        self._contactsCollectionName = constants.contactsCollectionName
         self.dbRef = MongoClient("mongodb://localhost:27017/")
         self.dbClient = self.dbRef[self._dbName]
         self.userColl = self.dbClient[self._userCollectionName] # this is for web app

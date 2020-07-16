@@ -1,5 +1,5 @@
 """
-    @file: This file contains the database helper class
+    @file: This file contains the database helper class that manages both 'users' and 'contacts' collections
     @Note: Calling this with python will do nothing
 """
 
@@ -14,9 +14,9 @@ from bson.binary import Binary # for serializing/derializing User objects
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
 from .usersCollectionManager import UsersCollectionManager
-# from databaseUtils import DatabaseUtils
+from .contactsCollectionManager import ContactsCollectionManager
 
-class DatabaseManager(UsersCollectionManager, ):
+class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
     def __init__(self):
         """
             \n@Brief: This class is meant to help manage the database of users' information

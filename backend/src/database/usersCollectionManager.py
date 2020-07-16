@@ -1,5 +1,5 @@
 """
-    \n@File: Responsible for manaing the "users" collection
+    \n@File: Responsible for maintaing the "users" collection
 """
 
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
@@ -18,7 +18,7 @@ class UsersCollectionManager(DatabaseBaseClass):
     def __init__(self):
         """
             \n@Brief: This class is responsible for managing the user's collection
-            \n@Note: Inheret from DatabaseUtils which gives it alot of util functions and self variables
+            \n@Note: Inheret from DatabaseBaseClass which gives it alot of util functions and self variables
         """
         # Inheret all functions and 'self' variables
         super().__init__()

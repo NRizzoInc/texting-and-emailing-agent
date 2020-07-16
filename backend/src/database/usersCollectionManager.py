@@ -55,7 +55,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Return: The corresponding id
             \n@Note: Useful if chained with other functions that require id (i.e. 'findUser()')
         """
-        match = list(self.userColl.find({"username": username}))
+        match = list(self.usersColl.find({"username": username}))
         matchId = match[0]["id"]
         return matchId
 
@@ -64,7 +64,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: userToken - The user's unique token id
             \n@Return: The 'User' object
         """
-        match = list(self.userColl.find({"id": userToken}))
+        match = list(self.usersColl.find({"id": userToken}))
         serializedUserObj = match[0]["User"]
         userObj = self.deserializeData(serializedUserObj)
         return userObj
@@ -74,7 +74,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: username - The password to find's username
             \n@Returns: The matching password 
         """
-        match = list(self.userColl.find({"username": username}))
+        match = list(self.usersColl.find({"username": username}))
         actualPassword = match[0]["password"]
         return actualPassword
 
@@ -83,6 +83,6 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: myId - The password to find's id
             \n@Returns: The matching password 
         """
-        match = list(self.userColl.find({"id": myId}))
+        match = list(self.usersColl.find({"id": myId}))
         actualPassword = match[0]["password"]
         return actualPassword

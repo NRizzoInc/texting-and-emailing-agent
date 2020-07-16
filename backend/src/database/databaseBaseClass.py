@@ -23,7 +23,7 @@ class DatabaseBaseClass(Constants):
 
         self.dbRef = MongoClient("mongodb://localhost:27017/")
         self.dbClient = self.dbRef[self._dbName]
-        self.userColl = self.dbClient[self._userCollectionName] # this is for web app
+        self.usersColl = self.dbClient[self._userCollectionName] # this is for web app
         self.contactsColl = self.dbClient[self._contactsCollectionName] # this is for email agent to manage contact lists
 
     def createCollDNE(self, collObj:MongoClient):
@@ -51,7 +51,7 @@ class DatabaseBaseClass(Constants):
         numEntries = len(data)
         if not insertingMultiple:
             collObj.insert_one(data)
-        # else:               self.userColl.insert_many(data)
+        # else:               self.usersColl.insert_many(data)
 
     def replaceData(self, collObj:MongoClient, myFilter:dict, newData:dict):
         """

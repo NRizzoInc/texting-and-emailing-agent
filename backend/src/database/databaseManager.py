@@ -7,8 +7,12 @@
 import json
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
-import pymongo
+from pymongo import MongoClient
+from bson.binary import Binary # for serializing/derializing User objects
+
+#--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
+import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
 
 class DatabaseManager():
     def __init__(self):
@@ -18,7 +22,7 @@ class DatabaseManager():
         """
         self._dbName = "email-web-app"
         self._dbCollectionName = "users"
-        self.dbClient = pymongo.MongoClient("mongodb://localhost:27017/")
+        self.dbClient = MongoClient("mongodb://localhost:27017/")
         self.db = self.dbClient[self._dbName]
         self.dbColl = self.db[self._dbCollectionName]
 
@@ -31,17 +35,19 @@ class DatabaseManager():
 
 ############################################### HIGH LEVEL API FUNCTIONS ##############################################
 
-    def addUser(self, userToken, username, password):
+    def addUser(self, userToken, username, password, userObj):
         """
             \n@Brief: High level api function call to add a user to the database
             \n@Param: userToken - The user's unique safe id (aka id)
             \n@Param: username - The user's chosen username
             \n@Param: password - The user's chosen password
+            \n@Param: userObj - Reference to the instantiated userObj
         """
         newUser = {
             "id": userToken,
             "username": username,
-            "password": password
+            "password": password,
+            "User": self._serializeObj(userObj) # need to serialize object for storage
         }
         self._insertData(newUser)
 
@@ -55,6 +61,15 @@ class DatabaseManager():
         # print(f"idExists: {idExists}")
         return idExists
 
+    def findUser(self, userToken:User):
+        """
+            \n@Param: userToken - The user's unique token id
+            \n@Return: The 'User' object
+        """
+        match = list(self.dbColl.find({"id": userToken}))
+        serializedUserObj = match[0]["User"]
+        userObj = self._deserializeData(serializedUserObj)
+        return userObj
 
 ############################################### LOW LEVEL API FUNCTIONS ###############################################
 
@@ -81,3 +96,15 @@ class DatabaseManager():
         match = list(self.dbColl.find(query))
         numMatches = len(match)
         return numMatches > 0
+
+    def _deserializeData(self, data:Binary):
+        return pickle.loads(data, encoding=Binary)
+
+    def _saveSSLContext(self, obj):
+        return obj.__class__, (obj.protocol,)
+
+    def _serializeObj(self, obj):
+        copyreg.pickle(ssl.SSLContext, self._saveSSLContext)
+        context = ssl.create_default_context()
+        serializedObj = pickle.dumps(context)
+        return Binary(serializedObj) 

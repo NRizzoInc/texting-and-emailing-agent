@@ -55,7 +55,7 @@ class UserManager():
                 \n@Param: userToken - The user's unique token id
                 \n@Return: Reference to the User class related to this uuid
             """
-            return UserManager.userDatabase[userToken]
+            return UserManager.dbManager.findUser(userToken) 
 
         @self.loginManager.unauthorized_handler
         def onNeedToLogIn():
@@ -112,7 +112,8 @@ class UserManager():
             else: print(f"userToken '{userToken}' is already taken")
 
         # create new email agent for each user
-        UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword)
+        newUserObj = User(webAppUsername, webAppPassword, userToken)
+        UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword, newUserObj)
 
     def removeUser(self, userToken):
         """
@@ -152,9 +153,9 @@ class UserManager():
     #     return cookieId
 
 class User(UserMixin):
-    """Custom user class that extends the expected class from LoginManager"""
     def __init__(self, webAppUsername, webAppPassword, userToken):
         """
+            Custom user class that extends the expected class from LoginManager
             \n@Brief: Initializes a User with the most basic info needed
             \n@Param: webAppUsername - The user's username on the site
             \n@Param: webAppPassword - The user's password on the site
@@ -180,7 +181,7 @@ class User(UserMixin):
         self.password = password
         needDefault = emailAddress == None or password == None
         self.client.setDefaultState(needDefault)
-        
+
     def checkPassword(self, password)->bool():
         return self.webAppPassword == password
 

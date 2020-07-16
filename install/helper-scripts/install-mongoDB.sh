@@ -10,14 +10,15 @@ print_flags () {
     echo "=========================================================================================================="
     echo "Usage: install-mongoDB.sh"
     echo "=========================================================================================================="
-    echo "Helper utility to download the correct version of mongoDB"
+    echo "Helper utility to download the correct version of MongoDB"
     echo "=========================================================================================================="
     echo "How to use:" 
     echo "  To Start: ./install-mongoDB.sh [flags]"
     echo "=========================================================================================================="
     echo "Needed Flags:"
     echo "  --root-dir <dir> : Absolute path to the root of the repo"
-    echo "  --install-dir <dir> Absolute path to the install directory of the repo (this folder)"
+    echo "  --install-dir <dir> Absolute path to the install directory of the repo (parent folder)"
+    echo "  --helper-script-dir <dir> Absolute path to the install helper script directory (this folder)"
     echo "  --user-data-dir <dir> Absolute path to the user data directory of the repo"
     echo "=========================================================================================================="
 }
@@ -26,6 +27,7 @@ print_flags () {
 rootDir=""
 installDir=""
 userDataDir=""
+helperScriptDir=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --root-dir )
@@ -36,9 +38,12 @@ while [[ "$#" -gt 0 ]]; do
             installDir="$2"
             shift
             ;;
+        --helper-script-dir )
+            helperScriptDir="$2"
+            shift
+            ;;
         --user-data-dir )
             userDataDir="$2"
-            shift
             shift
             ;;
         -h | --help )
@@ -105,7 +110,7 @@ if [[ ${isWindows} == true ]]; then
     downloadName="mongodb-win32-x86_64-enterprise-windows-64-4.2.8-signed.msi"
     winDownloadURL=https://downloads.mongodb.com/win32/${downloadName}
     downloadPath=${mongoDir}/${downloadName} # needed for curl command
-    installBatchScript=${installDir}/install-mongoDB.bat
+    installBatchScript=${helperScriptDir}/install-mongoDB.bat
 
     # download the .msi install file
     curl --url ${winDownloadURL} --output ${downloadPath}

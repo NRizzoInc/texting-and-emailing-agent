@@ -16,7 +16,8 @@ rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
 backendDir=${rootDir}/backend
 userDataDir=${backendDir}/userData
 installDir=${rootDir}/install
-mongoInstallScript=${installDir}/install-mongoDB.sh
+helpScriptDir=${installDir}/helper-scripts
+mongoInstallScript=${helpScriptDir}/install-mongoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonVersion=3.7
 pipLocation="" # make global
@@ -25,7 +26,11 @@ pythonLocation="" # global (changed based on OS)
 echo "#0 Downloading/Installing Prerequisite Software"
 
 echo "#0.1 Downloading/Installing MongoDB -- Database"
-bash ${mongoInstallScript} --root-dir ${rootDir} --install-dir ${installDir} --user-data-dir ${userDataDir}
+bash ${mongoInstallScript} \
+    --root-dir ${rootDir} \
+    --install-dir ${installDir} \
+    --helper-script-dir ${helpScriptDir} \
+    --user-data-dir ${userDataDir}
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

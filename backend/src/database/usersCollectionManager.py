@@ -64,8 +64,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: userToken - The user's unique token id
             \n@Return: The 'User' object
         """
-        match = list(self.usersColl.find({"id": userToken}))
-        serializedUserObj = match[0]["User"]
+        userDoc = self._getDocById(self.usersColl, userToken)
+        serializedUserObj = userDoc["User"]
         userObj = self._deserializeData(serializedUserObj)
         return userObj
 

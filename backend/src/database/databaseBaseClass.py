@@ -8,7 +8,6 @@ import pickle, copyreg, ssl # for serializing User objects (SSL obj requires mor
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pymongo import MongoClient
-from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 from constants import Constants
@@ -87,17 +86,20 @@ class DatabaseBaseClass(Constants):
         numMatches = len(match)
         return numMatches > 0
 
-    def _deserializeData(self, data:Binary):
-        decodedObj = Binary(data).decode()
+    def _deserializeData(self, data:bytes):
+        """
+            \n@Param: data - The serialized object to deserialize
+            \n@Return: The deserialized object
+            \n@Note: Meant to deserialize objects that were serialized with '_serializeObj()'
+        """
         deserializedObj = pickle.loads(data)
         return deserializedObj
 
-    def _serializeObj(self, obj):
+    def _serializeObj(self, obj)->bytes():
         """
             \n@Param: obj - The object to serial
             \n@Return: The serialized object
             \n@Note: Meant to serialize objects (pairs with '_deserializeData()')
         """
         serializedObj = pickle.dumps(obj)
-        binarySerialObj = Binary(serializedObj)
-        return binarySerialObj
+        return serializedObj

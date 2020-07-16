@@ -61,6 +61,16 @@ class DatabaseManager():
         # print(f"idExists: {idExists}")
         return idExists
 
+    def getIdByUsername(self, username)->str():
+        """
+            \n@Param: username - The username matching the id you are looking for
+            \n@Return: The corresponding id
+            \n@Note: Useful if chained with other functions that require id (i.e. 'findUser()')
+        """
+        match = list(self.dbColl.find({"username": username}))
+        matchId = match[0]["id"]
+        return matchId
+
     def findUser(self, userToken):
         """
             \n@Param: userToken - The user's unique token id

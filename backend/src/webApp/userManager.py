@@ -64,34 +64,9 @@ class UserManager():
             # flash(loginMsg)
             return redirect(webAppConsts.formSites["webAppLogin"])
 
-    @classmethod
-    def getUserLogin(cls, userToken)->dict():
-        """
-            \n@Brief: Get the user's webapp login info (username + password) based on their browser's cookie
-            \n@Param: `userToken` The user's unique id retrieved from cookie
-            \n@Note: username & password login info is for webApp (NOT for gmail or other email site)
-            \n@Note: `userToken` is the user's unique token based on browser and cookie data
-            \n@Return: {username: str, password: str}
-        """
-        cookieJson = utils.loadJson(cls.__cookieDataPath)
-        return cookieJson[userToken]
-
-    @classmethod
-    def createSafeCookieId(cls):
+    def createSafeCookieId(self):
         # https://docs.python.org/3/library/uuid.html -- safe random uuid
         return str(uuid.uuid4())
-
-    @classmethod
-    def getUserByUsername(cls, username):
-        """
-            Returns None if username does not exist
-        """
-        # search through user database's User objects (the values) until a User has the desired username
-        findUsernameMatch = lambda x: x.webAppUsername == username
-        # there should only be one (either way choose the first) or None if not found
-        userMatches = list(filter(findUsernameMatch, cls.userDatabase.values()))
-        userMatch = userMatches[0] if len(userMatches) > 0 else None
-        return userMatch
 
     def addUser(self, webAppUsername, webAppPassword):
         """
@@ -102,7 +77,7 @@ class UserManager():
         """
         # do-while loop to make sure non-colliding unique id is made
         while True:
-            userToken = UserManager.createSafeCookieId()
+            userToken = self.createSafeCookieId()
             inUse = UserManager.dbManager.isIdInUse(userToken)
             if not inUse: break # leave loop once new id is found
             else: print(f"userToken '{userToken}' is already taken")
@@ -143,3 +118,12 @@ class UserManager():
     def isUsernameInUse(cls, username):
         """Wrapper for dbManager.isUsernameInUse so multiple classes can use this function"""
         return cls.dbManager.isUsernameInUse(username)
+
+    @classmethod
+    def getUserByUsername(cls, username):
+        """
+            \n@Param: username: The username of the user's account
+            \n@Returns: None if username does not exist
+        """
+        myId = cls.dbManager.getIdByUsername(username)
+        return cls.dbManager.findUser(myId)

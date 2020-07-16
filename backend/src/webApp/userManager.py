@@ -123,6 +123,26 @@ class UserManager():
         UserManager.userDatabase[userToken].logoutClient()
         del UserManager.userDatabase[userToken]
 
+##################################### WRAPPER FUNCTIONS FOR LOWER LEVEL API ###########################################
+
+    @classmethod
+    def getPasswordFromUsername(cls, username):
+        """
+            \n@Note: Wrapper for dbManager.getPasswordFromUsername so multiple classes can use this function
+            \n@Param: username - The password to find's username
+            \n@Returns: The matching password 
+        """
+        return cls.dbManager.getPasswordFromUsername(username)
+
+    @classmethod
+    def getPasswordFromId(cls, myId):
+        """
+            \n@Note: Wrapper for dbManager.getPasswordFromId so multiple classes can use this function
+            \n@Param: myId - The password to find's id
+            \n@Returns: The matching password 
+        """
+        return cls.dbManager.getPasswordFromId(myId)
+
     @classmethod
     def isUsernameInUse(cls, username):
         """Wrapper for dbManager.isUsernameInUse so multiple classes can use this function"""

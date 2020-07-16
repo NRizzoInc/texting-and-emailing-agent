@@ -142,16 +142,32 @@ class WebApp():
             if current_user.is_authenticated:
                 return redirect(self.sites["landingpage"])
 
+            # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
+            # -- "flask_login.login_user"
             form = LoginForm()
+
             if form.validate_on_submit():
-                # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
-                # -- "flask_login.login_user"
-                user = UserManager.getUserByUsername(form.username.data)
-                login_user(user, remember=form.rememberMe.data)
-                return redirect(self.sites["landingpage"]) # TODO: eventually route back to start prior to login
-            else:
-                flash('Invalid username or password')
-                return redirect(self.formSites["webAppLogin"])
+                # username & password fields of form have been validated at this point
+                # They will be 'None' if validation failed
+                validUsername = form.username.data != None
+                validPassword = form.password.data != None
+
+                # check results
+                rtnMsg = ""
+                isError = not (validUsername and validPassword) # only both true == success
+                if validUsername and validPassword:
+                    rtnMsg = "Login Successful !!"
+                    login_user(user, remember=form.rememberMe.data)
+                elif not validUsername:
+                    rtnMsg = "Unrecognized Username"
+                elif not validPassword:
+                    rtnMsg = "Invalid Password"
+
+                # Print message and route to correct location
+                flash(rtnMsg)
+                if isError: return redirect(self.formSites["webAppLogin"])
+                else:       return redirect(self.sites["landingpage"]) # TODO: eventually route back to start prior to login
+
             return render_template('login.html', title='Sign In', form=form, 
                 links=self.sites, formLinks=self.formSites)
 

@@ -252,7 +252,7 @@ class WebApp():
                 emailAddress: str,
                 password: str,
                 carrier: str,
-                phoneNum: str,
+                phoneNumber: str,
                 message: str,
                 task: str
             }
@@ -267,7 +267,7 @@ class WebApp():
             "emailAddress":     "",
             "password":         "",
             "carrier":          "",
-            "phoneNum":         "",
+            "phoneNumber":         "",
             "message":          "",
             "task":             ""
         }

@@ -20,12 +20,6 @@ from database.databaseManager import DatabaseManager
 from user import User
 
 class UserManager():
-    __userDataDir = webAppConsts.userDataDir
-    __cookieDataPath = webAppConsts.cookieDataPath
-    # make dir and file if they do not exist (are not tracked by git)
-    if not os.path.exists(__userDataDir): os.mkdir(__userDataDir)
-    if not os.path.exists(__cookieDataPath): utils.writeJson(__cookieDataPath, {})
-
     # MongoDB database manager
     dbManager = DatabaseManager()
     

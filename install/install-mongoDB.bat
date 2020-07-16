@@ -28,7 +28,6 @@ REM Line's Purpose
 msiexec.exe ^
             /l*v %mongoInstallDir%\mdbinstall.log ^
             /qb /i %mongoInstaller% ^
-            INSTALLLOCATION="%mongoInstallationDir%" ^
             ADDLOCAL="ServerService,Client" ^
             SHOULD_INSTALL_COMPASS="1"
 

@@ -11,16 +11,16 @@ from pymongo import MongoClient
 from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import constants
+from constants import Constants
 
-class DatabaseBaseClass():
+class DatabaseBaseClass(Constants):
     def __init__(self):
         """
             \n@Brief: Helper class that is meant to be inhereted by other database manager classes
         """
-        self._dbName = constants.dbName
-        self._userCollectionName = constants.userCollectionName
-        self._contactsCollectionName = constants.contactsCollectionName
+        # Inheret all functions and 'self' variables
+        super().__init__()
+
         self.dbRef = MongoClient("mongodb://localhost:27017/")
         self.dbClient = self.dbRef[self._dbName]
         self.userColl = self.dbClient[self._userCollectionName] # this is for web app
@@ -52,6 +52,13 @@ class DatabaseBaseClass():
         if not insertingMultiple:
             collObj.insert_one(data)
         # else:               self.userColl.insert_many(data)
+
+    def getCardById(self, collObj:MongoClient, userId):
+        """Returns collection object based on the UUID -- returns empty dict for non-existant user"""
+        match = list(collObj.find({"id": userId})) # "match" because there should only ever be one
+        numMatches = len(match)
+        if numMatches > 0:  return match[0]
+        else:               return {} 
 
     def exists(self, collObj:MongoClient, query:dict):
         """Returns true if an item exists with your desired traits (both key and value)"""

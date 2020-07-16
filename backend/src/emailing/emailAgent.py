@@ -53,12 +53,13 @@ class EmailAgent(DatabaseManager):
     __success = 0
     __error = -1
 
-    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
+    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False, userId:str=""):
         """
             \n@Brief: This class is responsible for sending & receiving emails
             \n@input: displayContacts- If true, print the contact list during init
             \n@input: isCommandLine- True if using through the command line
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
+            \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
         """
         # Inheret all functions and 'self' variables
         super().__init__()
@@ -68,14 +69,6 @@ class EmailAgent(DatabaseManager):
         self.__backendDir = os.path.join(self.__srcDir, "..")
         self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
-        self.pathToContactList = os.path.join(self.__emailDataDir, "contacts.json")
-
-
-        # Open the contact list file (create new file if it does not exist)
-        if not os.path.exists(self.pathToContactList):
-            # write empty dictionary to file (creates the file)
-            utils.writeJson(self.pathToContactList, {})
-        self.contactList = utils.loadJson(self.pathToContactList)
 
         # information to login
         self.emailProvidersInfo = utils.loadJson(os.path.join(self.__emailDataDir, "emailProvidersInfo.json"))
@@ -100,6 +93,10 @@ class EmailAgent(DatabaseManager):
         # implement this class not using the command line
         self.isCommandLine = isCommandLine
 
+        # if running via CLI, access account meant for CLI user
+        self._userId = self._cliUserId if self.isCommandLine else userId
+        self.contactList = self.getContactList(self._userId)
+
         # work around for sending text messages with char limit (wait to add content)
         self.attachmentsList = []
         self.textMsgToSend = ''
@@ -108,10 +105,6 @@ class EmailAgent(DatabaseManager):
         if displayContacts is True:    
             printableContactList = pprint.pformat(self.contactList)
             print("The current contact list is:\n{0}".format(printableContactList))
-
-    # returns the contact list as it is currently in the contact list file
-    def getContactList(self):
-        return utils.loadJson(self.pathToContactList)
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
@@ -1484,7 +1477,7 @@ class EmailAgent(DatabaseManager):
 
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
-        self.contactList = self.getContactList()
+        self.contactList = self.getContactList(self._userId)
         formatedContactList = pprint.pformat(self.contactList)
         if printToTerminal:
            print(formatedContactList)

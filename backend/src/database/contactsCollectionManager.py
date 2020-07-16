@@ -20,3 +20,11 @@ class ContactsCollectionManager(DatabaseBaseClass):
         """
         # Inheret all functions and 'self' variables
         super().__init__()
+
+    def getContactList(self, userId)->dict():
+        """
+            \n@Brief: Returns the contact list matching the userId
+            \n@Param: userId - The UUID of the user whose contact list needs to be retrieved
+            \n@Returns: Dictionary containing the user's contact list
+        """
+        return self.getCardById(self.contactsColl, userId)

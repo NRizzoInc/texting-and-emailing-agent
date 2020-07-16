@@ -13,14 +13,15 @@ from userManager import UserManager
 def validateUsername(form, field)->bool():
     """
         \n@Returns True = Exists
-        \n@Note: This will be part of the password's validation
+        \n@Note: This will be part of the password's validation (chain both to avoid double flashes)
     """
     # prove that username is not already taken (if taken != None & not taken == None)
     typedUsername = form.username.data # use generic 'form' variable
     usernameExists = UserManager.isUsernameInUse(typedUsername)
     if not usernameExists:
-        errMsg = f"Username '{typedUsername}' does not exist"
-        raise StopValidation(message=f"{errMsg}, try again")
+        errMsg = f"Username '{typedUsername}' does not exist, try again"
+        flash(errMsg)
+        raise StopValidation(message=errMsg)
     else:
         return True
 
@@ -31,15 +32,15 @@ def validatePassword(form, field)->bool():
     isValidPassword = typedPassword == correctPassword
     if not isValidPassword: 
         errMsg = f"Invalid password for username '{typedUsername}"
-        print(errMsg)
-        raise StopValidation(errMsg)
+        flash(errMsg)
+        raise StopValidation(message=errMsg)
     else:
         return True
 
 class LoginForm(FlaskForm):
     """Generates a quick and dirty login form to authenticate for the webapp"""
     #-----------------------------------Form Fields-----------------------------------#
-    username = StringField('Username', validators=[DataRequired(), validateUsername])
+    username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password',  validators=[DataRequired(), validateUsername, validatePassword])
     rememberMe = BooleanField('Remember Me')
     submit = SubmitField('Submit')

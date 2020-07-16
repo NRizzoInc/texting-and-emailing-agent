@@ -62,6 +62,7 @@ function exitIfUnset() {
     toTest=$1
     if [ "${toTest}" = "" ]; then
         echo "Not all flags set... "
+        echo "(It is recommended to use ./install/setup.sh)"
         print_flags
         kill -s TERM $TOP_PID # exit 1
     else

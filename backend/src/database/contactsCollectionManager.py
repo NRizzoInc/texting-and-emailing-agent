@@ -39,8 +39,7 @@ class ContactsCollectionManager(DatabaseBaseClass):
             \n@Param: newContactList - The updated contact list
             \n@Returns: Dictionary containing the updated contact list
         """
-        query = {"id": userId}
         data = {self.contactListKey: newContactList}
         toSave = utils.mergeDicts(query, data)
-        self.replaceData(self.contactsColl, query, toSave)
+        self.replaceDataById(self.contactsColl, userId, toSave)
         return newContactList

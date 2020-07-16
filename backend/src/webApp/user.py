@@ -97,7 +97,7 @@ class User(UserMixin):
             \n@Brief: Helps create an EmailAgent object on demand
             \n@Returns: The new EmailAgent object
         """
-        newClient = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
+        newClient = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False, userId=self.id)
         return newClient
 
     def getContactInfo(self, client:EmailAgent):
@@ -116,10 +116,12 @@ class User(UserMixin):
         return client.getReceiverContactInfo(self.fname, self.lname)
 
     def getContactList(self):
-        return self.client.printContactListPretty(printToTerminal=False)
+        client = self.initializeEmailAgent()
+        return client.printContactListPretty(printToTerminal=False)
     
     def getNumFetch(self):
-        return self.numEmailsToFetch
+        client = self.initializeEmailAgent()
+        return client.numEmailsToFetch
     
     def setNumFetch(self, newVal):
         self.numEmailsToFetch = newVal

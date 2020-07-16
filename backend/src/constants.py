@@ -10,3 +10,6 @@ class Constants():
         self._userCollectionName = "users"
         self._contactsCollectionName = "contacts"
         self._cliUserId = "localhost"
+
+        # EmailAgent / Databases
+        self.contactListKey = "contact-list"

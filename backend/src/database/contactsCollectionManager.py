@@ -21,10 +21,26 @@ class ContactsCollectionManager(DatabaseBaseClass):
         # Inheret all functions and 'self' variables
         super().__init__()
 
-    def getContactList(self, userId)->dict():
+    def getContactList(self, userId:str)->dict():
         """
             \n@Brief: Returns the contact list matching the userId
             \n@Param: userId - The UUID of the user whose contact list needs to be retrieved
             \n@Returns: Dictionary containing the user's contact list
         """
-        return self.getCardById(self.contactsColl, userId)
+        # document in database contains more than just the contact list
+        contactList = self.getCardById(self.contactsColl, userId)
+        if len(contactList) == 0:   return contactList
+        else:                       return contactList[self.contactListKey]
+
+    def setContactList(self, userId:str, newContactList:dict)->dict():
+        """
+            \n@Brief: Updates the contact list matching the userId in the database
+            \n@Param: userId - The UUID of the user whose contact list needs to be retrieved
+            \n@Param: newContactList - The updated contact list
+            \n@Returns: Dictionary containing the updated contact list
+        """
+        query = {"id": userId}
+        data = {self.contactListKey: newContactList}
+        toSave = utils.mergeDicts(query, data)
+        self.replaceData(self.contactsColl, query, toSave)
+        return newContactList

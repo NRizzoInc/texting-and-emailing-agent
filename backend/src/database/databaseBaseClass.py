@@ -53,6 +53,15 @@ class DatabaseBaseClass(Constants):
             collObj.insert_one(data)
         # else:               self.userColl.insert_many(data)
 
+    def replaceData(self, collObj:MongoClient, myFilter:dict, newData:dict):
+        """
+            \n@Brief: Updates the FIRST card within the collection fitting the filter with 'newData'
+            \n@Param: collObj - The collection object
+            \n@Param: myFilter - The query parameter to find the card to update
+            \n@Param: newData - The data to update the card with
+        """
+        collObj.find_one_and_replace(myFilter, newData, upsert=True)
+
     def getCardById(self, collObj:MongoClient, userId):
         """Returns collection object based on the UUID -- returns empty dict for non-existant user"""
         match = list(collObj.find({"id": userId})) # "match" because there should only ever be one

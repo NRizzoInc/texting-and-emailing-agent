@@ -101,9 +101,7 @@ class EmailAgent(DatabaseManager):
         self.textMsgToSend = ''
 
         # display contents of the existing contact list
-        if displayContacts is True:    
-            printableContactList = pprint.pformat(self.contactList)
-            print("The current contact list is:\n{0}".format(printableContactList))
+        if displayContacts: self.printContactListPretty()
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
@@ -658,12 +656,7 @@ class EmailAgent(DatabaseManager):
             newContactList[lastName][firstName] = commonDataDict
 
         # Update existing variable used by rest of program so it constantly stays up to date
-        self.contactList = newContactList
-        print("The updated contacts list is:\n")
-        pprint.pprint(self.contactList)
-
-        # In either case, write updated version of contact list to the json file
-        utils.writeJson(self.pathToContactList, newContactList)
+        self.contactList = self.setContactList(self._userId, newContactList)
 
     def updateContactInfo(self, firstName=None, lastName=None, addingExternally=True):
         '''
@@ -751,11 +744,8 @@ class EmailAgent(DatabaseManager):
         # handled by other function if internal
         if (addingExternally):
             # Update existing variable used by rest of program so it constantly stays up to date
-            self.contactList = updatedContactList
-            print("The updated contacts list is:\n")
-            pprint.pprint(self.contactList)
-
-            utils.writeJson(self.pathToContactList, updatedContactList)
+            self.contactList = self.setContactList(self._userId, updatedContactList)
+            self.printContactListPretty()
 
         return updatedContactList
 
@@ -772,8 +762,7 @@ class EmailAgent(DatabaseManager):
         phoneNumber = input("Please enter their phone number: ")
 
         # call function that handles the actual adding
-        EmailAgent(displayContacts=False).addContact(
-            firstName, lastName, myEmail, carrier, phoneNumber)
+        self.addContact(firstName, lastName, myEmail, carrier, phoneNumber)
 
     def _waitForNewMessage(self, startedBySendingEmail:bool):
         """
@@ -1462,10 +1451,9 @@ class EmailAgent(DatabaseManager):
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
         self.contactList = self.getContactList(self._userId)
-        formatedContactList = pprint.pformat(self.contactList)
-        if printToTerminal:
-           print(formatedContactList)
-        return formatedContactList
+        formattedContactList = pprint.pformat(self.contactList)
+        if self.isCommandLine and printToTerminal:  print(f"The updated contacts list is:\n{formattedContactList}")
+        else:                                       return formattedContactList
 
     def logoutEmail(self):
         '''

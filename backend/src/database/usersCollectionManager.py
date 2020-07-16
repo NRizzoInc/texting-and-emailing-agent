@@ -12,9 +12,9 @@ from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
-from .databaseUtils import DatabaseUtils
+from .databaseBaseClass import DatabaseBaseClass
 
-class UsersCollectionManager(DatabaseUtils):
+class UsersCollectionManager(DatabaseBaseClass):
     def __init__(self):
         """
             \n@Brief: This class is responsible for managing the user's collection

@@ -13,7 +13,7 @@ from bson.binary import Binary # for serializing/derializing User objects
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import constants
 
-class DatabaseUtils():
+class DatabaseBaseClass():
     def __init__(self):
         """
             \n@Brief: Helper class that is meant to be inhereted by other database manager classes

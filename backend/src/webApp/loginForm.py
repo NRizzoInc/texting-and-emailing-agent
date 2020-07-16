@@ -13,13 +13,14 @@ from userManager import UserManager
 def validateUsername(form, field)->bool():
     """
         \n@Returns True = Exists
+        \n@Note: This will be part of the password's validation
     """
     # prove that username is not already taken (if taken != None & not taken == None)
-    typedUsername = field.data
+    typedUsername = form.username.data # use generic 'form' variable
     usernameExists = UserManager.isUsernameInUse(typedUsername)
     if not usernameExists:
         errMsg = f"Username '{typedUsername}' does not exist"
-        raise StopValidation(f"{errMsg}, try again")
+        raise StopValidation(message=f"{errMsg}, try again")
     else:
         return True
 
@@ -39,6 +40,6 @@ class LoginForm(FlaskForm):
     """Generates a quick and dirty login form to authenticate for the webapp"""
     #-----------------------------------Form Fields-----------------------------------#
     username = StringField('Username', validators=[DataRequired(), validateUsername])
-    password = PasswordField('Password',  validators=[DataRequired(), validatePassword])
+    password = PasswordField('Password',  validators=[DataRequired(), validateUsername, validatePassword])
     rememberMe = BooleanField('Remember Me')
     submit = SubmitField('Submit')

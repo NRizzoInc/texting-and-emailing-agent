@@ -25,7 +25,7 @@ def validateUsername(form, field)->bool():
         errMsg = f"Username '{typedUsername}' is already taken"
         # print(errMsg)
         flash(msgToPrint)
-        raise ValidationError(f"{errMsg}, choose another one")
+        raise ValidationError(message=f"{errMsg}, choose another one")
     else:
         # print(f"Username '{typedUsername} is free!")
         pass

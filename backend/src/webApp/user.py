@@ -19,9 +19,11 @@ class User(UserMixin):
             \n@Param: webAppPassword - The user's password on the site
             \n@Param: userToken - The user's unique token id
         """
+        # needed to extend UserMixin
+        self.id = userToken
+
         self.webAppUsername = webAppUsername
         self.webAppPassword = webAppPassword
-        self.id = userToken # needed to extend UserMixin
         self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later
@@ -30,7 +32,7 @@ class User(UserMixin):
         self.emailAddress = None
         self.password = None
         self.numEmailsToFetch = 5 # default to 5
-        
+
     def updateEmailLogin(self, firstname, lastname, emailAddress=None, password=None):
         """Updates class info about email/text sender"""
         self.fname = firstname

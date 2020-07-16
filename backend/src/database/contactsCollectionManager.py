@@ -28,7 +28,7 @@ class ContactsCollectionManager(DatabaseBaseClass):
             \n@Returns: Dictionary containing the user's contact list
         """
         # document in database contains more than just the contact list
-        contactList = self.getCardById(self.contactsColl, userId)
+        contactList = self._getDocById(self.contactsColl, userId)
         if len(contactList) == 0:   return contactList
         else:                       return contactList[self.contactListKey]
 
@@ -41,5 +41,5 @@ class ContactsCollectionManager(DatabaseBaseClass):
         """
         data = {self.contactListKey: newContactList}
         toSave = utils.mergeDicts(query, data)
-        self.replaceDataById(self.contactsColl, userId, toSave)
+        self._replaceDataById(self.contactsColl, userId, toSave)
         return newContactList

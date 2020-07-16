@@ -35,17 +35,17 @@ class UsersCollectionManager(DatabaseBaseClass):
             "id": userToken,
             "username": username,
             "password": password,
-            "User": self.serializeObj(userObj) # need to serialize object for storage
+            "User": self._serializeObj(userObj) # need to serialize object for storage
         }
-        self.insertData(self.usersColl, newUser)
+        self._insertData(self.usersColl, newUser)
 
     def isUsernameInUse(self, usernameToTest:str):
-        usernameExists = self.exists(self.usersColl, {"username": usernameToTest})
+        usernameExists = self._docExists(self.usersColl, {"username": usernameToTest})
         # print(f"usernameExists: {usernameExists}")
         return usernameExists
     
     def isIdInUse(self, idToTest:str):
-        idExists = self.exists(self.usersColl, {"id": idToTest})
+        idExists = self._docExists(self.usersColl, {"id": idToTest})
         # print(f"idExists: {idExists}")
         return idExists
 
@@ -66,7 +66,7 @@ class UsersCollectionManager(DatabaseBaseClass):
         """
         match = list(self.usersColl.find({"id": userToken}))
         serializedUserObj = match[0]["User"]
-        userObj = self.deserializeData(serializedUserObj)
+        userObj = self._deserializeData(serializedUserObj)
         return userObj
 
     def getPasswordFromUsername(self, username:str)->str():

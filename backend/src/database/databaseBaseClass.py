@@ -27,26 +27,26 @@ class DatabaseBaseClass(Constants):
         self.usersColl = self.dbClient[self._userCollectionName] # this is for web app
         self.contactsColl = self.dbClient[self._contactsCollectionName] # this is for email agent to manage contact lists
 
-    def createCollDNE(self, collObj:MongoClient):
+    def _createCollDNE(self, collObj:MongoClient):
         """Wrapper of lowest level api functions that creates a collection if it does not exist (DNE)"""
-        exists = self._doesCollExist(collObj)
+        exists = self.__doesCollExist(collObj)
         collName = collObj.name
         if not exists:
             print(f"Database collection '{collName}' does not exist... creating")
-            self.createCollection(collObj)
+            self._createCollection(collObj)
         else:
             print(f"Database collection '{collName}' already exists")
 
-    def _doesCollExist(self, collObj:MongoClient)->bool():
+    def __doesCollExist(self, collObj:MongoClient)->bool():
         collectionNames = self.dbClient.list_collection_names()
         return collObj.name in collectionNames
 
-    def createCollection(self, collObj:MongoClient):
+    def _createCollection(self, collObj:MongoClient):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
         dummyData = {"id": "admin-account", "username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
-        databaseUtils.insertData(collObj, dummyData)
+        databaseUtils._insertData(collObj, dummyData)
 
-    def insertData(self, collObj:MongoClient, data):
+    def _insertData(self, collObj:MongoClient, data):
         """Accepts a list of dictionaries (or just one) to submit"""
         insertingMultiple = utils.isList(data)
         numEntries = len(data)
@@ -54,7 +54,7 @@ class DatabaseBaseClass(Constants):
             collObj.insert_one(data)
         # else:               self.usersColl.insert_many(data)
 
-    def replaceDataById(self, collObj:MongoClient, userId:str, newData:dict):
+    def _replaceDataById(self, collObj:MongoClient, userId:str, newData:dict):
         query = {"id": userId}
         self._replaceData(collObj, query, newData)
 
@@ -67,36 +67,36 @@ class DatabaseBaseClass(Constants):
         """
         collObj.find_one_and_replace(myFilter, newData, upsert=True)
 
-    def getCardById(self, collObj:MongoClient, userId):
+    def _getDocById(self, collObj:MongoClient, userId):
         """Returns collection object based on the UUID -- returns empty dict for non-existant user"""
         match = list(collObj.find({"id": userId})) # "match" because there should only ever be one
         numMatches = len(match)
         if numMatches > 0:  return match[0]
         else:               return {}
 
-    def getDocByUsername(self, collObj:MongoClient, username):
+    def _getDocByUsername(self, collObj:MongoClient, username):
         """Returns collection object based on the username -- returns empty dict for non-existant user"""
         match = list(collObj.find({"username": username})) # "match" because there should only ever be one
         numMatches = len(match)
         if numMatches > 0:  return match[0]
         else:               return {} 
 
-    def exists(self, collObj:MongoClient, query:dict):
+    def _docExists(self, collObj:MongoClient, query:dict):
         """Returns true if an item exists with your desired traits (both key and value)"""
         match = list(collObj.find(query))
         numMatches = len(match)
         return numMatches > 0
 
-    def deserializeData(self, data:Binary):
+    def _deserializeData(self, data:Binary):
         decodedObj = Binary(data).decode()
         deserializedObj = pickle.loads(data)
         return deserializedObj
 
-    def serializeObj(self, obj):
+    def _serializeObj(self, obj):
         """
             \n@Param: obj - The object to serial
             \n@Return: The serialized object
-            \n@Note: Meant to serialize objects (pairs with 'deserializeData()')
+            \n@Note: Meant to serialize objects (pairs with '_deserializeData()')
         """
         serializedObj = pickle.dumps(obj)
         binarySerialObj = Binary(serializedObj)

@@ -29,5 +29,5 @@ class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
         # if db or collection(s) don't exist, add dummy data to them to create it
         allCollections = [self.usersColl, self.contactsColl]
         for collObj in allCollections: 
-            self.createCollDNE(collObj)
+            self._createCollDNE(collObj)
 

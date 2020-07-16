@@ -29,17 +29,18 @@ class ContactsCollectionManager(DatabaseBaseClass):
         """
         # document in database contains more than just the contact list
         contactList = self._getDocById(self.contactsColl, userId)
-        if len(contactList) == 0:   return contactList
-        else:                       return contactList[self.contactListKey]
+        if len(contactList) == 0:   return contactList # returns '{}' as there is nothing set in contact list
+        else:                       return contactList[self.contactListKey] # normal case 
 
     def setContactList(self, userId:str, newContactList:dict)->dict():
         """
             \n@Brief: Updates the contact list matching the userId in the database
             \n@Param: userId - The UUID of the user whose contact list needs to be retrieved
             \n@Param: newContactList - The updated contact list
+            \n@Note: `getContactList()` should be used to get the contact list so it can be updated
+            (This function does a full replace on the contact list in the database)
             \n@Returns: Dictionary containing the updated contact list
         """
-        data = {self.contactListKey: newContactList}
-        toSave = utils.mergeDicts(query, data)
-        self._replaceDataById(self.contactsColl, userId, toSave)
+        data = {"id": userId, self.contactListKey: newContactList}
+        self._replaceDataById(self.contactsColl, userId, data)
         return newContactList

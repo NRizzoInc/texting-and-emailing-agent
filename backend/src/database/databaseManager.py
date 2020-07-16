@@ -21,17 +21,17 @@ class DatabaseManager():
             \n@Note: Will create the database if it does not already exist
         """
         self._dbName = "email-web-app"
-        self._dbCollectionName = "users"
+        self._userCollectionName = "users"
+        self._contactsCollectionName = "contacts"
         self.dbClient = MongoClient("mongodb://localhost:27017/")
         self.db = self.dbClient[self._dbName]
-        self.dbColl = self.db[self._dbCollectionName]
+        self.userColl = self.db[self._userCollectionName] # this is for web app
+        self.contactsColl = self.db[self._contactsCollectionName] # this is for email agent to manage contact lists
 
-        # if db & collection don't exist, add dummy data to them to create it
-        if not self._doesDBExist():
-            print(f"Database '{self._dbName}' does not exist... creating")
-            self._createDB()
-        else:
-            print(f"Database '{self._dbName}' already exists")
+        # if db or collection(s) don't exist, add dummy data to them to create it
+        allCollections = [self.userColl, self.contactsColl]
+        map(self._createCollDNE, allCollections)
+
 
 ############################################### HIGH LEVEL API FUNCTIONS ##############################################
 
@@ -67,7 +67,7 @@ class DatabaseManager():
             \n@Return: The corresponding id
             \n@Note: Useful if chained with other functions that require id (i.e. 'findUser()')
         """
-        match = list(self.dbColl.find({"username": username}))
+        match = list(self.userColl.find({"username": username}))
         matchId = match[0]["id"]
         return matchId
 
@@ -76,7 +76,7 @@ class DatabaseManager():
             \n@Param: userToken - The user's unique token id
             \n@Return: The 'User' object
         """
-        match = list(self.dbColl.find({"id": userToken}))
+        match = list(self.userColl.find({"id": userToken}))
         serializedUserObj = match[0]["User"]
         userObj = self._deserializeData(serializedUserObj)
         return userObj
@@ -86,7 +86,7 @@ class DatabaseManager():
             \n@Param: username - The password to find's username
             \n@Returns: The matching password 
         """
-        match = list(self.dbColl.find({"username": username}))
+        match = list(self.userColl.find({"username": username}))
         actualPassword = match[0]["password"]
         return actualPassword
 
@@ -95,33 +95,42 @@ class DatabaseManager():
             \n@Param: myId - The password to find's id
             \n@Returns: The matching password 
         """
-        match = list(self.dbColl.find({"id": myId}))
+        match = list(self.userColl.find({"id": myId}))
         actualPassword = match[0]["password"]
         return actualPassword
 
 ############################################### LOW LEVEL API FUNCTIONS ###############################################
 
-    def _doesDBExist(self):
-        dbNames = self.dbClient.list_database_names()
-        print(f"Current Databases: {dbNames}")
-        return self._dbName in dbNames
+    def _createCollDNE(self, collObj:MongoClient):
+        """Wrapper of lowest level api functions that creates a collection if it does not exist (DNE)"""
+        exists = self.__doesCollExist(collObj)
+        collName = collObj.name
+        if not exists:
+            print(f"Collection '{collName}' does not exist... creating")
+            self.__createCollection(collObj)
+        else:
+            print(f"Database '{collName}' already exists")
 
-    def _createDB(self):
+    def __doesCollExist(self, collObj:MongoClient)->bool():
+        collectionNames = self.dbClient.list_collection_names()
+        return collObj.name in collectionNames
+
+    def __createCollection(self, collObj:MongoClient):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
         dummyData = {"id": "admin-account", "username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
-        self._insertData(dummyData)
+        self._insertData(collObj, dummyData)
     
-    def _insertData(self, data):
+    def _insertData(self, collObj:MongoClient, data):
         """Accepts a list of dictionaries (or just one) to submit"""
         insertingMultiple = utils.isList(data)
         numEntries = len(data)
         if not insertingMultiple:
-            self.dbColl.insert_one(data)
-        # else:               self.dbColl.insert_many(data)
+            collObj.insert_one(data)
+        # else:               self.userColl.insert_many(data)
 
     def _exists(self, query:dict):
         """Returns true if an item exists with your desired traits (both key and value)"""
-        match = list(self.dbColl.find(query))
+        match = list(self.userColl.find(query))
         numMatches = len(match)
         return numMatches > 0
 

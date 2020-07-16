@@ -23,14 +23,15 @@ class DatabaseManager():
         self._dbName = "email-web-app"
         self._userCollectionName = "users"
         self._contactsCollectionName = "contacts"
-        self.dbClient = MongoClient("mongodb://localhost:27017/")
-        self.db = self.dbClient[self._dbName]
-        self.userColl = self.db[self._userCollectionName] # this is for web app
-        self.contactsColl = self.db[self._contactsCollectionName] # this is for email agent to manage contact lists
+        self.dbRef = MongoClient("mongodb://localhost:27017/")
+        self.dbClient = self.dbRef[self._dbName]
+        self.userColl = self.dbClient[self._userCollectionName] # this is for web app
+        self.contactsColl = self.dbClient[self._contactsCollectionName] # this is for email agent to manage contact lists
 
         # if db or collection(s) don't exist, add dummy data to them to create it
         allCollections = [self.userColl, self.contactsColl]
-        map(self._createCollDNE, allCollections)
+        for collObj in allCollections: 
+            self._createCollDNE(collObj)
 
 
 ############################################### HIGH LEVEL API FUNCTIONS ##############################################
@@ -106,10 +107,10 @@ class DatabaseManager():
         exists = self.__doesCollExist(collObj)
         collName = collObj.name
         if not exists:
-            print(f"Collection '{collName}' does not exist... creating")
+            print(f"Database collection '{collName}' does not exist... creating")
             self.__createCollection(collObj)
         else:
-            print(f"Database '{collName}' already exists")
+            print(f"Database collection '{collName}' already exists")
 
     def __doesCollExist(self, collObj:MongoClient)->bool():
         collectionNames = self.dbClient.list_collection_names()

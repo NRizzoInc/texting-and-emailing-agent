@@ -149,14 +149,17 @@ class WebApp():
             if form.validate_on_submit():
                 # username & password fields of form have been validated at this point
                 # They will be 'None' if validation failed
-                validUsername = form.username.data != None
-                validPassword = form.password.data != None
+                username = form.username.data
+                password = form.password.data
+                validUsername = username != None
+                validPassword = password != None
 
                 # check results
                 rtnMsg = ""
                 isError = not (validUsername and validPassword) # only both true == success
                 if validUsername and validPassword:
                     rtnMsg = "Login Successful !!"
+                    user = UserManager.getUserByUsername(username)
                     login_user(user, remember=form.rememberMe.data)
                 elif not validUsername:
                     rtnMsg = "Unrecognized Username"

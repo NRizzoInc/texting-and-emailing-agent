@@ -30,7 +30,6 @@ bash ${mongoInstallScript} \
     --root-dir ${rootDir} \
     --install-dir ${installDir} \
     --helper-script-dir ${helpScriptDir} \
-    --user-data-dir ${userDataDir}
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"

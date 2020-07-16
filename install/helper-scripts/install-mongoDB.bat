@@ -4,15 +4,13 @@ REM Based on https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows
 REM accepts arguments:
 REM 1st = path to mongoDB Installer
 REM 2nd = path of install dir -- extern/mongoDB
-REM 3rd = path to mongo installation dir -- extern/mongoDB/Server, but not used/does not work
-REM 4th = path to mongo client
-REM tth = path to mongo daemon executable
+REM 3rd = path to mongo client
+REM 4th = path to mongo daemon executable
 
 set mongoInstaller=%1
 set mongoInstallDir=%2
-set mongoInstallationDir=%3
-set mongoClientPath=%4
-set mongoDaemonPath=%5
+set mongoClientPath=%3
+set mongoDaemonPath=%4
 
 REM Print important information of where user's mongoDB was installed
 echo Path to mongoDB Installer: %mongoInstaller%

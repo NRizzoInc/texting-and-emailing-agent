@@ -19,14 +19,12 @@ print_flags () {
     echo "  --root-dir <dir> : Absolute path to the root of the repo"
     echo "  --install-dir <dir> Absolute path to the install directory of the repo (parent folder)"
     echo "  --helper-script-dir <dir> Absolute path to the install helper script directory (this folder)"
-    echo "  --user-data-dir <dir> Absolute path to the user data directory of the repo"
     echo "=========================================================================================================="
 }
 
 # parse command line args
 rootDir=""
 installDir=""
-userDataDir=""
 helperScriptDir=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -40,10 +38,6 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --helper-script-dir )
             helperScriptDir="$2"
-            shift
-            ;;
-        --user-data-dir )
-            userDataDir="$2"
             shift
             ;;
         -h | --help )
@@ -92,12 +86,9 @@ function escapeBackslash() {
 startScriptsDir=${rootDir}/serviceScripts
 externDir=${rootDir}/extern
 mongoDir=${externDir}/mongoDB
-mongoInstallDir=${mongoDir}/"Server"
 dbLogPath=${mongoDir}/log/mongod.log
 startMongoScript=${startScriptsDir}/startMongoDB.sh
 stopMongoScript=${startScriptsDir}/stopMongoDB.sh
-mongoConfigPath=${mongoDir}/mongod.cfg
-mongoConfigTemplatePath=${mongoConfigPath}.bak
 
 mongoDefaultInstallDir="/c/Program Files/MongoDB/Server/4.2"
 mongoClientPath="${mongoDefaultInstallDir}/bin/mongo.exe"
@@ -121,22 +112,12 @@ if [[ ${isWindows} == true ]]; then
     ${installBatchScript} \
         $(linuxToWinPath ${downloadPath}) \
         $(linuxToWinPath ${mongoDir}) \
-        $(linuxToWinPath ${mongoInstallDir}) \
         "${mongoClientPath}" \
         "${mongoDaemonPath}"
 
     # Create & Register the Database Dir (default path)
-    dbDataDir=$(linuxToWinPath ${userDataDir})
     dbLogPathWin=$(linuxToWinPath ${dbLogPath})
-    echo "Database Data Directory: ${dbDataDir}"
     echo "Database Log File: ${dbLogPathWin}"
-    # fill in path variables in config file
-    # <<dbDataDir>> = value of ${dbDataDir}
-    # have to escape '\' characters
-    filledInTemplate=$(sed "s/<<dbDataDir>>/$(escapeBackslash ${dbDataDir})/g" ${mongoConfigTemplatePath} | sed "s/<<dbLogPathWin>>/$(escapeBackslash ${dbLogPathWin})/g")
-
-    echo "${filledInTemplate}" > ${mongoConfigPath}
-    "C:\Program Files\MongoDB\Server\4.2\bin\mongod.exe" --config ${mongoConfigPath}
 
 else
     #### linux

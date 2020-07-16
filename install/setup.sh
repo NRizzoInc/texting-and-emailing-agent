@@ -116,6 +116,7 @@ $pipLocation install fleep # to identify file types based on content -  https://
 $pipLocation install flask-login
 $pipLocation install flask-wtf
 $pipLocation install flask-socketio
+$pipLocation install is-safe-url
 $pipLocation install pymongo # for mongoDB
 
 # Start service after everything installed if linux

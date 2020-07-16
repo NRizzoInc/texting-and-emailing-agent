@@ -21,6 +21,7 @@ import werkzeug.serving # needed to make production worthy app that's secure
 # decorate app.route with "@login_required" to make sure user is logged in before doing anything
 # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader -- "flask_login.login_required"
 from flask_login import login_user, current_user, login_required, logout_user
+from is_safe_url import is_safe_url
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -58,6 +59,7 @@ class WebApp():
         self.infoSites = webAppConsts.infoSites
         self.settingsSites = webAppConsts.settingsSites
         # TODO: find less kludgy way to combine 3 dicts into one
+        # (missing settingsSites, but that is just for posting and getting, not redirect)
         self._urls = utils.mergeDicts(utils.mergeDicts(self.sites, self.formSites), self.infoSites)
 
         # create all sites to begin with
@@ -164,9 +166,12 @@ class WebApp():
                     # is_safe_url should check if the url is safe for redirects.
                     # See http://flask.pocoo.org/snippets/62/ for an example.
                     next = flask.request.args.get('next')
-                    if not is_safe_url(next):       return flask.abort(400)
-                    else:                           return redirect(next or url_for('index'))
-                else:
+                    isNextBad = next == None or not is_safe_url(next, self._urls)
+                    if isNextBad:
+                        return redirect(next or self.sites["landingpage"])
+                    else:
+                        return redirect(next)
+
                     # on error, keep trying to login until correct
                     return redirect(self.formSites["webAppLogin"])
 

@@ -40,7 +40,7 @@ import utils
 from emailCLIManager import CLIManager
 from database.databaseManager import DatabaseManager
 
-class EmailAgent():
+class EmailAgent(DatabaseManager):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
@@ -60,6 +60,9 @@ class EmailAgent():
             \n@input: isCommandLine- True if using through the command line
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
         """
+        # Inheret all functions and 'self' variables
+        super().__init__()
+
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
@@ -96,9 +99,6 @@ class EmailAgent():
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
         self.isCommandLine = isCommandLine
-
-        # if command line, initialize a database manager
-        self.dbManager = DatabaseManager() if self.isCommandLine else None
 
         # work around for sending text messages with char limit (wait to add content)
         self.attachmentsList = []

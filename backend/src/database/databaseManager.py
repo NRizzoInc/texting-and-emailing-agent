@@ -13,6 +13,7 @@ from bson.binary import Binary # for serializing/derializing User objects
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
 import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
+from user import User
 
 class DatabaseManager():
     def __init__(self):
@@ -125,14 +126,21 @@ class DatabaseManager():
         numMatches = len(match)
         return numMatches > 0
 
-    def _deserializeData(self, data:Binary):
-        return pickle.loads(data, encoding=Binary)
+    # def _deserializeData(self, data:Binary):
+    #     decodedObj = Binary(data).decode()
+    #     deserializedObj = pickle.loads(data)
+    #     return deserializedObj
 
-    def _saveSSLContext(self, obj):
-        return obj.__class__, (obj.protocol,)
+    # def _saveSSLContext(self, obj):
+    #     return obj.__class__, (obj.protocol,)
 
-    def _serializeObj(self, obj):
-        copyreg.pickle(ssl.SSLContext, self._saveSSLContext)
-        context = ssl.create_default_context()
-        serializedObj = pickle.dumps(context)
-        return Binary(serializedObj) 
+    # def _serializeObj(self, obj):
+    #     """
+    #         \n@Param: obj - The object to serial
+    #         \n@Return: The serialized object
+    #         \n@Note: Meant to serialize objects (pairs with '_deserializeData()')
+    #     """
+    #     copyreg.pickle(User, self._saveSSLContext)
+    #     serializedObj = pickle.dumps(obj)
+    #     binarySerialObj = Binary(obj)
+    #     return binarySerialObj

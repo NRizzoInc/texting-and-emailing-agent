@@ -83,7 +83,7 @@ class UserManager():
             else: print(f"userToken '{userToken}' is already taken")
 
         # create new email agent for each user
-        newUserObj = User(webAppUsername, webAppPassword, userToken)
+        newUserObj = User(userToken)
         UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword, newUserObj)
 
     def removeUser(self, userToken):

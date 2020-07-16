@@ -11,19 +11,14 @@ from flask_login import UserMixin
 from emailing.emailAgent import EmailAgent
 
 class User(UserMixin):
-    def __init__(self, webAppUsername, webAppPassword, userToken):
+    def __init__(self, userId):
         """
             Custom user class that extends the expected class from LoginManager
             \n@Brief: Initializes a User with the most basic info needed
-            \n@Param: webAppUsername - The user's username on the site
-            \n@Param: webAppPassword - The user's password on the site
-            \n@Param: userToken - The user's unique token id
+            \n@Param: userId - The user's unique token id
         """
         # needed to extend UserMixin
-        self.id = userToken
-
-        self.webAppUsername = webAppUsername
-        self.webAppPassword = webAppPassword
+        self.id = userId
         self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later

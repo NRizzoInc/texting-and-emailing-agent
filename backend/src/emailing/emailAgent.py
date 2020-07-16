@@ -38,6 +38,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 from emailCLIManager import CLIManager
+from database.databaseManager import DatabaseManager
 
 class EmailAgent():
     """
@@ -95,6 +96,9 @@ class EmailAgent():
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
         self.isCommandLine = isCommandLine
+
+        # if command line, initialize a database manager
+        self.dbManager = DatabaseManager() if self.isCommandLine else None
 
         # work around for sending text messages with char limit (wait to add content)
         self.attachmentsList = []

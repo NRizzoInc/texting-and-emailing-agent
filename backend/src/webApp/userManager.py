@@ -16,7 +16,7 @@ from flask_login import LoginManager
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 import utils
 import webAppConsts
-from database import databaseManager
+from database.databaseManager import DatabaseManager
 from user import User
 
 class UserManager():
@@ -27,7 +27,7 @@ class UserManager():
     if not os.path.exists(__cookieDataPath): utils.writeJson(__cookieDataPath, {})
 
     # MongoDB database manager
-    dbManager = databaseManager.DatabaseManager()
+    dbManager = DatabaseManager()
     
     # create database of User objects (maps tokenId -> User obj)
     userDatabase = {} # TODO: remove once MongoDB fully functional

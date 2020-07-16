@@ -20,6 +20,7 @@ class User(UserMixin):
         # needed to extend UserMixin
         self.id = userId
         # Cannot serialize this object if include this class due to SSLContext restrictions
+        # define client on as needed basis & set to None on logout
         # self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later
@@ -35,8 +36,6 @@ class User(UserMixin):
         self.lname = lastname
         self.emailAddress = emailAddress
         self.password = password
-        needDefault = emailAddress == None or password == None
-        self.client.setDefaultState(needDefault)
 
     def send(self, sendMethod, message):
         """
@@ -45,9 +44,12 @@ class User(UserMixin):
             \n@Param: `message` - (string) The message to send
             \n@Return: Return code (Success = None, Error = stringified error message)
         """
-        receiverContactInfo = self.getContactInfo()
-        return self.client.sendMsg(receiverContactInfo, sendMethod=sendMethod, msgToSend=message)
-    
+        client = self.initializeEmailAgent()
+        receiverContactInfo = self.getContactInfo(client)
+        toRtn = client.sendMsg(receiverContactInfo, sendMethod=sendMethod, msgToSend=message)
+        self.logoutClient(client)
+        return toRtn
+
     def userReceiveEmailUser(self, numToFetch):
         """
             \n@Brief: Receives the preliminary email data that needs to be parsed more to fully fetch an email
@@ -59,8 +61,11 @@ class User(UserMixin):
             \n\t    emailList: [{To, From, DateTime, Subject, Body, idNum, unread}] # list of dicts with email message data
             \n\t} If error, 'error' key will be true, printed email (or error) will be in 'text' key`
         """
-        return self.client.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
-    
+        client = self.initializeEmailAgent()
+        toRtn = client.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
+        self.logoutClient(client)
+        return toRtn
+
     def selectEmailById(self, idDict, emailList, emailId)->str():
         """
             \n@Brief: Given brief information about user's email selection options, open the correct one (by its id)
@@ -69,8 +74,11 @@ class User(UserMixin):
             \n@Param: emailId- Selected email's id to open (should be determined by your code prior to calling this)
             \n@Returns: The email's contents
         """
-        return self.client.openEmailById(idDict, emailList, emailId)
-    
+        client = self.initializeEmailAgent()
+        toRtn = client.openEmailById(idDict, emailList, emailId)
+        self.logoutClient(client)
+        return toRtn
+
     def addContact(self, firstName, lastName, emailAddress, carrier, phoneNumber):
         """
             \n@Brief: This function is responsible for adding another contact to the contact list by processing the inputs
@@ -80,22 +88,32 @@ class User(UserMixin):
             \n@Param: carrier - carrier of the person being added
             \n@Param: phoneNumber - phone number of the person being added
         """
-        self.client.addContact(firstName, lastName, emailAddress, carrier, phoneNumber)
+        client = self.initializeEmailAgent()
+        client.addContact(firstName, lastName, emailAddress, carrier, phoneNumber)
+        self.logoutClient(client)
 
-    def getContactInfo(self):
+    def initializeEmailAgent(self)->EmailAgent():
+        """
+            \n@Brief: Helps create an EmailAgent object on demand
+            \n@Returns: The new EmailAgent object
+        """
+        newClient = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
+        return newClient
+
+    def getContactInfo(self, client:EmailAgent):
         """Establish emailAgent client for user based on provided info & return contact info needed for other stuff"""
         # login info error-checking
         try:
             if (len(self.emailAddress) == 0 or len(self.password) == 0):
-                self.client.setDefaultState(True)
+                client.setDefaultState(True)
             else:
                 # if no errors and not empty then okay to use non default accoount
-                self.client.setDefaultState(False) 
+                client.setDefaultState(False) 
         except Exception as e:
             # if there is an error just use the default sender/receiver
-            self.client.setDefaultState(True)
+            client.setDefaultState(True)
             
-        return self.client.getReceiverContactInfo(self.fname, self.lname)
+        return client.getReceiverContactInfo(self.fname, self.lname)
 
     def getContactList(self):
         return self.client.printContactListPretty(printToTerminal=False)
@@ -109,6 +127,6 @@ class User(UserMixin):
     # def updateContactList(self, firstname, lastname):
     #     self.client.updateContactInfo(firstName=firstname, lastName=lastname, addingExternally=True)
 
-    def logoutClient(self):
+    def logoutClient(self, client:EmailAgent):
         """Logout of EmailAgent"""
-        self.client.logoutEmail()
+        client.logoutEmail()

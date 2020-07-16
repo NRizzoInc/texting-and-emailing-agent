@@ -155,21 +155,20 @@ class WebApp():
                 validPassword = password != None
 
                 # check results
-                rtnMsg = ""
-                isError = not (validUsername and validPassword) # only both true == success
-                if validUsername and validPassword:
-                    rtnMsg = "Login Successful !!"
+                isSuccess = validUsername and validPassword # only both true == success
+                if isSuccess:
                     user = UserManager.getUserByUsername(username)
                     login_user(user, remember=form.rememberMe.data)
-                elif not validUsername:
-                    rtnMsg = "Unrecognized Username"
-                elif not validPassword:
-                    rtnMsg = "Invalid Password"
 
-                # Print message and route to correct location
-                flash(rtnMsg)
-                if isError: return redirect(self.formSites["webAppLogin"])
-                else:       return redirect(self.sites["landingpage"]) # TODO: eventually route back to start prior to login
+                    # route to original destination
+                    # is_safe_url should check if the url is safe for redirects.
+                    # See http://flask.pocoo.org/snippets/62/ for an example.
+                    next = flask.request.args.get('next')
+                    if not is_safe_url(next):       return flask.abort(400)
+                    else:                           return redirect(next or url_for('index'))
+                else:
+                    # on error, keep trying to login until correct
+                    return redirect(self.formSites["webAppLogin"])
 
             return render_template('login.html', title='Sign In', form=form, 
                 links=self.sites, formLinks=self.formSites)

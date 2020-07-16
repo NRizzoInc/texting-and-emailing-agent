@@ -12,6 +12,7 @@ from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 from constants import Constants
+import utils
 
 class DatabaseBaseClass(Constants):
     def __init__(self):

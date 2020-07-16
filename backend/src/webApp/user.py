@@ -19,7 +19,8 @@ class User(UserMixin):
         """
         # needed to extend UserMixin
         self.id = userId
-        self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
+        # Cannot serialize this object if include this class due to SSLContext restrictions
+        # self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later
         self.fname = None

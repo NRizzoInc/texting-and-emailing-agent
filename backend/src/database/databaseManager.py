@@ -126,21 +126,17 @@ class DatabaseManager():
         numMatches = len(match)
         return numMatches > 0
 
-    # def _deserializeData(self, data:Binary):
-    #     decodedObj = Binary(data).decode()
-    #     deserializedObj = pickle.loads(data)
-    #     return deserializedObj
+    def _deserializeData(self, data:Binary):
+        decodedObj = Binary(data).decode()
+        deserializedObj = pickle.loads(data)
+        return deserializedObj
 
-    # def _saveSSLContext(self, obj):
-    #     return obj.__class__, (obj.protocol,)
-
-    # def _serializeObj(self, obj):
-    #     """
-    #         \n@Param: obj - The object to serial
-    #         \n@Return: The serialized object
-    #         \n@Note: Meant to serialize objects (pairs with '_deserializeData()')
-    #     """
-    #     copyreg.pickle(User, self._saveSSLContext)
-    #     serializedObj = pickle.dumps(obj)
-    #     binarySerialObj = Binary(obj)
-    #     return binarySerialObj
+    def _serializeObj(self, obj):
+        """
+            \n@Param: obj - The object to serial
+            \n@Return: The serialized object
+            \n@Note: Meant to serialize objects (pairs with '_deserializeData()')
+        """
+        serializedObj = pickle.dumps(obj)
+        binarySerialObj = Binary(serializedObj)
+        return binarySerialObj

@@ -52,6 +52,23 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+# check if vars are unset
+trap "exit 1" TERM
+export TOP_PID=$$
+# $1 = variable
+function exitIfUnset() {
+    toTest=$1
+    if [ "${toTest}" = "" ]; then
+        echo "Not all flags set... "
+        print_flags
+        kill -s TERM $TOP_PID # exit 1
+    fi
+}
+# actually check each variable
+echo -e "$(exitIfUnset ${rootDir})\c"
+echo -e "$(exitIfUnset ${installDir})\c"
+echo -e "$(exitIfUnset ${helperScriptDir})\c"
+
 # $1 is path to convert
 # returns windows path -- capture with res=$(linuxToWinPath <path>)
 # WARNING: Path cannot have spaces in it

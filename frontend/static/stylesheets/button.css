@@ -2,50 +2,67 @@ body {
    height: 90vh; /* Ensures the button fills the entire body height*/
 }
 
-/** 
-  * Add wrapper div around a button in order to center it 
-  * DONT CHANGE THIS: it maintains the position of the button 
-  * in the center and not touching the sidebar
-  */
 .button-wrapper {
-    justify-content: center;
-    align-items: center;
-    width: 80%;
-    height: 100%;
-    position: relative;
-    left: 20%; /*For side bar*/
-    
+  display: flex;
+  max-width: 100%;
+  justify-content: space-evenly;
+  align-items: center;
+  vertical-align: center;
+  /* Space for Contact List */
+  /* margin-bottom: 3%; */
 }
 
-/** 
-  * Modify existing button class
-  * Change 'width' and 'height' to modify the size of the button
-  */
-.myBtn {
-    background:url("https://cdn.pixabay.com/photo/2016/05/31/12/42/red-button-1426817_960_720.png") no-repeat;
-    background-size: cover;
-    cursor: grab;
-    border: none;
-    /*Size of button*/
-    width: 25%;
-    height: 30%;
-    /* So that image on buttons dont touch sidebar and have space between themselves*/
-    top: 0;
-    bottom: 0;
-    right: 0;
-    margin: 2%; /*between buttons*/
-    /*Button text is centered*/
-    text-align: center; 
-    /*Allows multiple buttons on same page to automatically not overlap*/
-    position: relative; 
-    display: inline-block;
-    text-emphasis: bold;
+.redBtn {
+  /* Background related fields  */
+  background:url(../images/red-button.png) no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: grab;
+  border: none;
+  text-emphasis: bold;
+
+  /* Hide border on click */
+  outline: none;
+
+  /* Center Text */
+  justify-content: center;
+  align-items: center;
+
+  /* Text Size */
+  font-size: large;
+  /* Line breaks for words causes size (height & thus width) to be different between buttons */
+  white-space: nowrap;
+
+  /*Size & Postioning of button*/
+  display: flex;
+  width: fit-content;
+  object-fit: cover;
+  width: fit-content;
+  height: fit-content;
+  /* Padding makes button become large (also influenced by font-size */
+  /* Use view-xxxx to make size remain relatively constant */
+  padding: 7vw;
 }
 
-/* When clicked by user*/
-.myBtn:active {
-    /* background:url("https://www.nationalgeographic.com/content/dam/animals/thumbs/rights-exempt/mammals/d/domestic-dog_thumb.jpg") no-repeat; */
-    background-image: none;
-    cursor: grabbing;
-        
+/* Design on hover mechanic that makes the button *appear* to get darker */
+/* Opacity 1 = normal (0 = invisible) */
+.redBtn-overlay {
+  transition: opacity 0.5s ease;
+  -webkit-transition: opacity 0.5s ease;
+  -moz-transition: opacity 0.5s ease;
+  width: fit-content;
+}
+
+.redBtn-overlay {
+  opacity: .80;
+}
+
+.redBtn:hover, .redBtn-overlay:hover {
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* On click */
+.redBtn-overlay:active, .redBtn:active {
+  cursor: grabbing;
 }

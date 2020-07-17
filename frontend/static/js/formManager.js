@@ -4,6 +4,7 @@
 import { parseForm/*, loadEmailDropdown*/ } from "./formProcessor.js"
 import { loadResource, writeResizeTextarea, isVisible, postData, getData } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
+import { resizeContactList } from "./contactList.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector", true, onChooseEmail)
 const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false, updateNumEmailFetch)
@@ -49,8 +50,11 @@ const addContactDisplayDict = Object.assign({}, defaultDisplayDict, {
 $(document).ready( async () => {
     const urls = await loadResource(urlsPath)
 
+    // Have to resize for original contact list
+    resizeContactList()
+
     // add event listener for each form button element
-    const formBtnList = document.getElementsByClassName("myBtn")
+    const formBtnList = document.getElementsByClassName("redBtn")
     for (const btn of formBtnList) {
         btn.addEventListener("click", () => {
             onFormBtnClick(btn.id)
@@ -92,6 +96,7 @@ $(document).ready( async () => {
 async function onFormBtnClick(id) {
     // manipulate form page based on which form is desired 
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
+    document.getElementById("Contact-List-Container").style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
 
     // set name attributes to match task of button
@@ -259,8 +264,13 @@ function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
  * @note Usually used by "Go Back" button
  */
 function exitForm() {
-    document.getElementsByClassName('button-wrapper')[0].style.display = "block"
+    document.getElementById("Button-Container").style.display = "flex"
+    document.getElementById("Contact-List-Container").style.display = "flex-inline"
     document.getElementById('Texting-Form-Wrapper').style.display = "none"
+
+    // update contact list size
+    resizeContactList()
+
     // Force a page rerender to get contact list to update
     const currPage = window.location.href
     window.location.href = currPage

@@ -1,5 +1,11 @@
-'use strict';
-function loadContactList(data) {
-    let contactList = JSON.parse(data)
-    document.getElementById('Contact-List').innerHTML = JSON.stringify(contactList, undefined, 4)
+import { writeResizeTextarea } from "./utils.js"
+
+
+export function resizeContactList() {
+    const contactListId = "contact-list-textarea"
+    const contactListArea = $(`#${contactListId}`)
+    const contactListEl = contactListArea[0]
+    const textToWrite = contactListArea.innerHTML
+    console.log(`textToWrite: ${textToWrite}`)
+    writeResizeTextarea(contactListId, textToWrite)
 }

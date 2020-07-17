@@ -48,6 +48,11 @@ input[type=submit]:hover, input[type=button]:hover {
     background-color: #45a049;
 }
 
+/* On click */
+input[type=submit]:active, input[type=button]:active {
+    cursor: grabbing;
+}
+
 /*Flex grows item to fit container*/
 .input-padding {
     display: flex;

@@ -49,12 +49,6 @@
     margin: 2%;
 }
 
-.sidebar-neighbor {
-    /*For side bar, need to offset position*/
-    position: fixed;
-    left: 23%; 
-}
-
 .grow-full-width {
     width: 100%;
 }
@@ -70,4 +64,30 @@
     flex-basis: 100%;
     width: 100%;
     height: 100%;
+}
+
+.page-container {
+    display: flex;
+    /* Insert items left to right as seperate entities */
+    flex-direction: row;
+    justify-content: space-between;
+    flex-basis: 100%;
+    width: 100%;
+    height: 100%;
+}
+
+.page-content-container {
+    width: 100%;
+    height: 100%;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.height-25 {
+    height: 25%;
+}
+
+.vertical-margins-med {
+    margin-top: 3%;
+    margin-bottom: 3%;
 }

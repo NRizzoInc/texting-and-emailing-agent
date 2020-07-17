@@ -17,6 +17,7 @@
 *.properties    text
 *.txt           text
 *.xml           text
+*.py            text
 
 # These files are binary and should be left untouched
 # (binary is macro for -text -diff)

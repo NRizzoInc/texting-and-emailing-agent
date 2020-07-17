@@ -22,7 +22,7 @@ body {
   * Change 'width' and 'height' to modify the size of the button
   */
 .myBtn {
-    background:url("https://cdn.pixabay.com/photo/2016/05/31/12/42/red-button-1426817_960_720.png") no-repeat;
+    background:url(../images/red-button.webp) no-repeat;
     background-size: cover;
     cursor: grab;
     border: none;

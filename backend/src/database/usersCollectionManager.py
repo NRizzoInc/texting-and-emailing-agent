@@ -105,6 +105,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Returns: An instance of UpdateResult
         """
         query = {"id": myId}
-        # use '$' to indicate what value to change
-        toUpdateWith = {"$User": updatedUserObj}
+        # https://docs.mongodb.com/manual/reference/operator/update/#id1 -- different update commands
+        # $set = set matching field
+        serializedUpdatedObj = self._serializeObj(updatedUserObj)
+        toUpdateWith = {"$set": {"User": serializedUpdatedObj}}
         return self.usersColl.update_one(query, toUpdateWith)

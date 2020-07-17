@@ -17,9 +17,15 @@
         {% include "sidebar.html" %}
         <div class="sidebar-neighbor page-content-container">
             <div class="row flex-inline button-wrapper height-25 vertical-margins-med"> <!--Combine multiple items on same flex line-->
-                <button class="redBtn" id="text-send-button">Send Text</button>
-                <button class="redBtn" id="text-receive-button">Receive Text</button>
-                <button class="redBtn" id="add-contact-button">Add Contact</button>
+                <div class="redBtn-overlay">
+                    <button class="redBtn" id="text-send-button">Send Text</button>
+                </div>
+                <div class="redBtn-overlay">
+                    <button class="redBtn" id="text-receive-button">Receive Text</button>
+                </div>
+                <div class="redBtn-overlay">
+                    <button class="redBtn" id="add-contact-button">Add Contact</button>
+                </div>
             </div>
             <div class="row flex-inline vertical-margins-med" id="Contact-List">
                 <div class="contact-list">

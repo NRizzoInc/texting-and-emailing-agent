@@ -41,9 +41,24 @@ body {
   padding: 7vw;
 }
 
-/* When clicked by user*/
-.redBtn:active {
-  /* background:url("https://www.nationalgeographic.com/content/dam/animals/thumbs/rights-exempt/mammals/d/domestic-dog_thumb.jpg") no-repeat; */
-  background-image: none;
+/* Design on hover mechanic that makes the button *appear* to get darker */
+/* Opacity 1 = normal (0 = invisible) */
+.redBtn-overlay {
+  transition: opacity 0.5s ease;
+  -webkit-transition: opacity 0.5s ease;
+  -moz-transition: opacity 0.5s ease;
+  width: fit-content;
+}
+
+.redBtn-overlay {
+  opacity: .80;
+}
+
+.redBtn-overlay:hover {
+  opacity: 1;
+}
+
+/* On click */
+.redBtn-overlay:active .redBtn:active {
   cursor: grabbing;
 }

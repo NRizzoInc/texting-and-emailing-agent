@@ -261,6 +261,9 @@ function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
 function exitForm() {
     document.getElementsByClassName('button-wrapper')[0].style.display = "block"
     document.getElementById('Texting-Form-Wrapper').style.display = "none"
+    // Force a page rerender to get contact list to update
+    const currPage = window.location.href
+    window.location.href = currPage
 }
 
 /**

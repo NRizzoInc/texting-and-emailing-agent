@@ -21,16 +21,17 @@ import werkzeug.serving # needed to make production worthy app that's secure
 # decorate app.route with "@login_required" to make sure user is logged in before doing anything
 # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader -- "flask_login.login_required"
 from flask_login import login_user, current_user, login_required, logout_user
+from is_safe_url import is_safe_url
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
-from webAppUsers import User, UserManager
-from webAppRegistration import RegistrationForm
-from webAppLoginForm import LoginForm
+from userManager import User, UserManager
+from registrationForm import RegistrationForm
+from loginForm import LoginForm
 import webAppConsts
 
-class WebApp():
+class WebApp(UserManager):
     def __init__(self, isDebug:bool=False, port:str=None):
         """
             \n@Brief: Creates a web application that provides a GUI for running the email app
@@ -43,7 +44,9 @@ class WebApp():
         self.hostPost = port if port != None and len(port) > 0 else '5000'
         self.hostAddr = 'http://' + self.hostIP + ':' + self.hostPost
         self.app = Flask(__name__)
-        self.userManager = UserManager(self.app)
+
+        # Inheret all functions and 'self' variables (UserManager)
+        super().__init__(self.app)
 
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = webAppConsts.pathToThisDir
@@ -58,6 +61,7 @@ class WebApp():
         self.infoSites = webAppConsts.infoSites
         self.settingsSites = webAppConsts.settingsSites
         # TODO: find less kludgy way to combine 3 dicts into one
+        # (missing settingsSites, but that is just for posting and getting, not redirect)
         self._urls = utils.mergeDicts(utils.mergeDicts(self.sites, self.formSites), self.infoSites)
 
         # create all sites to begin with
@@ -138,18 +142,41 @@ class WebApp():
                 client-side form data. For example, WTForms is a library that will
                 handle this for us, and we use a custom LoginForm to validate.
             """
+            # do not attempt to login if already logged in
             if current_user.is_authenticated:
                 return redirect(self.sites["landingpage"])
-            form = LoginForm()
+
+            # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
+            # -- "flask_login.login_user"
+            form = LoginForm(self.app)
+
             if form.validate_on_submit():
-                user = UserManager.getUserByUsername(form.username.data)
-                if user is None or not user.checkPassword(form.password.data):
-                    flash('Invalid username or password')
+                # username & password fields of form have been validated at this point
+                # They will be 'None' if validation failed
+                username = form.username.data
+                password = form.password.data
+                validUsername = username != None
+                validPassword = password != None
+
+                # check results
+                isSuccess = validUsername and validPassword # only both true == success
+                if isSuccess:
+                    user = self.getUserByUsername(username)
+                    login_user(user, remember=form.rememberMe.data)
+
+                    # route to original destination
+                    # is_safe_url should check if the url is safe for redirects.
+                    # See http://flask.pocoo.org/snippets/62/ for an example.
+                    next = flask.request.args.get('next')
+                    isNextBad = next == None or not is_safe_url(next, self._urls)
+                    if isNextBad:
+                        return redirect(next or self.sites["landingpage"])
+                    else:
+                        return redirect(next)
+
+                    # on error, keep trying to login until correct
                     return redirect(self.formSites["webAppLogin"])
-                # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
-                # -- "flask_login.login_user"
-                login_user(user, remember=True)
-                return redirect(self.sites["landingpage"])
+
             return render_template('login.html', title='Sign In', form=form, 
                 links=self.sites, formLinks=self.formSites)
 
@@ -160,9 +187,9 @@ class WebApp():
             """
             if current_user.is_authenticated:
                 return redirect(self.sites["landingpage"])
-            form = RegistrationForm()
+            form = RegistrationForm(self.app)
             if form.validate_on_submit():
-                self.userManager.addUser(form.username.data, form.password.data)
+                self.addUser(form.username.data, form.password.data)
                 flash('Congratulations, you are now a registered user!')
                 return redirect(self.formSites["webAppLogin"])
             return render_template('register.html', title='Register', form=form,
@@ -189,6 +216,7 @@ class WebApp():
                 \n@Brief:   Logouts of email
                 \n@Returns: {rtnCode: bool} rtnCode - 0 == success, -1 == fail
             """
+            self.updateUserObjById(current_user.get_id(), current_user._get_current_object())
             logout_user()
             flash("Successfully logged out!")
             return redirect(self.formSites["webAppLogin"])

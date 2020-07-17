@@ -1,0 +1,1 @@
+This folder may appear empty, but MongoDB will use it to store its logs 

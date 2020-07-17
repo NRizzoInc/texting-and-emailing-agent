@@ -74,3 +74,9 @@ def promptUntilSuccess(message, successCondition=None):
             if successCondition == None:        return response # if no comparison fn, return checked response
             elif successCondition(response):    return response # if returns true, can return valid response
         else: print("Not a valid response")
+
+def isList(objToTest):
+    return type(objToTest) is list
+
+def isDict(objToTest):
+    return type(objToTest) is dict

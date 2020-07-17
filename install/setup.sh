@@ -13,10 +13,23 @@ fi
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
+backendDir=${rootDir}/backend
+userDataDir=${backendDir}/userData
+installDir=${rootDir}/install
+helpScriptDir=${installDir}/helper-scripts
+mongoInstallScript=${helpScriptDir}/install-mongoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonVersion=3.7
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
+
+echo "#0 Downloading/Installing Prerequisite Software"
+
+echo "#0.1 Downloading/Installing MongoDB -- Database"
+bash ${mongoInstallScript} \
+    --root-dir ${rootDir} \
+    --install-dir ${installDir} \
+    --helper-script-dir ${helpScriptDir} \
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
@@ -55,7 +68,8 @@ else
     apt upgrade -y
     apt install -y \
         ${pythonName} \
-        ${pythonName}-venv
+        ${pythonName}-venv \
+        mongodb
 
     echo "#1.4 Creating Virtual Environment"
     ${pythonName} -m venv ${virtualEnvironDir} # actually create the virtual environment
@@ -64,7 +78,6 @@ else
 
     echo "#1.5 Exporting Path to Source Code"
     # set it locally
-    emailWebAppRootDir=${rootDir}
 
     # make environment variable for path global (if already exists -> replace it, but keep backup)
     # https://serverfault.com/a/413408 -- safest way to create & use environment vars with services
@@ -80,7 +93,7 @@ else
     sed -i.bak '/emailWebAppRootDir=/d' ${environFile}
     echo "emailWebAppRootDir=${rootDir}" >> ${environFile}
     source ${environFile}
-    echo "emailWebAppRootDir: ${emailWebAppRootDir}"
+    echo "emailWebAppRootDir: ${rootDir}"
 
     echo "#1.6 Deploying Service File"
     sysServiceDir=/etc/systemd/system
@@ -107,15 +120,28 @@ $pipLocation install fleep # to identify file types based on content -  https://
 $pipLocation install flask-login
 $pipLocation install flask-wtf
 $pipLocation install flask-socketio
+$pipLocation install is-safe-url
+$pipLocation install pymongo # for mongoDB
 
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then
-    echo "#4 Starting Service"
+    echo "#4 Starting Services"
+    # stop daemon to allow reload
     echo "-- Stopping ${serviceFileName} Daemon"
-    systemctl stop ${serviceFileName} # stop daemon
+    systemctl stop ${serviceFileName}
+    echo "-- Stopping MongoDB Daemon"
+    systemctl stop mongodb
     echo "-- Stopped ${serviceFileName} Daemon"
-    systemctl daemon-reload # refresh service daemons
+
+    # refresh service daemons
+    systemctl daemon-reload
+
+    # Restart Daemons
     echo "-- Reloaded ${serviceFileName} Daemon"
-    systemctl start ${serviceFileName} # start daemon
+    systemctl start ${serviceFileName}
+    echo "-- Reloaded MongoDB Daemon"
+    systemctl start mongodb
+
+    # Done
     echo "-- Started ${serviceFileName} Daemon"
 fi

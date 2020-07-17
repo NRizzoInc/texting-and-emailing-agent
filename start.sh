@@ -12,7 +12,7 @@ backendPath=${rootDir}/backend
 srcPath=${backendPath}/src
 emailDirPath=${srcPath}/emailing
 webDirPath=${srcPath}/webApp
-emailExecPath=${emailDirPath}/emailAgent.py
+emailExecPath=${emailDirPath}/emailCLIManager.py
 webExecPath=${webDirPath}/webApp.py
 executePath="" # global (defined later based on CLI flag)
 

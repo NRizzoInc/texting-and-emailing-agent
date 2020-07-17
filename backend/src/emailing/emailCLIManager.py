@@ -12,9 +12,10 @@ import argparse # for CLI Flags
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
+from emailAgent import EmailAgent
 
-class CLIManager():
-    def __init__(self, EmailAgent):
+class CLIManager(EmailAgent):
+    def __init__(self):
         """
             \n@Brief: This class is responsible for spinning off the email agent via it's CLI Flags4
             \n@Param: EmailAgent - Reference to EmailAgent class (cannot directly import or else get circular chain)
@@ -123,46 +124,47 @@ class CLIManager():
         args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
 
         # use this phrase to easily add more contacts to the contact list
+        # trigger EmailAgent init based on the situation (this point forward, 'self' will contain EmailAgent attributes)
         if args["addContact"]:
-            emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-            emailer.simpleAddContact()
+            super().__init__(displayContacts=True, isCommandLine=True)
+            self.simpleAddContact()
             sys.exit(0)
         
         elif args["updateContact"]:
-            emailer = EmailAgent(displayContacts=True, isCommandLine=True)
-            emailer.updateContactInfo()
+            super().__init__(displayContacts=True, isCommandLine=True)
+            self.updateContactInfo()
             sys.exit(0)
 
         # Create a class obj for this file
-        emailer = EmailAgent(displayContacts=False, isCommandLine=True)
+        super().__init__(displayContacts=False, isCommandLine=True)
 
         # based on if CLI flag is used, set the default's state
-        emailer.setDefaultState(args["useDefault"])
+        self.setDefaultState(args["useDefault"])
 
         # determine what the user wants to use the emailing agent for
         # dont ask if user already specified via CLI flags
-        serviceType = args[serviceDest] if utils.keyExists(args, serviceDest) else EmailAgent.getServiceType()
+        serviceType = args[serviceDest] if utils.keyExists(args, serviceDest) else self.getServiceType()
 
         # each function takes the email agent as first arg, and have optional for the rest
         # firstname, lastname, etc...
         selectedFn = self.serviceTypes[str(serviceType)]
-        selectedFn(emailer, firstname=args['fname'], lastname=args['lname'])
+        selectedFn(firstname=args['fname'], lastname=args['lname'])
 
         # logout
-        emailer.logoutEmail()
+        self.logoutEmail()
 
         print("Closing Program")
 
 
-    def sendText(self, emailer, firstname=None, lastname=None):
+    def sendText(self, firstname=None, lastname=None):
         # Inform users of who is current in contact list before selecting one (or adding another)
-        currContactList = emailer.printContactListPretty(printToTerminal=False)
+        currContactList = self.printContactListPretty(printToTerminal=False)
         contactListPrint = f"The existing contact list includes:\n{currContactList}"
         print(contactListPrint)
 
         # Check if they want to add a new contact
         addContact = utils.promptUntilSuccess("Do you want to add a new contact to this list(y/n): ")
-        if addContact == 'y' or addContact == 'yes': emailer.simpleAddContact()
+        if addContact == 'y' or addContact == 'yes': self.simpleAddContact()
 
         # check if user wants to send a message
         sendMsg = utils.promptUntilSuccess(
@@ -182,20 +184,38 @@ class CLIManager():
                 lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
 
             # get contact info regardless of method to reach this point
-            receiverContactInfo = emailer.getReceiverContactInfo(firstname, lastname)
+            receiverContactInfo = self.getReceiverContactInfo(firstname, lastname)
 
             # acutally send message
-            emailer.sendMsg(receiverContactInfo)
+            self.sendMsg(receiverContactInfo)
 
         # regardless of if sent a message or not, see if user wants to wait for reply
         waitForReply = utils.promptUntilSuccess(
             "Do you want to wait for a reply (y/n): ", successCondition=utils.containsConfirmation)
-        if 'n' not in waitForReply: emailer.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
+        if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
-    def getText(self, emailer, firstname=None, lastname=None):
+    def getText(self, firstname=None, lastname=None):
         # Entering something in the second argument signifies that you want to use the default login
         seeUnopned = utils.promptUntilSuccess(
             "Do you want to see only unopened emails (y/n): ", successCondition=utils.containsConfirmation)
-        if filterInput == "y": emailer.receiveEmail(onlyUnread=True)
-        elif filterInput == "n": emailer.receiveEmail(onlyUnread=False)
+        if filterInput == "y": self.receiveEmail(onlyUnread=True)
+        elif filterInput == "n": self.receiveEmail(onlyUnread=False)
         else: print("Invalid Arg Entered!")
+
+    def getServiceType(self):
+        """Helps to determine what user wants to do via terminal inputs"""
+        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
+        keysString = reduce(createPrompt, list(serviceTypes.keys()))
+        prompt = "Type {0}".format(keysString)
+
+        isValidType = False
+        while not isValidType:
+            serviceType = input(prompt).lower()
+            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
+            # return or print error based on if entered value is valid
+            if (not isValidType):   print("Please Enter a Valid Option!")
+            else:                   return serviceType
+
+if __name__ == "__main__":
+    # Create all CLI Flags & spin off code
+    emailCLI = CLIManager()

@@ -37,9 +37,9 @@ import fleep # to identify file types
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
-from emailCLIManager import CLIManager
+from database.databaseManager import DatabaseManager
 
-class EmailAgent():
+class EmailAgent(DatabaseManager):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
@@ -52,26 +52,22 @@ class EmailAgent():
     __success = 0
     __error = -1
 
-    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False):
+    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False, userId:str=""):
         """
             \n@Brief: This class is responsible for sending & receiving emails
             \n@input: displayContacts- If true, print the contact list during init
             \n@input: isCommandLine- True if using through the command line
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
+            \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
         """
+        # Inheret all functions and 'self' variables
+        super().__init__()
+
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
         self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
         self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
-        self.pathToContactList = os.path.join(self.__emailDataDir, "contacts.json")
-
-
-        # Open the contact list file (create new file if it does not exist)
-        if not os.path.exists(self.pathToContactList):
-            # write empty dictionary to file (creates the file)
-            utils.writeJson(self.pathToContactList, {})
-        self.contactList = utils.loadJson(self.pathToContactList)
 
         # information to login
         self.emailProvidersInfo = utils.loadJson(os.path.join(self.__emailDataDir, "emailProvidersInfo.json"))
@@ -79,7 +75,7 @@ class EmailAgent():
         self.context = ssl.SSLContext(ssl.PROTOCOL_SSLv23) 
         self.SMTPClient = smtplib.SMTP
         self.IMAPClient = imaplib.IMAP4 
-        self.connectedToServers = False
+        self.isConnectedToServers = False
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
@@ -96,18 +92,16 @@ class EmailAgent():
         # implement this class not using the command line
         self.isCommandLine = isCommandLine
 
+        # if running via CLI, access account meant for CLI user
+        self._userId = self._cliUserId if self.isCommandLine else userId
+        self.contactList = self.getContactList(self._userId)
+
         # work around for sending text messages with char limit (wait to add content)
         self.attachmentsList = []
         self.textMsgToSend = ''
 
         # display contents of the existing contact list
-        if displayContacts is True:    
-            printableContactList = pprint.pformat(self.contactList)
-            print("The current contact list is:\n{0}".format(printableContactList))
-
-    # returns the contact list as it is currently in the contact list file
-    def getContactList(self):
-        return utils.loadJson(self.pathToContactList)
+        if displayContacts: self.printContactListPretty()
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
@@ -124,7 +118,7 @@ class EmailAgent():
         """            
 
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError): return err
@@ -507,7 +501,7 @@ class EmailAgent():
         try:
             self.SMTPClient.login(self.myEmailAddress, self.password)
             self.IMAPClient.login(self.myEmailAddress, self.password)
-            self.connectedToServers = True
+            self.isConnectedToServers = True
             print("Successfully logged into email account!\n")
             return None
             
@@ -662,12 +656,7 @@ class EmailAgent():
             newContactList[lastName][firstName] = commonDataDict
 
         # Update existing variable used by rest of program so it constantly stays up to date
-        self.contactList = newContactList
-        print("The updated contacts list is:\n")
-        pprint.pprint(self.contactList)
-
-        # In either case, write updated version of contact list to the json file
-        utils.writeJson(self.pathToContactList, newContactList)
+        self.contactList = self.setContactList(self._userId, newContactList)
 
     def updateContactInfo(self, firstName=None, lastName=None, addingExternally=True):
         '''
@@ -755,11 +744,8 @@ class EmailAgent():
         # handled by other function if internal
         if (addingExternally):
             # Update existing variable used by rest of program so it constantly stays up to date
-            self.contactList = updatedContactList
-            print("The updated contacts list is:\n")
-            pprint.pprint(self.contactList)
-
-            utils.writeJson(self.pathToContactList, updatedContactList)
+            self.contactList = self.setContactList(self._userId, updatedContactList)
+            self.printContactListPretty()
 
         return updatedContactList
 
@@ -776,8 +762,7 @@ class EmailAgent():
         phoneNumber = input("Please enter their phone number: ")
 
         # call function that handles the actual adding
-        EmailAgent(displayContacts=False).addContact(
-            firstName, lastName, myEmail, carrier, phoneNumber)
+        self.addContact(firstName, lastName, myEmail, carrier, phoneNumber)
 
     def _waitForNewMessage(self, startedBySendingEmail:bool):
         """
@@ -827,7 +812,7 @@ class EmailAgent():
             \n@return: List of email ids matching the filter
         """
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError):
@@ -1116,7 +1101,7 @@ class EmailAgent():
         toRtn = {"error": False, "text": "", "idDict": {}, "emailList": []}
 
         # first check if connected to email servers, if not connect
-        if not self.connectedToServers:
+        if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
             if (hasError):
@@ -1463,28 +1448,12 @@ class EmailAgent():
             print("NOT A VALID URL")
             return False
 
-    @classmethod
-    def getServiceType(cls):
-        """Helps to determine what user wants to do via terminal inputs"""
-        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
-        keysString = reduce(createPrompt, list(cls.serviceTypes.keys()))
-        prompt = "Type {0}".format(keysString)
-
-        isValidType = False
-        while not isValidType:
-            serviceType = input(prompt).lower()
-            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
-            # return or print error based on if entered value is valid
-            if (not isValidType):   print("Please Enter a Valid Option!")
-            else:                   return serviceType
-
     # prints the contact list and returns the printed string nicely printed
     def printContactListPretty(self, printToTerminal=True):
-        self.contactList = self.getContactList()
-        formatedContactList = pprint.pformat(self.contactList)
-        if printToTerminal:
-           print(formatedContactList)
-        return formatedContactList
+        self.contactList = self.getContactList(self._userId)
+        formattedContactList = pprint.pformat(self.contactList)
+        if self.isCommandLine and printToTerminal:  print(f"The updated contacts list is:\n{formattedContactList}")
+        else:                                       return formattedContactList
 
     def logoutEmail(self):
         '''
@@ -1492,18 +1461,14 @@ class EmailAgent():
             Need to make it a function due to the fact that logging out requires different code depening on the type of server 
         '''
         # depending on situation, one of them might not have logged in in the first place
-        try:
-            self.SMTPClient.quit()
-        except Exception as e:
-            pass
+        if self.isConnectedToServers:
+            try:
+                self.SMTPClient.quit()
+            except Exception as e:
+                pass
 
-        try:
-            self.IMAPClient.logout()
-        except Exception as e:
-            pass
-        self.connectedToServers = False
-
-if __name__ == "__main__":
-    # Create all CLI Flags & spin off code
-    # have to pass reference to the EmailAgent class (cannot directly import or else get circular chain)
-    flagManager = CLIManager(EmailAgent)
+            try:
+                self.IMAPClient.logout()
+            except Exception as e:
+                pass
+        self.isConnectedToServers = False

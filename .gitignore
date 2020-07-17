@@ -1,17 +1,20 @@
-
-contacts\.json
-
-\.vscode/
-
-retrievedData/cellularData.html
-
+# Build/Run Remenants
 __pycache__/
-
 build/
-
 dist/
-
 emailEnv/
+# exclude all log Files
 *.log
 
+
+# Dev tools
+\.vscode/
+
+# User Data Files (Should never be committed)
+contacts\.json
 **cookies.json
+**/userData/*
+extern/MongoDB/mongod.cfg
+
+# Extern Downloads
+**-signed.msi

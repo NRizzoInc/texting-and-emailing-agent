@@ -21,6 +21,9 @@ body {
   border: none;
   text-emphasis: bold;
 
+  /* Hide border on click */
+  outline: none;
+
   /* Center Text */
   justify-content: center;
   align-items: center;
@@ -54,11 +57,12 @@ body {
   opacity: .80;
 }
 
-.redBtn-overlay:hover {
+.redBtn:hover, .redBtn-overlay:hover {
   opacity: 1;
+  cursor: pointer;
 }
 
 /* On click */
-.redBtn-overlay:active .redBtn:active {
+.redBtn-overlay:active, .redBtn:active {
   cursor: grabbing;
 }

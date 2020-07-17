@@ -9,7 +9,8 @@
     overflow-x: hidden; /* Disable horizontal scroll */
     padding-top: 20px;
     width: fit-content;
-    display: block;
+    display: flex;
+    flex-direction: column; /*Place items in a new line*/
     margin-right: 3%;
     padding-right: 1%;
   }

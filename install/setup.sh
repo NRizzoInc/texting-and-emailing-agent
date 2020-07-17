@@ -125,12 +125,23 @@ $pipLocation install pymongo # for mongoDB
 
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then
-    echo "#4 Starting Service"
+    echo "#4 Starting Services"
+    # stop daemon to allow reload
     echo "-- Stopping ${serviceFileName} Daemon"
-    systemctl stop ${serviceFileName} # stop daemon
+    systemctl stop ${serviceFileName}
+    echo "-- Stopping MongoDB Daemon"
+    systemctl stop mongodb
     echo "-- Stopped ${serviceFileName} Daemon"
-    systemctl daemon-reload # refresh service daemons
+
+    # refresh service daemons
+    systemctl daemon-reload
+
+    # Restart Daemons
     echo "-- Reloaded ${serviceFileName} Daemon"
-    systemctl start ${serviceFileName} # start daemon
+    systemctl start ${serviceFileName}
+    echo "-- Reloaded MongoDB Daemon"
+    systemctl start mongodb
+
+    # Done
     echo "-- Started ${serviceFileName} Daemon"
 fi

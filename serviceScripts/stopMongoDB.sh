@@ -9,7 +9,7 @@ if [[ ${isWindows} == false ]]; then
         exit
     else # have sudo permissions
         echo "Stopping MongoDB"
-        systemctl start mongodb
+        systemctl stop mongodb
     fi
 else # is windows
     # || denotes "on fail"

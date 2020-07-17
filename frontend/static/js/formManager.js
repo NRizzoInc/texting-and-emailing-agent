@@ -92,6 +92,7 @@ $(document).ready( async () => {
 async function onFormBtnClick(id) {
     // manipulate form page based on which form is desired 
     document.getElementsByClassName('button-wrapper')[0].style.display = "none"
+    document.getElementById("Contact-List").style.display = "none"
     document.getElementById('Texting-Form-Wrapper').style.display = "block"
 
     // set name attributes to match task of button
@@ -259,7 +260,8 @@ function sortEmailDesc(emailEntryPrev, emailEntryCurr) {
  * @note Usually used by "Go Back" button
  */
 function exitForm() {
-    document.getElementsByClassName('button-wrapper')[0].style.display = "block"
+    document.getElementsByClassName('button-wrapper')[0].style.display = "flex"
+    document.getElementById("Contact-List").style.display = "flex-inline"
     document.getElementById('Texting-Form-Wrapper').style.display = "none"
     // Force a page rerender to get contact list to update
     const currPage = window.location.href

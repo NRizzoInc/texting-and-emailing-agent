@@ -7,23 +7,29 @@
     <link rel="stylesheet" type="text/css" href="../static/stylesheets/button.css">
     <link rel="stylesheet" type="text/css" href="../static/stylesheets/contactList.css">
     <link rel="stylesheet" type="text/css" href="../static/stylesheets/dropdown.css">
+    <link rel="stylesheet" type="text/css" href="../static/stylesheets/formInterface.css">
     <title>{{ title }}</title>
 </head>
 
 <body>
-    <div class="button-wrapper">
-        <button class="myBtn" id="text-send-button">Send Text</button>
-        <button class="myBtn" id="text-receive-button">Receive Text</button>
-        <button class="myBtn" id="add-contact-button">Add Contact</button>
-        <div class="contact-list" id="Contact-List">
-            <div>Current Contact List:</div>
-            <!-- TODO: REMOVE CONTACT/LIST LIMIT WHO SEES BASED ON IP (WILL SHOW SAME LIST TO EVERYONE) -->
-            <pre class="contact-list-json">{{ contacts }}</pre>
+    <div class="page-container">
+        <!-- <div class="button-wrapper sidebar-neighbor"> -->
+        {% include "sidebar.html" %}
+        <div class="sidebar-neighbor page-content-container">
+            <div class="row flex-inline button-wrapper height-25 vertical-margins-med"> <!--Combine multiple items on same flex line-->
+                <button class="redBtn" id="text-send-button">Send Text</button>
+                <button class="redBtn" id="text-receive-button">Receive Text</button>
+                <button class="redBtn" id="add-contact-button">Add Contact</button>
+            </div>
+            <div class="row flex-inline vertical-margins-med">
+                <div class="contact-list" id="Contact-List">
+                    <div>Current Contact List:</div>
+                    <pre class="contact-list-json">{{ contacts }}</pre>
+                </div>
+            </div>
         </div>
-    </div> <!-- End of container -->
-    {% include "TextingForm.html" %}
-    {% include "sidebar.html" %}
-    
+        {% include "TextingForm.html" %}
+    </div>
 </body>
 
 <script type="module" src="../static/js/external/jquery.js"></script>

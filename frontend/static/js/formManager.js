@@ -50,7 +50,7 @@ $(document).ready( async () => {
     const urls = await loadResource(urlsPath)
 
     // add event listener for each form button element
-    const formBtnList = document.getElementsByClassName("myBtn")
+    const formBtnList = document.getElementsByClassName("redBtn")
     for (const btn of formBtnList) {
         btn.addEventListener("click", () => {
             onFormBtnClick(btn.id)

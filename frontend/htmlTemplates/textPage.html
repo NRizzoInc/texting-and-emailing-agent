@@ -16,7 +16,7 @@
         <!-- <div class="button-wrapper sidebar-neighbor"> -->
         {% include "sidebar.html" %}
         <div class="sidebar-neighbor page-content-container">
-            <div class="row flex-inline button-wrapper height-25 vertical-margins-med"> <!--Combine multiple items on same flex line-->
+            <div class="row flex-inline button-wrapper height-25 vertical-margins-med" id="Button-Container"> <!--Combine multiple items on same flex line-->
                 <div class="redBtn-overlay">
                     <button class="redBtn" id="text-send-button">Send Text</button>
                 </div>
@@ -27,10 +27,12 @@
                     <button class="redBtn" id="add-contact-button">Add Contact</button>
                 </div>
             </div>
-            <div class="row flex-inline vertical-margins-med" id="Contact-List">
-                <div class="contact-list">
-                    <div>Current Contact List:</div>
-                    <pre class="contact-list-json">{{ contacts }}</pre>
+            <div id="Contact-List-Container">
+                <div class="vertical-margins">Current Contact List:</div>
+                <div class="row flex-inline">
+                    <div class="contact-list">
+                        <textarea id="contact-list-textarea" readonly>{{ contacts }}</textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,6 +45,7 @@
 <script type="module" src="../static/js/socketHandler.js"></script>
 <script type="module" src="../static/js/formManager.js"></script>
 <script type="module" src="../static/js/dropdown.js"></script>
+<script type="module" src="../static/js/contactList.js"></script>
 <script type="module" src="../static/js/utils.js"></script>
 <script type="application/json" src="../static/urls.json"></script>
 

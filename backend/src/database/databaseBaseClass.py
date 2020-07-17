@@ -43,7 +43,7 @@ class DatabaseBaseClass(Constants):
     def _createCollection(self, collObj:MongoClient):
         """Meant to help create the database & collection if they dont exist by adding dummy data"""
         dummyData = {"id": "admin-account", "username": "dev", "password": "1@Mdummy5@t@P@ssw0rD"}
-        databaseUtils._insertData(collObj, dummyData)
+        self._insertData(collObj, dummyData)
 
     def _insertData(self, collObj:MongoClient, data):
         """Accepts a list of dictionaries (or just one) to submit"""

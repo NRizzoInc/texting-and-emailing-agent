@@ -6,6 +6,7 @@
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import json
 import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
+from itertools import count # to keep track of # initializations
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pymongo import MongoClient
@@ -17,6 +18,8 @@ from .usersCollectionManager import UsersCollectionManager
 from .contactsCollectionManager import ContactsCollectionManager
 
 class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
+    _numInits = 0
+
     def __init__(self):
         """
             \n@Brief: This class is meant to help manage the database of users' information
@@ -26,8 +29,11 @@ class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
         # Inheret all functions and 'self' variables
         super().__init__()
 
-        # if db or collection(s) don't exist, add dummy data to them to create it
-        allCollections = [self.usersColl, self.contactsColl]
-        for collObj in allCollections: 
-            self._createCollDNE(collObj)
+        # only check & create database collections once
+        if DatabaseManager._numInits == 0:
+            # if db or collection(s) don't exist, add dummy data to them to create it
+            allCollections = [self.usersColl, self.contactsColl]
+            for collObj in allCollections: 
+                self._createCollDNE(collObj)
+        DatabaseManager._numInits += 1
 

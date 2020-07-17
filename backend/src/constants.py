@@ -13,3 +13,12 @@ class Constants():
 
         # EmailAgent / Databases
         self.contactListKey = "contact-list"
+
+        # Web App
+        self.siteTitleDict = {
+            "mainpage":     "Texting App Main Page",
+            "textpage":     "Texting App",
+            "emailpage":    "Email App",
+            "aboutpage":    "About Texting App",
+            "loginpage":    "Sign In"
+        }

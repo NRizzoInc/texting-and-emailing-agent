@@ -109,7 +109,7 @@ class WebApp(UserManager):
         # for each function render the sidebar so that there is a single source of truth for its design
         @self.app.route(self.sites['landingpage'], methods=["GET", "POST"])
         def createMainPage():
-            return render_template("mainPage.html", title="Texting App Main Page",
+            return render_template("mainPage.html", title=self.siteTitleDict["mainpage"],
                 links=self.sites, formLinks=self.formSites)
 
         @self.app.route(self.sites['textpage'], methods=["GET", "POST"])
@@ -117,7 +117,7 @@ class WebApp(UserManager):
         def createTextPage():
             # proxy for current User object that triggered this
             contactList = current_user.getContactList()
-            return render_template("textPage.html", title="Texting App Texting Page", 
+            return render_template("textPage.html", title=self.siteTitleDict["textpage"], 
                 links=self.sites, formLinks=self.formSites, contacts=contactList)
 
         @self.app.route(self.sites['emailpage'], methods=["GET", "POST"])
@@ -125,12 +125,12 @@ class WebApp(UserManager):
         def createEmailPage():
             # proxy for current User object that triggered this
             contactList =  current_user.getContactList()
-            return render_template("emailPage.html", title="Texting App Email Page", 
+            return render_template("emailPage.html", title=self.siteTitleDict["emailpage"],
                 links=self.sites, formLinks=self.formSites, contacts=contactList)
 
         @self.app.route(self.sites['aboutpage'], methods=["GET", "POST"])
         def createAboutPage():
-            return render_template("aboutPage.html", title="Texting App About Page",
+            return render_template("aboutPage.html", title=self.siteTitleDict["aboutpage"],
                 links=self.sites, formLinks=self.formSites)
 
         @self.app.route(self.formSites["webAppLogin"], methods=["GET", "POST"])
@@ -177,7 +177,7 @@ class WebApp(UserManager):
                     # on error, keep trying to login until correct
                     return redirect(self.formSites["webAppLogin"])
 
-            return render_template('login.html', title='Sign In', form=form, 
+            return render_template('login.html', title=self.siteTitleDict["loginpage"], form=form,
                 links=self.sites, formLinks=self.formSites)
 
         @self.app.route(self.formSites["webAppRegister"], methods=["GET", "POST"])

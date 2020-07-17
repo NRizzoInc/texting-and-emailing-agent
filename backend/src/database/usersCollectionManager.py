@@ -7,7 +7,7 @@ import json
 import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
-from pymongo import MongoClient
+from pymongo import MongoClient, collection
 from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
@@ -23,7 +23,7 @@ class UsersCollectionManager(DatabaseBaseClass):
         # Inheret all functions and 'self' variables
         super().__init__()
 
-    def addUser(self, userToken, username, password, userObj):
+    def _addUserToColl(self, userToken, username, password, userObj):
         """
             \n@Brief: High level api function call to add a user to the database
             \n@Param: userToken - The user's unique safe id (aka id)
@@ -53,18 +53,28 @@ class UsersCollectionManager(DatabaseBaseClass):
         """
             \n@Param: username - The username matching the id you are looking for
             \n@Return: The corresponding id
-            \n@Note: Useful if chained with other functions that require id (i.e. 'findUser()')
+            \n@Note: Useful if chained with other functions that require id (i.e. 'findUserById()')
         """
         match = list(self.usersColl.find({"username": username}))
         matchId = match[0]["id"]
         return matchId
 
-    def findUser(self, userToken):
+    def findUserById(self, userToken):
         """
             \n@Param: userToken - The user's unique token id
             \n@Return: The 'User' object
         """
         userDoc = self._getDocById(self.usersColl, userToken)
+        serializedUserObj = userDoc["User"]
+        userObj = self._deserializeData(serializedUserObj)
+        return userObj
+
+    def getUserByUsername(self, username):
+        """
+            \n@Param: username: The username of the user's account
+            \n@Returns: None if username does not exist
+        """
+        userDoc = self._getDocByUsername(self.usersColl, username)
         serializedUserObj = userDoc["User"]
         userObj = self._deserializeData(serializedUserObj)
         return userObj
@@ -86,3 +96,15 @@ class UsersCollectionManager(DatabaseBaseClass):
         match = list(self.usersColl.find({"id": myId}))
         actualPassword = match[0]["password"]
         return actualPassword
+
+    def updateUserObjById(self, myId:str, updatedUserObj:object)->dict():
+        """
+            \n@Brief: Updates the 'User' object in the document corresponding to the id
+            \n@Param: myId - The UUID of the user to update
+            \n@Param: updatedUser - The User object to replace the existing one with
+            \n@Returns: An instance of UpdateResult
+        """
+        query = {"id": myId}
+        # use '$' to indicate what value to change
+        toUpdateWith = {"$User": updatedUserObj}
+        return self.usersColl.update_one(query, toUpdateWith)

@@ -19,17 +19,16 @@ import webAppConsts
 from database.databaseManager import DatabaseManager
 from user import User
 
-class UserManager():
-    # MongoDB database manager
-    dbManager = DatabaseManager()
-    
-    # create database of User objects (maps tokenId -> User obj)
-    userDatabase = {} # TODO: remove once MongoDB fully functional
-
+class UserManager(LoginManager, DatabaseManager):
     def __init__(self, app:Flask):
         self.flaskApp = app
-        self.loginManager = LoginManager(app)
+
+        # create login manager object
+        LoginManager.__init__(self, self.flaskApp)
         self.createLoginManager()
+
+        # Create Database Manager
+        DatabaseManager.__init__(self)
 
     def createLoginManager(self):
         """
@@ -37,7 +36,7 @@ class UserManager():
             \n@Note: Wrapper to provide closure for `self`
         """
 
-        @self.loginManager.user_loader
+        @self.user_loader
         def loadUser(userToken):
             """
                 \n@Brief: When Flask app is asked for "current_user", this decorator gets the current user's User object
@@ -45,9 +44,9 @@ class UserManager():
                 \n@Param: userToken - The user's unique token id
                 \n@Return: Reference to the User class related to this uuid
             """
-            return UserManager.dbManager.findUser(userToken) 
+            return self.findUserById(userToken) 
 
-        @self.loginManager.unauthorized_handler
+        @self.unauthorized_handler
         def onNeedToLogIn():
             """
                 \n@Brief: VERY important callback that redirects the user to log in if needed --
@@ -72,13 +71,13 @@ class UserManager():
         # do-while loop to make sure non-colliding unique id is made
         while True:
             userToken = self.createSafeCookieId()
-            inUse = UserManager.dbManager.isIdInUse(userToken)
+            inUse = self.isIdInUse(userToken)
             if not inUse: break # leave loop once new id is found
             else: print(f"userToken '{userToken}' is already taken")
 
         # create new email agent for each user
         newUserObj = User(userToken)
-        UserManager.dbManager.addUser(userToken, webAppUsername, webAppPassword, newUserObj)
+        self._addUserToColl(userToken, webAppUsername, webAppPassword, newUserObj)
 
     def removeUser(self, userToken):
         """
@@ -87,37 +86,3 @@ class UserManager():
         """
         UserManager.userDatabase[userToken].logoutClient()
         del UserManager.userDatabase[userToken]
-
-##################################### WRAPPER FUNCTIONS FOR LOWER LEVEL API ###########################################
-
-    @classmethod
-    def getPasswordFromUsername(cls, username):
-        """
-            \n@Note: Wrapper for dbManager.getPasswordFromUsername so multiple classes can use this function
-            \n@Param: username - The password to find's username
-            \n@Returns: The matching password 
-        """
-        return cls.dbManager.getPasswordFromUsername(username)
-
-    @classmethod
-    def getPasswordFromId(cls, myId):
-        """
-            \n@Note: Wrapper for dbManager.getPasswordFromId so multiple classes can use this function
-            \n@Param: myId - The password to find's id
-            \n@Returns: The matching password 
-        """
-        return cls.dbManager.getPasswordFromId(myId)
-
-    @classmethod
-    def isUsernameInUse(cls, username):
-        """Wrapper for dbManager.isUsernameInUse so multiple classes can use this function"""
-        return cls.dbManager.isUsernameInUse(username)
-
-    @classmethod
-    def getUserByUsername(cls, username):
-        """
-            \n@Param: username: The username of the user's account
-            \n@Returns: None if username does not exist
-        """
-        myId = cls.dbManager.getIdByUsername(username)
-        return cls.dbManager.findUser(myId)

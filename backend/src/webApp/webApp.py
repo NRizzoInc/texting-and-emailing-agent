@@ -31,7 +31,7 @@ from registrationForm import RegistrationForm
 from loginForm import LoginForm
 import webAppConsts
 
-class WebApp():
+class WebApp(UserManager):
     def __init__(self, isDebug:bool=False, port:str=None):
         """
             \n@Brief: Creates a web application that provides a GUI for running the email app
@@ -44,7 +44,9 @@ class WebApp():
         self.hostPost = port if port != None and len(port) > 0 else '5000'
         self.hostAddr = 'http://' + self.hostIP + ':' + self.hostPost
         self.app = Flask(__name__)
-        self.userManager = UserManager(self.app)
+
+        # Inheret all functions and 'self' variables (UserManager)
+        super().__init__(self.app)
 
         # change location of where the html, css, and js code lives
         self.__pathToThisDir = webAppConsts.pathToThisDir
@@ -146,7 +148,7 @@ class WebApp():
 
             # https://flask-login.readthedocs.io/en/latest/#flask_login.LoginManager.user_loader
             # -- "flask_login.login_user"
-            form = LoginForm()
+            form = LoginForm(self.app)
 
             if form.validate_on_submit():
                 # username & password fields of form have been validated at this point
@@ -159,7 +161,7 @@ class WebApp():
                 # check results
                 isSuccess = validUsername and validPassword # only both true == success
                 if isSuccess:
-                    user = UserManager.getUserByUsername(username)
+                    user = self.getUserByUsername(username)
                     login_user(user, remember=form.rememberMe.data)
 
                     # route to original destination
@@ -185,9 +187,9 @@ class WebApp():
             """
             if current_user.is_authenticated:
                 return redirect(self.sites["landingpage"])
-            form = RegistrationForm()
+            form = RegistrationForm(self.app)
             if form.validate_on_submit():
-                self.userManager.addUser(form.username.data, form.password.data)
+                self.addUser(form.username.data, form.password.data)
                 flash('Congratulations, you are now a registered user!')
                 return redirect(self.formSites["webAppLogin"])
             return render_template('register.html', title='Register', form=form,
@@ -214,6 +216,7 @@ class WebApp():
                 \n@Brief:   Logouts of email
                 \n@Returns: {rtnCode: bool} rtnCode - 0 == success, -1 == fail
             """
+            self.updateUserObjById(current_user.get_id(), current_user._get_current_object())
             logout_user()
             flash("Successfully logged out!")
             return redirect(self.formSites["webAppLogin"])

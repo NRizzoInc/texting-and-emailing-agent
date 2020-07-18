@@ -215,23 +215,6 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                         part.set_payload(None)
         return msg
 
-    def _getTextMsgInput(self)->str():
-        """
-            \n@Brief: Helper function that allows for messages to span multiple lines, stops with 'control-c'
-            \n@Return: Returns the message as a string
-        """
-        msgToRtn = ""
-        try:
-            print("Please enter the message you would like to send (Use control-c to stop): ")
-            while True:
-                msgToRtn += input("") + "\n"
-        except KeyboardInterrupt:
-            pass
-        finally:
-            # remove extra newlines
-            return msgToRtn.strip()
-
-
     def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
             @Args:
@@ -272,7 +255,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         
         # Get content to send in text message
         if self.isCommandLine:
-            body = self._getTextMsgInput()
+            body = self._getMultiLineInput("Please enter the message you would like to send")
         # not using command line
         else: 
             body = msgToSend
@@ -384,7 +367,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                     receiverName=receiver, senderName=self.myEmailAddress) 
 
             elif typeOfMsg == 'inputContent':
-                myInput = self._getTextMsgInput()
+                myInput = self._getMultiLineInput("Please enter the message you would like to send")
                 sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
             
             # Default to default file 

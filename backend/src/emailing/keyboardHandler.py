@@ -15,20 +15,25 @@ class KeyboardMonitor():
     def __init__(self):
         super().__init__()
         
-    def _onPress(self, key):
-        """Helper function that stops the listener if 'escape' is pressed"""
-        # print(f"{key} pressed")
-        if key == Key.esc: return False
+    def _onPressGenerator(self, stopKey):
+        """Helper function that generates function that stops the listener if 'stopKey' is pressed"""
+        def __onPress(pressedKey):
+            print(f"{pressedKey} pressed")
+            # return not pressedKey == stopKey
+        return __onPress
 
-    def _onRelease(self, key):
-        """Helper function that stops the listener if 'escape' is released"""
-        # print(f"{key} released")
-        # Stop listener
-        if key == Key.esc: return False
+    def _onReleaseGenerator(self, stopKey):
+        """Helper function that generates function that stops the listener if 'stopKey' is released"""
+        def __onRelease(releasedKey):
+            print(f"{releasedKey} released")
+            return not releasedKey == stopKey
+        return __onRelease
 
-    def initListener(self):
-        """Collect events until 'escape' is pressed and released"""
-        with Listener(on_press=self._onPress, on_release=self._onRelease) as listener:
+    def initListener(self, stopKey:str=None):
+        """Collect events until 'stopKey' is pressed and released (defaults to 'escape' key)"""
+        # Have to convert 'stopKey' to its KeyCode
+        stopKeycode = KeyCode.from_char(stopKey) if stopKey != None else Key.esc
+        with Listener(on_press=self._onPressGenerator(stopKey), on_release=self._onReleaseGenerator(stopKeycode)) as listener:
             listener.join()
 
 # Test functionality

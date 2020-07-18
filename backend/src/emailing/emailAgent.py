@@ -93,7 +93,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId
-        self.configureUsername()
+        if self.isCommandLine: self.configureUsername()
 
         # Fetch the contact list from the database
         self.contactList = self.getContactList(self._userId)

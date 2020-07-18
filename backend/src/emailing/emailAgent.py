@@ -93,6 +93,9 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId
+        self.configureUsername()
+
+        # Fetch the contact list from the database
         self.contactList = self.getContactList(self._userId)
 
         # work around for sending text messages with char limit (wait to add content)
@@ -101,6 +104,18 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # display contents of the existing contact list
         if displayContacts: self.printContactListPretty()
+
+    def configureUsername(self):
+        """Helper function that sets username if needed"""
+        myUsername = self.getUsernameById(self._userId)
+        needToSetUsername = myUsername == "" # will only be the case for command line
+        if needToSetUsername:
+            while True:
+                newUsername = utils.promptUntilSuccess("Enter your display name when sending texts: ")
+                if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
+                else: break
+            newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI): ")
+            self._addUserToColl(self._userId, newUsername, newPassword, None)
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """

@@ -35,7 +35,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             "id": userToken,
             "username": username,
             "password": password,
-            "User": self._serializeObj(userObj) # need to serialize object for storage
+            "User": self._serializeObj(userObj) if userObj != None else None # need to serialize object for storage
         }
         self._insertData(self.usersColl, newUser)
 
@@ -62,11 +62,13 @@ class UsersCollectionManager(DatabaseBaseClass):
     def findUserById(self, userToken):
         """
             \n@Param: userToken - The user's unique token id
-            \n@Return: The 'User' object
+            \n@Return: The 'User' object (None if 'User' DNE or unset)
         """
         userDoc = self._getDocById(self.usersColl, userToken)
-        serializedUserObj = userDoc["User"]
-        userObj = self._deserializeData(serializedUserObj)
+        if utils.keyExists(userDoc, "User") and userDoc["User"] != None:
+            serializedUserObj = userDoc["User"]
+            userObj = self._deserializeData(serializedUserObj)
+        else: userObj = None
         return userObj
 
     def getUserByUsername(self, username):
@@ -110,3 +112,26 @@ class UsersCollectionManager(DatabaseBaseClass):
         serializedUpdatedObj = self._serializeObj(updatedUserObj)
         toUpdateWith = {"$set": {"User": serializedUpdatedObj}}
         return self.usersColl.update_one(query, toUpdateWith)
+
+    def setUsernameById(self, myId:str, username:str):
+        """
+            \n@Brief: Sets the username in the database for the user with 'myId'
+            \n@Param: myId - The id of the user whose username you want to set
+            \n@Param: username - The username to set
+            \n@Note: Probably only useful for command line uses
+            \n@Returns: An instance of UpdateResult
+        """
+        query = {"id": myId}
+        toUpdateWith = {"$set": {"username": username}}
+        return self.usersColl.update_one(query, toUpdateWith)
+
+    def getUsernameById(self, myId:str)->str():
+        """
+            \n@Brief: Gets the username in the database for the user with 'myId'
+            \n@Param: myId - The id of the user whose username you want to set
+            \n@Returns: The username belonging to the ID (empty string if not set)
+        """
+        match = self._getDocById(self.usersColl, myId)
+        username = match["username"] if utils.keyExists(match, "username") else ""
+        return username
+

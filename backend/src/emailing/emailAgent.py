@@ -976,9 +976,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         emailList = []
         idDict = {}
-        try:
-            if (self.isCommandLine):    print("ctrl-c to stop fetching...")
-            else:                       print("Fetching x{0} emails".format(maxFetchCount))
+        if not self.isCommandLine: print("Fetching x{0} emails".format(maxFetchCount))
+        def fetchEmailsWorker():
             for idx, idNum in enumerate(idList):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
                 emailUnreadBool = idNum in idListUnread 
@@ -991,12 +990,17 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                     if (self.isCommandLine): print(emailDescLine)
                 idDict[idNum] = {"idx": listIdx, "desc": emailDescLine}
 
-                if (maxFetchCount != -1 and idx >= maxFetchCount): break # exit for loop if fetched enough
-        except KeyboardInterrupt:
-            # stub
-            pass
+                # exit for loop if fetched enough
+                if (maxFetchCount != -1 and idx >= maxFetchCount): return
 
-        print("Stopped fetching")
+        # if command line, do special trick to get user to stop the fetching
+        if self.isCommandLine: self._stopOnKeypress(
+            fetchEmailsWorker,
+            prompt="to stop fetching emails",
+            toPrintOnStop="Stopped fetching"
+        )
+        else: fetchEmailsWorker()
+
         return (emailList, idDict)
 
     def _openEmail(self, idDict:dict, emailList:list, idSelected:int=-1)->(str(), dict()):

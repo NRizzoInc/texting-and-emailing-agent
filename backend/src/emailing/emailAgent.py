@@ -1316,7 +1316,9 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                     continue
 
         # check if the email is relevant to the logged in user
+        # remove special footer if there
         belongsToUser = body.find(self._sendTextBlurb) != -1
+        if belongsToUser: body = body.replace(self._sendTextBlurb, "").strip()
 
         # Get date and time of email
         dataTuple = email.utils.parsedate_tz(emailMsg['Date'])
@@ -1358,7 +1360,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             "Subject": "", 
             "Body": "",
             "idNum": "",
-            "unread": bool()
+            "unread": bool(),
+            "belongsToUser": bool()
         }
         if (emailDict.keys() != sampleDict.keys()):
             raise Exception("Incorrectly Passed Dictionary, needs this format: {0}".format(sampleDict))

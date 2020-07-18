@@ -121,6 +121,28 @@ class CLIManager(EmailAgent):
             help="The receipient's lastname",
         )
 
+        ##################################################################################################################
+        # Login Managers
+        ##################################################################################################################
+        loginManagersGroup = parser.add_argument_group(
+            title="Login",
+            description="Helps update login information",
+        )
+        loginManagersGroup.add_argument(
+            "-x", "--username",
+            action="store_true",
+            dest="setUsername",
+            required=False,
+            help="Set what username (display name) when sending text messages and exit",
+        )
+        loginManagersGroup.add_argument(
+            "-p", "--password",
+            action="store_true",
+            dest="setPassword",
+            required=False,
+            help="Set your password when logging in and exit",
+        )
+
         # Actually Parse Flags (turn into dictionary)
         args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
 
@@ -134,6 +156,10 @@ class CLIManager(EmailAgent):
         elif args["updateContact"]:
             super().__init__(displayContacts=True, isCommandLine=True)
             self.updateContactInfo()
+            sys.exit(0)
+        elif args["setUsername"] or args["setPassword"]:
+            super().__init__(displayContacts=False, isCommandLine=True)
+            self.configureUsername(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
             sys.exit(0)
 
         # Create a class obj for this file

@@ -105,17 +105,30 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         # display contents of the existing contact list
         if displayContacts: self.printContactListPretty()
 
-    def configureUsername(self):
-        """Helper function that sets username if needed"""
+    def configureUsername(self, overrideUsername:bool=False, overridePassword:bool=False):
+        """
+            \n@Brief: Helper function that sets username & password if needed
+            \n@Param: (optional - default = False) overrideUsername - Update the username?
+            \n@Param: (optional - default = False) overridePassword - Update the password?
+        """
+        # will only be the case for command line (myUsername == "" if first time doing command line)
         myUsername = self.getUsernameById(self._userId)
-        needToSetUsername = myUsername == "" # will only be the case for command line
+        myPassword = self.getPasswordFromId(self._userId)
+        needToSetUsername = overrideUsername or myUsername == ""
+        needToSetPassword = overridePassword or myPassword == ""
+
         if needToSetUsername:
             while True:
                 newUsername = utils.promptUntilSuccess("Enter your display name when sending texts: ")
                 if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
                 else: break
+            self.setUsernameById(self._userId, newUsername)
+
+        if needToSetPassword:
             newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI): ")
-            self._addUserToColl(self._userId, newUsername, newPassword, None)
+            self.setPasswordById(self._userId, newPassword)
+
+        # Set variables needed for future
         self._sendTextBlurb = f"Dest: {myUsername}" # text to match on receive side
 
     def createTextReturnInstructions(self)->str():

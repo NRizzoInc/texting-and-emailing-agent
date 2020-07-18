@@ -54,6 +54,12 @@ class DatabaseBaseClass(Constants):
         # else:               self.usersColl.insert_many(data)
 
     def _replaceDataById(self, collObj:MongoClient, userId:str, newData:dict):
+        """
+            \n@Brief: Updates the FIRST card within the collection fitting the filter with 'newData'
+            \n@Param: collObj - The collection object
+            \n@Param: userId - The UUID of the user's data to replace/update
+            \n@Param: newData - The data to update the card with
+        """
         query = {"id": userId}
         self._replaceData(collObj, query, newData)
 

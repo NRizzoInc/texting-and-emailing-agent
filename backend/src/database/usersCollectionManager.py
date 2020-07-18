@@ -37,7 +37,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             "password": password,
             "User": self._serializeObj(userObj) if userObj != None else None # need to serialize object for storage
         }
-        self._insertData(self.usersColl, newUser)
+        self._replaceDataById(self.usersColl, userToken, newUser)
 
     def isUsernameInUse(self, usernameToTest:str):
         usernameExists = self._docExists(self.usersColl, {"username": usernameToTest})
@@ -93,10 +93,10 @@ class UsersCollectionManager(DatabaseBaseClass):
     def getPasswordFromId(self, myId:str)->str():
         """
             \n@Param: myId - The password to find's id
-            \n@Returns: The matching password 
+            \n@Returns: The matching password (or "" if not yet set)
         """
-        match = list(self.usersColl.find({"id": myId}))
-        actualPassword = match[0]["password"]
+        match = list(self.usersColl.find({"id": myId}))[0]
+        actualPassword = match["password"] if utils.keyExists(match, "password") else ""
         return actualPassword
 
     def updateUserObjById(self, myId:str, updatedUserObj:object)->dict():
@@ -123,6 +123,18 @@ class UsersCollectionManager(DatabaseBaseClass):
         """
         query = {"id": myId}
         toUpdateWith = {"$set": {"username": username}}
+        return self.usersColl.update_one(query, toUpdateWith)
+
+    def setPasswordById(self, myId:str, password:str):
+        """
+            \n@Brief: Sets the password in the database for the user with 'myId'
+            \n@Param: myId - The id of the user whose username you want to set
+            \n@Param: password - The password to set
+            \n@Note: Probably only useful for command line uses
+            \n@Returns: An instance of UpdateResult
+        """
+        query = {"id": myId}
+        toUpdateWith = {"$set": {"password": password}}
         return self.usersColl.update_one(query, toUpdateWith)
 
     def getUsernameById(self, myId:str)->str():

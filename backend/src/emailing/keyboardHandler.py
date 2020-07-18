@@ -13,13 +13,19 @@ from pynput.keyboard import Key, KeyCode, Controller, Listener # to monitor keyb
 
 
 class KeyboardMonitor():
-    def __init__(self):
+    def __init__(self, printMessages=True):
+        """
+            \n@Brief: Class that help monitor when a certain key is clicked
+            \n@Param: printMessages - Set to false if you do not want it printing which keys were clicked
+            \n@Note: Most likely will use the 'initListener()' function
+        """
         super().__init__()
-        
+        self.printMessages = printMessages
+
     def _onPressGenerator(self, stopKey):
         """Helper function that generates function that stops the listener if 'stopKey' is pressed"""
         def __onPress(pressedKey):
-            print(f"{pressedKey} pressed")
+            if self.printMessages: print(f"{pressedKey} pressed")
             # have to stop on release or else leaves thread hanging
             # return not pressedKey == stopKey
         return __onPress
@@ -27,7 +33,7 @@ class KeyboardMonitor():
     def _onReleaseGenerator(self, stopKey):
         """Helper function that generates function that stops the listener if 'stopKey' is released"""
         def __onRelease(releasedKey):
-            print(f"{releasedKey} released")
+            if self.printMessages: print(f"{releasedKey} released")
             return not releasedKey == stopKey
         return __onRelease
 
@@ -49,6 +55,13 @@ if __name__ == "__main__":
         dest="stopKey",
         help="The key to stop listening on",
     )
+    parser.add_argument(
+        "-n", "--dont-print-messages",
+        action="store_false",
+        required=False,
+        dest="printMessages",
+        help="Use this to not have the program print out which keys were clicked",
+    )
 
     # Actually Parse Flags (turn into dictionary)
     # converts all '-' after '--' to '_'
@@ -57,5 +70,5 @@ if __name__ == "__main__":
     stopKey = args["stopKey"]
     print(f"Stopping on '{stopKey}' key")
 
-    keyMonitor = KeyboardMonitor()
+    keyMonitor = KeyboardMonitor(printMessages=args["printMessages"])
     keyMonitor.initListener(stopKey=stopKey)

@@ -38,8 +38,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 from database.databaseManager import DatabaseManager
+from backend.src.emailing.keyboardHandler import KeyboardMonitor
 
-class EmailAgent(DatabaseManager):
+class EmailAgent(DatabaseManager, KeyboardMonitor):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
@@ -229,6 +230,7 @@ class EmailAgent(DatabaseManager):
         finally:
             # remove extra newlines
             return msgToRtn.strip()
+
 
     def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''

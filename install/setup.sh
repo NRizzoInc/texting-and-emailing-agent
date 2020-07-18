@@ -122,6 +122,7 @@ $pipLocation install flask-wtf
 $pipLocation install flask-socketio
 $pipLocation install is-safe-url
 $pipLocation install pymongo # for mongoDB
+$pipLocation install pynput # for keyboard event listeners
 
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then

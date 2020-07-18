@@ -7,7 +7,7 @@ from wtforms.validators import ValidationError, StopValidation, DataRequired, Em
 from flask import flash, Flask
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from userManager import UserManager
+from backend.src.webApp.userManager import UserManager
 
 class LoginForm(FlaskForm, UserManager):
     """Generates a quick and dirty login form to authenticate for the webapp"""

@@ -9,8 +9,8 @@ import json
 from pymongo import MongoClient
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import utils
-from .databaseBaseClass import DatabaseBaseClass
+from backend.src import utils
+from backend.src.database.databaseBaseClass import DatabaseBaseClass
 
 class ContactsCollectionManager(DatabaseBaseClass):
     def __init__(self):

@@ -34,10 +34,8 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-sys.path.append(os.path.join(os.path.dirname(__file__)))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import utils
-from database.databaseManager import DatabaseManager
+from backend.src import utils
+from backend.src.database.databaseManager import DatabaseManager
 from backend.src.emailing.keyboardHandler import KeyboardMonitor
 
 class EmailAgent(DatabaseManager, KeyboardMonitor):

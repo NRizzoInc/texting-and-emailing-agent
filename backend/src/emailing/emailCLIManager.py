@@ -10,9 +10,10 @@ import os, sys
 import argparse # for CLI Flags
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import utils
-from emailAgent import EmailAgent
+# make sure to include 'backend' dir to get access to module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from backend.src import utils
+from backend.src.emailing.emailAgent import EmailAgent
 
 class CLIManager(EmailAgent):
     def __init__(self):

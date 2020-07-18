@@ -9,7 +9,7 @@ from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from flask import flash, Flask
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from userManager import UserManager
+from backend.src.webApp.userManager import UserManager
 
 class RegistrationForm(FlaskForm, UserManager):
     # To be redefined

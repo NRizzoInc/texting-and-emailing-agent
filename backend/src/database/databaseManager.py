@@ -13,9 +13,9 @@ from pymongo import MongoClient
 from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import utils
-from .usersCollectionManager import UsersCollectionManager
-from .contactsCollectionManager import ContactsCollectionManager
+from backend.src import utils
+from backend.src.database.usersCollectionManager import UsersCollectionManager
+from backend.src.database.contactsCollectionManager import ContactsCollectionManager
 
 class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
     _numInits = 0

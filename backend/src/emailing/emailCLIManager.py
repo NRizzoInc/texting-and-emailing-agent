@@ -159,7 +159,7 @@ class CLIManager(EmailAgent):
             sys.exit(0)
         elif args["setUsername"] or args["setPassword"]:
             super().__init__(displayContacts=False, isCommandLine=True)
-            self.configureUsername(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
+            self.configureLogin(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
             sys.exit(0)
 
         # Create a class obj for this file

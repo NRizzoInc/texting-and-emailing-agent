@@ -93,7 +93,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId
-        if self.isCommandLine: self.configureUsername()
+        if self.isCommandLine: self.configureLogin()
 
         # Fetch the contact list from the database
         self.contactList = self.getContactList(self._userId)
@@ -105,7 +105,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         # display contents of the existing contact list
         if displayContacts: self.printContactListPretty()
 
-    def configureUsername(self, overrideUsername:bool=False, overridePassword:bool=False):
+    def configureLogin(self, overrideUsername:bool=False, overridePassword:bool=False):
         """
             \n@Brief: Helper function that sets username & password if needed
             \n@Param: (optional - default = False) overrideUsername - Update the username?

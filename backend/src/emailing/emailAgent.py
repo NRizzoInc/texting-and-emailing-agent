@@ -1031,12 +1031,13 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
                 # exit for loop if fetched enough
                 if (maxFetchCount != -1 and numFetched >= maxFetchCount): return
+            return
 
         # if command line, do special trick to get user to stop the fetching
         if self.isCommandLine: self._stopOnKeypress(
             fetchEmailsWorker,
-            prompt="to stop fetching emails",
-            toPrintOnStop="Stopped fetching"
+            prompt="stop fetching emails",
+            toPrintOnStop="Stopped fetching",
         )
         else: fetchEmailsWorker()
 

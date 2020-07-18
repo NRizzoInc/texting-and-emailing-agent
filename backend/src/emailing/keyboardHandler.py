@@ -123,8 +123,8 @@ class KeyboardMonitor():
         # Create Event & EventThread to stop keyboard thread if worker finishes
         # If worker fn finishes first, will trigger a callback that presses the escape key to stop keyboard monitor
         stopEvent = Event()
-        stopEventThread = stopThreadOnSetCallback(
-            name="stopEventThread",
+        stopEventCallback = stopThreadOnSetCallback(
+            name="stopEventCallback",
             onStopCallback=self._pressEscape,
             stopEvent=stopEvent
         )
@@ -144,8 +144,12 @@ class KeyboardMonitor():
         # have the custom function run, but stop it when the stop key thread finishes
         # https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
         # start monitor threads first (might be delay, so it should be available prior)
-        stopEventThread.start() # montiors keyboard
-        stopKeyThread.start() # checks if worker fn finishes first
+
+        # checks if worker fn finishes first (if so, triggers callback to trigger stop on monitor)
+        stopEventCallback.start()
+
+        # montiors keyboard -- stopped when 'esc' is clicked or stopEventCallback is triggered by end of worker
+        stopKeyThread.start()
 
         # start worker function
         funcToRunThread.start()
@@ -155,8 +159,11 @@ class KeyboardMonitor():
         
         # ends the worker function by causing an exception
         funcToRunThread.raise_exception()
-        # kill the thread completely
+
+        # kill the threads completely
+        # (make sure to set stopEvent to ensure stopEventCallback is killed)
         funcToRunThread.join()
+        stopEvent.set() # Warning: Remove at risk of leaving thread up
 
 # Test functionality
 if __name__ == "__main__":

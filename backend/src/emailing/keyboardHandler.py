@@ -122,9 +122,9 @@ class KeyboardMonitor():
         # have the custom function run, but stop it when the stop key thread finishes
         # https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
         stopKeyThread.start() # start monitor first (might be delay, so it should be available prior)
-        funcToRunThread.start()
-        stopKeyThread.join()
-        funcToRunThread.raise_exception() # ends its 'run' fn
+        funcToRunThread.start() # start worker function
+        stopKeyThread.join() # block main thread until monitoring thread stop (i.e. 'esc' is clicked)
+        funcToRunThread.raise_exception() # ends the worker function by causing an exception
         funcToRunThread.join() # kill the thread completely
 
 # Test functionality

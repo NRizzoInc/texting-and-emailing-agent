@@ -46,7 +46,7 @@ class KeyboardMonitor():
 
 # Test functionality
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Keyboard Handler & Monitoring Tester")
+    parser = argparse.ArgumentParser(description="Keyboard Handler & Monitoring Tester (note, will not work over ssh)")
     parser.add_argument(
         "-k", "--stop-key",
         metavar="<key to stop on>",

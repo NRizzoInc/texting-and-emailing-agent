@@ -939,6 +939,10 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         emailList = self.getEmailListWithContent(emailFilter=_unreadEmailFilter)
         return emailList
 
+    def markAsUnread(self, emailId):
+        """Mark an email (with 'emailId') as unread"""
+        self.IMAPClient.uid("STORE", emailId, "+FLAGS", "\SEEN")
+
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
         """
             \n@Brief- Takes email list and prints: "Mail Id #: <subject> "

@@ -119,13 +119,13 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         if needToSetUsername:
             while True:
-                newUsername = utils.promptUntilSuccess("Enter your display name when sending texts: ")
+                newUsername = utils.promptUntilSuccess("Enter your display name when sending texts (can be updated later): ")
                 if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
                 else: break
             self.setUsernameById(self._userId, newUsername)
 
         if needToSetPassword:
-            newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI): ")
+            newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI - can be updated later): ")
             self.setPasswordById(self._userId, newPassword)
 
         # Set variables needed for future

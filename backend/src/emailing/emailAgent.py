@@ -1038,7 +1038,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         if self.isCommandLine: 
             self._stopOnKeypress(
                 fetchEmailsWorker,
-                prompt="stop fetching emails",
+                prompt="stop fetching emails (this may take awhile)",
                 toPrintOnStop="Stopped fetching",
             )
         else: fetchEmailsWorker()

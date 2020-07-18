@@ -41,8 +41,11 @@ class KeyboardMonitor():
         """Collect events until 'stopKey' is pressed and released (defaults to 'escape' key)"""
         # Have to convert 'stopKey' to its KeyCode
         stopKeycode = KeyCode.from_char(stopKey) if stopKey != None else Key.esc
-        with Listener(on_press=self._onPressGenerator(stopKey), on_release=self._onReleaseGenerator(stopKeycode)) as listener:
-            listener.join()
+        with Listener(
+            on_press=self._onPressGenerator(stopKey),
+            on_release=self._onReleaseGenerator(stopKeycode),
+            suppress=False # if True, anything typed while listening is not registered (i.e. wont appear in terminal)
+        ) as listener: listener.join()
 
 # Test functionality
 if __name__ == "__main__":

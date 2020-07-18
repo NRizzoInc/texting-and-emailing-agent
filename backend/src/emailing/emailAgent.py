@@ -106,6 +106,14 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         # display contents of the existing contact list
         if displayContacts: self.printContactListPretty()
 
+
+    def chooseEmailFilter(self, onlyUnread:bool):
+        """
+            \n@Brief: Helper function to determine which filter to use
+            \n@Param: onlyUnread - True if only want unread emails
+        """
+        return EmailAgent._unreadEmailFilter if onlyUnread else EmailAgent._allEmailFilter
+
     def configureLogin(self, overrideUsername:bool=False, overridePassword:bool=False):
         """
             \n@Brief: Helper function that sets username & password if needed
@@ -794,6 +802,36 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         # call function that handles the actual adding
         self.addContact(firstName, lastName, myEmail, carrier, phoneNumber)
 
+    def getNumRelevantNewEmails(self):
+        """
+            \n@Brief: Gets all current unread emails and filters by if they are relevant to user
+            \n@Returns: {
+            \n\t"numUnread": int,
+            \n\t"relevantEmailsInfo": dict # matches return from self.getEmailsGradually()
+            \n}
+        """
+        allUnreadEmailsInfo = self.getEmailsGradually(
+            emailFilter=EmailAgent._unreadEmailFilter, printEmails=False, leaveUnread=True)
+
+        # iterate through unread emails and filter to get only relevant ones
+        for idx, emailInfo in enumerate(allUnreadEmailsInfo["emailList"]):
+            # remove from emailList & dict if not relevant
+            if emailInfo["belongsToUser"] == False:
+                # since idDict maps emailId to emailList idx, need to reverse search to get dict key to remove
+                keyList = list(allUnreadEmailsInfo["idDict"].keys())
+                valList = list(allUnreadEmailsInfo["idDict"].values())
+                dictIdxToRemove = valList.index(idx)
+                dictKeyToRemove = keyList[dictIdxToRemove]
+                del allUnreadEmailsInfo["idDict"][dictKeyToRemove]
+
+                # normal
+                del allUnreadEmailsInfo["emailList"][idx]
+
+        return {
+            "numUnread": len(allUnreadEmailsInfo["emailList"]),
+            "relevantEmailsInfo": allUnreadEmailsInfo
+        }
+
     def _waitForNewMessage(self, startedBySendingEmail:bool):
         """
             \n@Brief: This function halts the program until a new message is detected in the inbox
@@ -804,7 +842,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         if startedBySendingEmail == False:
             if self.isCommandLine:
                 while ('y' not in waitForMsg and 'n' not in waitForMsg):
-                    waitForMsg = input("Do you want to wait for a new message (y/n): ")
+                    waitForMsg = input("\nDo you want to wait for a new message (y/n): ")
             else: 
                 raise Exception("IMPLEMENT NON-COMMAND LINE '_waitForNewMessage'")
         else:
@@ -815,25 +853,27 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # wait for new message
         else:
-            keepCheckingInbox = True # allows function to look at emails to repeat
-
-            startNumEmails = len(self.getEmailListIDs())
-            numEmails = startNumEmails
-            unreadEmailList = []
-            
             print("waiting for new message...\n")
-            while startNumEmails - numEmails == 0:
+            normalEmailInfoRtn = {}
+            while True:
+                # Check for emails
                 # Defaults to only look for unread emails
-                unreadEmailList = self.getEmailListIDs()
-                numEmails = len(unreadEmailList)
-                # check intermittenly
-                time.sleep(10) # in seconds
-                print("{0} - No New Message".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
-            
+                relevantUnreadDict = self.getNumRelevantNewEmails()
+                numEmails = relevantUnreadDict["numUnread"]
+                normalEmailInfoRtn = relevantUnreadDict["relevantEmailsInfo"]
+
+                if numEmails > 0: break
+                else:
+                    print("{0} - No New Message".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
+                    # check intermittenly
+                    time.sleep(10) # in seconds
+
             # if this point is reached, new email detected and can end function so program can continue!
             print("{0} - New email message detected!".format(str(datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S"))))
-            self.receiveEmail(onlyUnread=True, recursiveCall=True) # return to main receive function but have it stop early to not recur
-            
+
+            # return to main receive function but have it stop early to not recur
+            self.receiveEmail(onlyUnread=True, recursiveCall=True, fetchedEmailsDict=normalEmailInfoRtn)
+
 
     def getEmailListIDs(self, emailFilter:str=_unreadEmailFilter)->list():
         """
@@ -994,19 +1034,25 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
 
     def getEmailsGradually(self,
-                           emailFilter:str=_unreadEmailFilter,
-                           printDescriptors:bool=True,
-                           leaveUnread:int=False,
-                           maxFetchCount=-1)->(list(), dict()):
+            emailFilter:str=_unreadEmailFilter,
+            printDescriptors:bool=True,
+            leaveUnread:int=False,
+            maxFetchCount=-1,
+            printEmails:bool=True
+        )->dict():
         """
             \n@Brief- Takes email dict and prints out email nicely for user
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
             \n@Param: printDescriptors(bool)- if true, print "<email id>) <email subject>" for all emails
             \n@Param: leaveUnread- Dont open the email (leave as unread)
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
-            \n@Return- Touple(emailMsgLlist, idList) 
-            \n@emailMsgLlist: list of dicts with email message data. Format [{To, From, DateTime, Subject, Body, idNum, unread}]
-            \n@idDict: dict of email ids mapped to indexes of emailMsgLlist in format {'<email id>': {idx: '<list index>', desc: ''}}
+            \n@Param: printEmails - Should each email be printed out (note, if not command line, always False)
+            \n@Return- {
+            \n\t"emailList": list({To, From, DateTime, Subject, Body, idNum, unread, belongsToUser}),
+            \n\t"idDict": dict({'[insert email id]': {idx: '[list index]', desc: ''})
+            \n}
+            \n@emailList: list of dicts with email message data
+            \n@idDict: dict of email ids mapped to indexes of emailList
         """
         # Get both types of lists so that if reading all emails, can mark ones as unread
         idListUnread = self.getEmailListIDs(emailFilter=EmailAgent._unreadEmailFilter)
@@ -1030,7 +1076,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                     emailDescLine = "" # default to empty string 
                     if printDescriptors:
                         emailDescLine = self._getEmailDescriptor(emailMsg)
-                        if (self.isCommandLine): print(emailDescLine)
+                        if (self.isCommandLine and printEmails): print(emailDescLine)
                     idDict[idNum] = {"idx": numFetched, "desc": emailDescLine}
                     numFetched+=1
 
@@ -1044,10 +1090,11 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 fetchEmailsWorker,
                 prompt="stop fetching emails (this may take awhile)",
                 toPrintOnStop="Stopped fetching",
+                printPrompts=printEmails
             )
         else: fetchEmailsWorker()
 
-        return (emailList, idDict)
+        return {"emailList": emailList, "idDict": idDict}
 
     def _openEmail(self, idDict:dict, emailList:list, idSelected:int=-1)->(str(), dict()):
         """
@@ -1123,7 +1170,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                      startedBySendingEmail=False,
                      onlyUnread:bool=True,
                      recursiveCall:bool=False,
-                     maxFetchCount:int=-1
+                     maxFetchCount:int=-1,
+                     fetchedEmailsDict:dict=None
                     )->dict():
         """
             \n@Brief: High level api function which allows user to receive an email
@@ -1133,6 +1181,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n@Param: onlyUnread- When set to true, no command line input needed to tell which messages to read
             \n@Param: recursiveCall- bool used to prevent infinite recursion when waiting for new email
             \n@Param: maxFetchCount- The maximum number of emails to fetch (default to -1 = no limit)
+            \n@Param: fetchedEmailsDict - (optional) Only set this to a return from 'getEmailsGradually'
+            (Bypasses calling this function locally, hence prevents redundancy)
             \n\t@Return: `{
             \n\t    error: bool,
             \n\t    text: str,
@@ -1151,18 +1201,17 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 toRtn["text"] = err
                 return toRtn
 
-        # input error checking
-        if onlyUnread:
-            emailList, idDict = self.getEmailsGradually(emailFilter=EmailAgent._unreadEmailFilter, maxFetchCount=maxFetchCount)
-        elif not onlyUnread: 
-            emailList, idDict = self.getEmailsGradually(emailFilter=EmailAgent._allEmailFilter, maxFetchCount=maxFetchCount)
-
-        toRtn["idDict"] = idDict
-        toRtn["emailList"] = emailList
+        # only get email dict if not already provided
+        if fetchedEmailsDict == None or len(fetchedEmailsDict) == 0:
+            emailFilter = self.chooseEmailFilter(onlyUnread)
+            fetchedEmailsDict = self.getEmailsGradually(emailFilter=emailFilter, maxFetchCount=maxFetchCount)
+        
+        # due to depth of fetchedEmailsDict, have to manually set values of toRtn
+        toRtn = utils.mergeDicts(toRtn, fetchedEmailsDict)
 
         # if command line, can just ask user, otherwise need to call another function to select & open email by id
         if (self.isCommandLine):
-            self.recvCommandLine(startedBySendingEmail, recursiveCall, emailList, idDict)
+            self.recvCommandLine(startedBySendingEmail, recursiveCall, toRtn["emailList"], toRtn["idDict"])
         return toRtn
 
     def openEmailById(self, idDict, emailList, emailId)->str():

@@ -109,16 +109,17 @@ class KeyboardMonitor():
         # remove extra newlines
         return msgToRtn.strip()
 
-    def _stopOnKeypress(self, workerFn, prompt:str="\b", toPrintOnStop:str=""):
+    def _stopOnKeypress(self, workerFn, prompt:str="\b", toPrintOnStop:str="", printPrompts:bool=True):
         """
             \n@Brief: Stops running 'workerFn()' when a certain key is pressed
             \n@Param: workerFn - The function that should be stopped on the keypress 
             (Needs threading.Event arg that will stop worker if event.isSet())
             \n@Param: toPrintOnStop - (optional) What's printed when the thread is stopped during target's execution
             \n@Param: prompt - The prompt to the user before they wait to stop about wait they are waiting for
+            \n@Param: printPrompts - Set to false to keep prints to a minimum
         """
         # hide terminal inputs (only care about 'escape')
-        print(f"Press escape ('esc') to {prompt}...")
+        if printPrompts: print(f"Press escape ('esc') to {prompt}...")
 
         # Create Event & EventThread to stop keyboard thread if worker finishes
         # If worker fn finishes first, will trigger a callback that presses the escape key to stop keyboard monitor
@@ -134,7 +135,7 @@ class KeyboardMonitor():
         funcToRunThread = threadWithException(
             name="stop-me-on-keypress-thread",
             target=workerFn,
-            toPrintOnStop=toPrintOnStop,
+            toPrintOnStop=toPrintOnStop if printPrompts == True else "",
             stopEvent=stopEvent
         )
 

@@ -6,6 +6,7 @@ import platform
 import subprocess
 # used to get local network exposible IP
 import socket
+import copy
 
 def loadJson(pathToJson):
     """Wrapper function that makes it easy to load a json"""
@@ -23,7 +24,11 @@ def keyExists(thisDict, key):
     return key in thisDict
 
 def mergeDicts(dict1, dict2):
-    return {**dict1, **dict2}
+    # return {**dict1, **dict2} # doesnt always work
+    toRtn = copy.deepcopy(dict1)
+    for key in list(dict2.keys()):
+        toRtn[key] = dict2[key]
+    return toRtn
 
 def isWindows():
     myPlatform = platform.system()

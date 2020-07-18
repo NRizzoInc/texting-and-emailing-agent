@@ -59,21 +59,35 @@ class UsersCollectionManager(DatabaseBaseClass):
         matchId = match[0]["id"]
         return matchId
 
-    def findUserById(self, userToken):
+    def findUserById(self, userToken, UserObjRef):
         """
             \n@Param: userToken - The user's unique token id
+            \n@Param: UserObjRef - reference to the constructor for the User object
             \n@Return: The 'User' object (None if 'User' DNE or unset)
         """
         userDoc = self._getDocById(self.usersColl, userToken)
-        return self.__checkIfUserValid(userDoc)
+        return self._createUserIfDNE(userDoc, UserObjRef)
 
-    def getUserByUsername(self, username):
+    def getUserByUsername(self, username, UserObjRef):
         """
             \n@Param: username: The username of the user's account
+            \n@Param: UserObjRef - reference to the constructor for the User object
             \n@Returns: None if username does not exist
         """
         userDoc = self._getDocByUsername(self.usersColl, username)
-        return self.__checkIfUserValid(userDoc)
+        return self._createUserIfDNE(userDoc, UserObjRef)
+
+    def _createUserIfDNE(self, userDoc, UserObjRef):
+        """
+            \n@Brief: Get the User object referenced in the document. If it doesn't exist, create one
+            \n@Param: userDoc - The dictionary containing the information belonging to a specific user
+            \n@Param: UserObjRef - reference to the constructor for the User object
+            \n@Returns: The User object associated with the document (creates one if not already made/set)
+            \n@Note: Good if paired with '__checkIfUserValid'
+        """
+        userObj = self.__checkIfUserValid(userDoc)
+        userId = userDoc["id"]
+        return userObj if userObj != None else UserObjRef(userId)
 
     def __checkIfUserValid(self, userDoc:dict):
         """

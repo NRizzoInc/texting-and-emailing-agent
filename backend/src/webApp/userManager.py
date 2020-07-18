@@ -44,10 +44,7 @@ class UserManager(LoginManager, DatabaseManager):
                 \n@Param: userToken - The user's unique token id
                 \n@Return: Reference to the User class related to this uuid
             """
-            userMatch = self.findUserById(userToken)
-            # if User obj is not defined, create a new one
-            if userMatch == None: userMatch = User(userToken)
-            return userMatch 
+            return self.findUserById(userToken, User)
 
         @self.unauthorized_handler
         def onNeedToLogIn():

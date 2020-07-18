@@ -162,7 +162,7 @@ class WebApp(UserManager):
                 # check results
                 isSuccess = validUsername and validPassword # only both true == success
                 if isSuccess:
-                    user = self.getUserByUsername(username)
+                    user = self.getUserByUsername(username, User)
                     login_user(user, remember=form.rememberMe.data)
 
                     # route to original destination

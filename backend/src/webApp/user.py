@@ -8,7 +8,7 @@
 from flask_login import UserMixin
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from emailing.emailAgent import EmailAgent
+from backend.src.emailing.emailAgent import EmailAgent
 
 class User(UserMixin):
     def __init__(self, userId):

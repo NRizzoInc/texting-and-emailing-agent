@@ -11,7 +11,7 @@ from pymongo import MongoClient, collection
 from bson.binary import Binary # for serializing/derializing User objects
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import utils
+from backend.src import utils
 from .databaseBaseClass import DatabaseBaseClass
 
 class UsersCollectionManager(DatabaseBaseClass):

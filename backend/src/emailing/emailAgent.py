@@ -34,12 +34,11 @@ from urllib.parse import urlparse # WARNING: python3 only
 import fleep # to identify file types
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-sys.path.append(os.path.join(os.path.dirname(__file__)))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import utils
-from database.databaseManager import DatabaseManager
+from backend.src import utils
+from backend.src.database.databaseManager import DatabaseManager
+from backend.src.emailing.keyboardHandler import KeyboardMonitor
 
-class EmailAgent(DatabaseManager):
+class EmailAgent(DatabaseManager, KeyboardMonitor):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
@@ -115,9 +114,12 @@ class EmailAgent(DatabaseManager):
             \n@Param: sendMethod- a string that should either be 'email' or 'text'
             \n@Param: msgToSend- a string that contains the message that is desired to be sent
             \n@Return: String of error message if error occurs (None if success)
-        """            
+        """
+        # Check if passed contact info is valid
+        isContactValid = receiverContactInfo != None and len(receiverContactInfo) > 0
+        if not isContactValid: return "Invalid Contact (probably does not exist)"
 
-        # first check if connected to email servers, if not connect
+        # check if connected to email servers, if not connect
         if not self.isConnectedToServers:
             err = self.connectToEmailServers()
             hasError = err != None
@@ -211,22 +213,6 @@ class EmailAgent(DatabaseManager):
                         part.set_payload(None)
         return msg
 
-    def _getTextMsgInput(self)->str():
-        """
-            \n@Brief: Helper function that allows for messages to span multiple lines, stops with 'control-c'
-            \n@Return: Returns the message as a string
-        """
-        msgToRtn = ""
-        try:
-            print("Please enter the message you would like to send (Use control-c to stop): ")
-            while True:
-                msgToRtn += input("") + "\n"
-        except KeyboardInterrupt:
-            pass
-        finally:
-            # remove extra newlines
-            return msgToRtn.strip()
-
     def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
             @Args:
@@ -267,7 +253,7 @@ class EmailAgent(DatabaseManager):
         
         # Get content to send in text message
         if self.isCommandLine:
-            body = self._getTextMsgInput()
+            body = self._getMultiLineInput("Please enter the message you would like to send")
         # not using command line
         else: 
             body = msgToSend
@@ -379,7 +365,7 @@ class EmailAgent(DatabaseManager):
                     receiverName=receiver, senderName=self.myEmailAddress) 
 
             elif typeOfMsg == 'inputContent':
-                myInput = self._getTextMsgInput()
+                myInput = self._getMultiLineInput("Please enter the message you would like to send")
                 sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
             
             # Default to default file 
@@ -407,14 +393,15 @@ class EmailAgent(DatabaseManager):
             templateFileContent = templateFile.read()
         return Template(templateFileContent)
 
-    def getReceiverContactInfo(self, myFirstName, myLastName):
-        '''
-            This function will search the existing database for entries with the input firstName and lastName.\n
-
-            Returns:\n
-                Dictionary of format: {first name, last name, email, carrier, phone number}
-                The phone number return accepts common type of seperaters or none (ex: '-')             
-        '''
+    def getReceiverContactInfo(self, myFirstName:str, myLastName:str)->dict():
+        """
+            \n@Brief: This function will search the existing database for entries with the input firstName and lastName.
+            \n@Param: myFirstName - The receiver's firstname
+            \n@Param: myLastName - The receiver's lastname
+            \n@Returns: Dictionary of format: {firstname: "", lastname: "", email: "", carrier: "", phoneNumber: ""}
+            (Will be an empty dict receiver DNE in contact list)
+            \n@Note: The phone number return accepts common type of seperaters or none (ex: '-')
+        """
 
         receiverContactInfoDict = {}
         email = ''
@@ -423,9 +410,7 @@ class EmailAgent(DatabaseManager):
 
         # Go through the list looking for name matches (case-insensitive)
         for lastName in self.contactList.keys():
-            # print(lastName)
             for firstName in self.contactList[lastName].keys():
-                # print(firstName)
                 if firstName.lower() == myFirstName.lower() and lastName.lower() == myLastName.lower():
                     print("\nFound a match!\n")
                     contactFirstName = firstName
@@ -438,9 +423,16 @@ class EmailAgent(DatabaseManager):
 
         # if values were not initialized then no match was found
         if email == '' and phoneNumber == '' and carrier == '':
-            raise Exception("Contact does not exist! \n\nAdd them to the contact \
-                list by calling this program followed by 'addContact'")
-        
+            if self.isCommandLine:
+                toPrint = [
+                    f"\nContact '{myFirstName} {myLastName}' does not exist!",
+                    f"Add them to the contact list by calling this program followed by 'using the --add-contact flag'",
+                    "\n"
+                ]
+                print("\n".join(toPrint))
+            # Return an empty dict to signify DNE
+            return {}
+            
         print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(myFirstName, myLastName))
         print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
             contactFirstName, contactLastName, email, carrier, phoneNumber))
@@ -1060,8 +1052,8 @@ class EmailAgent(DatabaseManager):
             # send response to the information of "from" from the received email
             contactInfo = self.numberToContact(emailMsgDict["From"])
 
-            # if contactInfo is None, then sender of email not in contact list. Resort to other methods
-            if contactInfo == None:
+            # if contactInfo is None/empty, then sender of email not in contact list. Resort to other methods
+            if contactInfo == None or len(contactInfo) == 0:
                 # signifies sender was a cell phone
                 if '@' in emailMsgDict["From"]:
                     # get phoneNumber/carrier info

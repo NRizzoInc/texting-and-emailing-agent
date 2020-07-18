@@ -24,12 +24,13 @@ from flask_login import login_user, current_user, login_required, logout_user
 from is_safe_url import is_safe_url
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import utils
-from userManager import User, UserManager
-from registrationForm import RegistrationForm
-from loginForm import LoginForm
-import webAppConsts
+# make sure to include 'backend' dir to get access to module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from backend.src import utils
+from backend.src.webApp.userManager import User, UserManager
+from backend.src.webApp.registrationForm import RegistrationForm
+from backend.src.webApp.loginForm import LoginForm
+from backend.src.webApp import webAppConsts
 
 class WebApp(UserManager):
     def __init__(self, isDebug:bool=False, port:str=None):

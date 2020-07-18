@@ -14,10 +14,10 @@ from flask import Flask, redirect, flash
 from flask_login import LoginManager
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-import utils
-import webAppConsts
-from database.databaseManager import DatabaseManager
-from user import User
+from backend.src import utils
+from backend.src.webApp import webAppConsts
+from backend.src.database.databaseManager import DatabaseManager
+from backend.src.webApp.user import User
 
 class UserManager(LoginManager, DatabaseManager):
     def __init__(self, app:Flask):

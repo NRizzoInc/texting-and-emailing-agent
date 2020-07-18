@@ -10,8 +10,8 @@ import pickle, copyreg, ssl # for serializing User objects (SSL obj requires mor
 from pymongo import MongoClient
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-from constants import Constants
-import utils
+from backend.src.constants import Constants
+from backend.src import utils
 
 class DatabaseBaseClass(Constants):
     def __init__(self):

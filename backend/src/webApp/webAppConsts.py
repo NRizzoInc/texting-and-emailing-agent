@@ -3,7 +3,7 @@
 """
 
 import os
-import utils
+from backend.src import utils
 
 pathToThisDir = os.path.dirname(os.path.abspath(__file__))
 srcDir = os.path.join(pathToThisDir, "..")

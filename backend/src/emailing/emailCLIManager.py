@@ -10,9 +10,10 @@ import os, sys
 import argparse # for CLI Flags
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-import utils
-from emailAgent import EmailAgent
+# make sure to include 'backend' dir to get access to module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from backend.src import utils
+from backend.src.emailing.emailAgent import EmailAgent
 
 class CLIManager(EmailAgent):
     def __init__(self):
@@ -157,41 +158,44 @@ class CLIManager(EmailAgent):
 
 
     def sendText(self, firstname=None, lastname=None):
-        # Inform users of who is current in contact list before selecting one (or adding another)
-        currContactList = self.printContactListPretty(printToTerminal=False)
-        contactListPrint = f"The existing contact list includes:\n{currContactList}"
-        print(contactListPrint)
+        # If first and last name not provided, have to manually ask for it
+        receiveInfoProvided = firstname != None and lastname != None
+        if not receiveInfoProvided:
+            # Inform users of who is current in contact list before selecting one (or adding another)
+            currContactList = self.printContactListPretty(printToTerminal=False)
+            contactListPrint = f"The existing contact list includes:\n{currContactList}"
+            print(contactListPrint)
 
-        # Check if they want to add a new contact
-        addContact = utils.promptUntilSuccess("Do you want to add a new contact to this list(y/n): ")
-        if addContact == 'y' or addContact == 'yes': self.simpleAddContact()
+            # Check if they want to add a new contact
+            addContact = utils.promptUntilSuccess("Do you want to add a new contact to this list(y/n): ")
+            if addContact == 'y' or addContact == 'yes': self.simpleAddContact()
 
-        # check if user wants to send a message
-        sendMsg = utils.promptUntilSuccess(
-            "Do you want to send a message to one of these contacts (y/n): ",
-            successCondition=utils.containsConfirmation
-        )
-        if sendMsg == 'y': 
-            # First check first & last name were provided
-            # Dont need an else (both provided)
-            createNamePrompt = lambda x: f"Enter the receipient's {x}: "
-            if firstname == None and lastname == None:
-                firstname = utils.promptUntilSuccess(createNamePrompt("firstname"))
-                lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
-            elif firstname == None:
-                firstname = utils.promptUntilSuccess(createNamePrompt("firstname"))
-            elif lastname == None:
-                lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
+            # check if user wants to send a message
+            sendMsg = utils.promptUntilSuccess(
+                "Do you want to send a message to one of these contacts (y/n): ",
+                successCondition=utils.containsConfirmation
+            )
+            if sendMsg == 'y': 
+                # First check first & last name were provided
+                # Dont need an else (both provided)
+                createNamePrompt = lambda x: f"Enter the receipient's {x}: "
+                if firstname == None and lastname == None:
+                    firstname = utils.promptUntilSuccess(createNamePrompt("firstname"))
+                    lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
+                elif firstname == None:
+                    firstname = utils.promptUntilSuccess(createNamePrompt("firstname"))
+                elif lastname == None:
+                    lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
 
-            # get contact info regardless of method to reach this point
-            receiverContactInfo = self.getReceiverContactInfo(firstname, lastname)
+        # get contact info regardless of method to reach this point
+        receiverContactInfo = self.getReceiverContactInfo(firstname, lastname)
 
-            # acutally send message
-            self.sendMsg(receiverContactInfo)
+        # acutally send message
+        self.sendMsg(receiverContactInfo)
 
         # regardless of if sent a message or not, see if user wants to wait for reply
         waitForReply = utils.promptUntilSuccess(
-            "Do you want to wait for a reply (y/n): ", successCondition=utils.containsConfirmation)
+            "Do you want to wait for a new message (y/n): ", successCondition=utils.containsConfirmation)
         if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
     def getText(self, firstname=None, lastname=None):

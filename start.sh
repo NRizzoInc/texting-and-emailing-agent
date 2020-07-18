@@ -86,6 +86,5 @@ if [[ ${executePath} == "" ]]; then
     exit 1
 fi
 
-
 # use "$@" to pass on all parameter the same way to python script
 ${pythonLocation} ${executePath} "$@"

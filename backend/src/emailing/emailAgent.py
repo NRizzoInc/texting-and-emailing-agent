@@ -116,6 +116,14 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 else: break
             newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI): ")
             self._addUserToColl(self._userId, newUsername, newPassword, None)
+        self._sendTextBlurb = f"Dest: {myUsername}" # text to match on receive side
+
+    def createTextReturnInstructions(self)->str():
+        """Helper function for telling receiver how to send a message back so it can be received"""
+        myUsername = self.getUsernameById(self._userId)
+        # Note: Text will not send if you do 'To: <username>' -- probably interferes with native email code
+        msgToAppend = f"\n\nAdd '{self._sendTextBlurb}' if you want them to be able to see your response"
+        return msgToAppend
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
@@ -162,13 +170,14 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             # method of sending email changes depending on whether it is an email of text
             if self.sendToPhone is True:
                 msgList = self.adjustTextMsg(msg)
-                
+                msgList[-1] += self.createTextReturnInstructions() # add instructions to end of msg
+
                 # send pure text first
                 for currMsg in msgList:
-                    sms = currMsg.strip() # need to convert message to string
+                    smsText = currMsg.strip() # need to convert message to string
                     # only send text bubble is there is actual text to send
-                    if (not sms.isspace() and len(sms) > 0): 
-                        self.SMTPClient.sendmail(msg["From"], msg["To"], sms)
+                    if (not smsText.isspace() and len(smsText) > 0): 
+                        self.SMTPClient.sendmail(msg["From"], msg["To"], smsText)
                         # add microscopic delay to ensure that messages arrive in correct order
                         time.sleep(10/1000) # input is in seconds (convert to milliseconds)
                     else:

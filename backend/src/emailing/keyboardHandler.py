@@ -42,9 +42,13 @@ class KeyboardMonitor():
         """
         def __onRelease(releasedKey:KeyCode):
             if self.printMessages: print(f"{releasedKey.char} released")
-            # if not the 'stopKey', add the pressed key into the queue
-            if releasedKey != stopKey: inputQueue.put(releasedKey.char)
-            else: return False
+            # if not the 'stopKey', add the pressed key into the queue & print it out for user feedback
+            if releasedKey != stopKey:
+                inputQueue.put(releasedKey.char)
+                print(releasedKey.char, end="", flush=True) # dont add newline at the end of each
+            else:
+                print("\n") # on done, print the newline
+                return False
 
         return __onRelease
 

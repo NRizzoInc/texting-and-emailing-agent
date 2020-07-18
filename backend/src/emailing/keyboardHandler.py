@@ -5,6 +5,7 @@
 
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import argparse # for CLI Flags
+from queue import Queue # used to collect inputs during 'initListener'
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pynput.keyboard import Key, KeyCode, Controller, Listener # to monitor keyboard
@@ -22,30 +23,54 @@ class KeyboardMonitor():
         super().__init__()
         self.printMessages = printMessages
 
-    def _onPressGenerator(self, stopKey):
-        """Helper function that generates function that stops the listener if 'stopKey' is pressed"""
-        def __onPress(pressedKey):
-            if self.printMessages: print(f"{pressedKey} pressed")
-            # have to stop on release or else leaves thread hanging
-            # return not pressedKey == stopKey
+    def _onPressGenerator(self, stopKey:KeyCode):
+        """
+            \n@Brief: Helper function that generates function that stops the listener if 'stopKey' is pressed
+            \n@Param: stopKey - The KeyCode to stop on
+            \n@Returns: Function pointer to the real on "onPress" callback
+        """
+        def __onPress(pressedKey:KeyCode):
+            if self.printMessages: print(f"{pressedKey.char} pressed")
         return __onPress
 
-    def _onReleaseGenerator(self, stopKey):
-        """Helper function that generates function that stops the listener if 'stopKey' is released"""
-        def __onRelease(releasedKey):
-            if self.printMessages: print(f"{releasedKey} released")
-            return not releasedKey == stopKey
+    def _onReleaseGenerator(self, stopKey:KeyCode, inputQueue:Queue):
+        """
+            \n@Brief: Helper function that generates function that stops the listener if 'stopKey' is released
+            \n@Param: stopKey - The KeyCode to stop on
+            \n@Param: inputQueue - The queue to push input data to
+            \n@Returns: Function pointer to the real on "onRelease" callback
+        """
+        def __onRelease(releasedKey:KeyCode):
+            if self.printMessages: print(f"{releasedKey.char} released")
+            # if not the 'stopKey', add the pressed key into the queue
+            if releasedKey != stopKey: inputQueue.put(releasedKey.char)
+            else: return False
+
         return __onRelease
 
-    def initListener(self, stopKey:str=None):
-        """Collect events until 'stopKey' is pressed and released (defaults to 'escape' key)"""
+    def initListener(self, stopKey:str=None)->str():
+        """
+            \n@Brief: Collect events until 'stopKey' is pressed and released (defaults to 'escape' key)
+            \n@Param: stopKey - the keyboard character to stop on
+            \n@Returns: What was typed until 'stopKey' was pressed
+        """
         # Have to convert 'stopKey' to its KeyCode
         stopKeycode = KeyCode.from_char(stopKey) if stopKey != None else Key.esc
+
+        # Create a queue in which the pressed keys can be added to
+        inputQueue = Queue()
+
         with Listener(
             on_press=self._onPressGenerator(stopKey),
-            on_release=self._onReleaseGenerator(stopKeycode),
-            suppress=False # if True, anything typed while listening is not registered (i.e. wont appear in terminal)
+            on_release=self._onReleaseGenerator(stopKeycode, inputQueue),
+            suppress=True # if True, anything typed while listening is not registered (i.e. wont appear in terminal)
         ) as listener: listener.join()
+
+        # After 'stopKey', pop each element from queue until empty to form a single string
+        inputStr = ""
+        while not inputQueue.empty():
+            inputStr+=inputQueue.get()
+        return inputStr
 
 # Test functionality
 if __name__ == "__main__":
@@ -74,4 +99,5 @@ if __name__ == "__main__":
     print(f"Stopping on '{stopKey}' key")
 
     keyMonitor = KeyboardMonitor(printMessages=args["printMessages"])
-    keyMonitor.initListener(stopKey=stopKey)
+    typedStr = keyMonitor.initListener(stopKey=stopKey)
+    print(f"You typed:\n{typedStr}")

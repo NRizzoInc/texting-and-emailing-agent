@@ -1019,16 +1019,18 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
                 emailUnreadBool = idNum in idListUnread 
                 emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
-                listIdx = len(emailList) # right before append (list size at first =0, and first entry in 0)
-                emailList.append(emailMsg)
-                emailDescLine = "" # default to empty string 
-                if printDescriptors:
-                    emailDescLine = self._getEmailDescriptor(emailMsg)
-                    if (self.isCommandLine): print(emailDescLine)
-                idDict[idNum] = {"idx": listIdx, "desc": emailDescLine}
+                numFetched = 0
+                if emailMsg["belongsToUser"] == True:
+                    emailList.append(emailMsg)
+                    emailDescLine = "" # default to empty string 
+                    if printDescriptors:
+                        emailDescLine = self._getEmailDescriptor(emailMsg)
+                        if (self.isCommandLine): print(emailDescLine)
+                    idDict[idNum] = {"idx": numFetched, "desc": emailDescLine}
+                    numFetched+=1
 
                 # exit for loop if fetched enough
-                if (maxFetchCount != -1 and idx >= maxFetchCount): return
+                if (maxFetchCount != -1 and numFetched >= maxFetchCount): return
 
         # if command line, do special trick to get user to stop the fetching
         if self.isCommandLine: self._stopOnKeypress(
@@ -1286,7 +1288,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n\t"Subject": "", 
             \n\t"body": "", 
             \n\t"idNum": "", 
-            \n\t"unread": bool
+            \n\t"unread": bool,
+            \n\t"belongsToUser": bool # true if this email is relevant to the logged in user
             \n}
         """
         # convert byte literal to string removing b''
@@ -1305,6 +1308,9 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 elif part.get_content_type() == "text/html":
                     continue
 
+        # check if the email is relevant to the logged in user
+        belongsToUser = body.find(self._sendTextBlurb) != -1
+
         # Get date and time of email
         dataTuple = email.utils.parsedate_tz(emailMsg['Date'])
         if dataTuple:
@@ -1313,13 +1319,14 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             dateTime = local_date.strftime("%a, %d %b %Y %H:%M:%S")
 
         emailMsgDict = {
-            "To":           emailMsg['To'],
-            "From":         emailMsg['From'],
-            "DateTime":     dateTime,
-            "Subject":      emailMsg['Subject'],
-            "Body":         body,
-            "idNum":        idNum,
-            "unread":       unread
+            "To":               emailMsg['To'],
+            "From":             emailMsg['From'],
+            "DateTime":         dateTime,
+            "Subject":          emailMsg['Subject'],
+            "Body":             body,
+            "idNum":            idNum,
+            "unread":           unread,
+            "belongsToUser":    belongsToUser
         }
 
         return emailMsgDict

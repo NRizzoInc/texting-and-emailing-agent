@@ -41,7 +41,7 @@ from backend.src.emailing.keyboardHandler import KeyboardMonitor
 class EmailAgent(DatabaseManager, KeyboardMonitor):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
-        \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveMsg
+        \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveEmail/openEmailById
         \n@Note:The helper high level api functions are: updateContactInfo(), self.EmailAgent.printContactListPretty(),
         self.EmailAgent.setDefaultState(bool), getReceiverContactInfo(firstName, lastName)
     """

@@ -202,8 +202,8 @@ class CLIManager(EmailAgent):
         # Entering something in the second argument signifies that you want to use the default login
         seeUnopned = utils.promptUntilSuccess(
             "Do you want to see only unopened emails (y/n): ", successCondition=utils.containsConfirmation)
-        if filterInput == "y": self.receiveEmail(onlyUnread=True)
-        elif filterInput == "n": self.receiveEmail(onlyUnread=False)
+        if seeUnopned == "y": self.receiveEmail(onlyUnread=True)
+        elif seeUnopned == "n": self.receiveEmail(onlyUnread=False)
         else: print("Invalid Arg Entered!")
 
     def getServiceType(self):

@@ -5,7 +5,7 @@
 
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import argparse # for CLI Flags
-from queue import Queue # used to collect inputs during 'initListener'
+from queue import Queue # used to collect inputs during 'inputUntil'
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pynput.keyboard import Key, KeyCode, Controller, Listener # to monitor keyboard
@@ -18,7 +18,7 @@ class KeyboardMonitor():
         """
             \n@Brief: Class that help monitor when a certain key is clicked
             \n@Param: printMessages - Set to false if you do not want it printing which keys were clicked
-            \n@Note: Most likely will use the 'initListener()' function
+            \n@Note: Most likely will use the 'inputUntil()' function
         """
         super().__init__()
         self.printMessages = printMessages
@@ -48,9 +48,9 @@ class KeyboardMonitor():
 
         return __onRelease
 
-    def initListener(self, stopKey:str=None)->str():
+    def inputUntil(self, stopKey:str=None)->str():
         """
-            \n@Brief: Collect events until 'stopKey' is pressed and released (defaults to 'escape' key)
+            \n@Brief: Collects keypresses until 'stopKey' is pressed and released (defaults to 'escape' key)
             \n@Param: stopKey - the keyboard character to stop on
             \n@Returns: What was typed until 'stopKey' was pressed
         """
@@ -99,5 +99,5 @@ if __name__ == "__main__":
     print(f"Stopping on '{stopKey}' key")
 
     keyMonitor = KeyboardMonitor(printMessages=args["printMessages"])
-    typedStr = keyMonitor.initListener(stopKey=stopKey)
+    typedStr = keyMonitor.inputUntil(stopKey=stopKey)
     print(f"You typed:\n{typedStr}")

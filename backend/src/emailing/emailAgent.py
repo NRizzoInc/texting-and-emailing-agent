@@ -1034,11 +1034,12 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             return
 
         # if command line, do special trick to get user to stop the fetching
-        if self.isCommandLine: self._stopOnKeypress(
-            fetchEmailsWorker,
-            prompt="stop fetching emails",
-            toPrintOnStop="Stopped fetching",
-        )
+        if self.isCommandLine: 
+            self._stopOnKeypress(
+                fetchEmailsWorker,
+                prompt="stop fetching emails",
+                toPrintOnStop="Stopped fetching",
+            )
         else: fetchEmailsWorker()
 
         return (emailList, idDict)

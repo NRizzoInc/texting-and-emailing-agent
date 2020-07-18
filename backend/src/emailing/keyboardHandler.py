@@ -13,7 +13,7 @@ from pynput.keyboard import Key, KeyCode, Controller, Listener # to monitor keyb
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from backend.src.emailing.threadHelper import threadWithException
+from backend.src.threadHelper.killableThreads import threadWithException
 
 class KeyboardMonitor():
     def __init__(self, printKeyPresses=False):

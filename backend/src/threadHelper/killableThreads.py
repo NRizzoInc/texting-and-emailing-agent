@@ -1,5 +1,4 @@
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
-# needed for receive code to stop fetching
 import threading
 from queue import Queue
 import ctypes

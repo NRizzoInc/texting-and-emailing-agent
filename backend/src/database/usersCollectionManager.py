@@ -65,11 +65,7 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Return: The 'User' object (None if 'User' DNE or unset)
         """
         userDoc = self._getDocById(self.usersColl, userToken)
-        if utils.keyExists(userDoc, "User") and userDoc["User"] != None:
-            serializedUserObj = userDoc["User"]
-            userObj = self._deserializeData(serializedUserObj)
-        else: userObj = None
-        return userObj
+        return self.__checkIfUserValid(userDoc)
 
     def getUserByUsername(self, username):
         """
@@ -77,8 +73,18 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Returns: None if username does not exist
         """
         userDoc = self._getDocByUsername(self.usersColl, username)
-        serializedUserObj = userDoc["User"]
-        userObj = self._deserializeData(serializedUserObj)
+        return self.__checkIfUserValid(userDoc)
+
+    def __checkIfUserValid(self, userDoc:dict):
+        """
+            \n@Brief: Helper function that checks if the 'User' obj within the document has been set and is valid
+            \n@Param: userDoc - The dictionary containing the information belonging to a specific user
+            \n@Return: The User object 
+        """
+        if utils.keyExists(userDoc, "User") and userDoc["User"] != None:
+            serializedUserObj = userDoc["User"]
+            userObj = self._deserializeData(serializedUserObj)
+        else: userObj = None
         return userObj
 
     def getPasswordFromUsername(self, username:str)->str():

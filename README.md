@@ -46,11 +46,11 @@ using the virtual environment so your global python system is not messed up
 **(Not recommended as you will have to deal with virtual environment shenanigans yourself)**
 
 1. Activate the virtual environment (located in `emailEnv` directory after install)
-2. Run either the GUI (`webApp`) or command line version (`emailAgent`)
+2. Run either the GUI (`webApp`) or command line version (`emailCLIManager`)
 
   > GUI: `python <path to repo root>/backend/src/webApp/webApp.py`
 
-  > Command Line: `python <path to repo root>/backend/src/emailing/emailAgent.py`
+  > Command Line: `python <path to repo root>/backend/src/emailing/emailCLIManager.py`
 
 ## How to Use (Flags)
 
@@ -68,7 +68,7 @@ using the virtual environment so your global python system is not messed up
 
 1. Try to send a message to a user who does not exist. The program will ask you if you want to add the contact to the list and go through it with you step by step.
 
-2. To skip directly to the add contact step, simply use the `emailAgent` flag `--add-contact`
+2. To skip directly to the add contact step, simply use the `emailCLIManager` flag `--add-contact`
 
 3. Via the web app -- click "Add Contact"
 
@@ -76,7 +76,7 @@ using the virtual environment so your global python system is not messed up
 
 1. Try to send a message to a user who already exist. The program will ask you if you want to update the contacts info and go through it with you step by step.
 
-2. To skip directly to the add contact step, simply the `emailAgent` flag `--update-contact`
+2. To skip directly to the add contact step, simply the `emailCLIManager` flag `--update-contact`
 
 ## To Make Code Executable on a Computer Without Python
 

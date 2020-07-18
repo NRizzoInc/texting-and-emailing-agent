@@ -50,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-k", "--stop-key",
         metavar="<key to stop on>",
-        default=None,
+        default="escape",
         required=False,
         dest="stopKey",
         help="The key to stop listening on",

@@ -26,15 +26,15 @@ class DatabaseBaseClass(Constants):
         self.usersColl = self.dbClient[self._userCollectionName] # this is for web app
         self.contactsColl = self.dbClient[self._contactsCollectionName] # this is for email agent to manage contact lists
 
-    def _createCollDNE(self, collObj:MongoClient):
+    def _createCollDNE(self, collObj:MongoClient, printCreation=True):
         """Wrapper of lowest level api functions that creates a collection if it does not exist (DNE)"""
         exists = self.__doesCollExist(collObj)
         collName = collObj.name
         if not exists:
-            print(f"Database collection '{collName}' does not exist... creating")
+            if printCreation: print(f"Database collection '{collName}' does not exist... creating")
             self._createCollection(collObj)
         else:
-            print(f"Database collection '{collName}' already exists")
+            if printCreation: print(f"Database collection '{collName}' already exists")
 
     def __doesCollExist(self, collObj:MongoClient)->bool():
         collectionNames = self.dbClient.list_collection_names()

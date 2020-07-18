@@ -59,7 +59,12 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
             \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
         """
+        # this variable is neccesary for the webApp and anything that wants to 
+        # implement this class not using the command line
+        self.isCommandLine = isCommandLine
+
         # Inheret all functions and 'self' variables
+        DatabaseManager.__init__(self, printCollectionCreation=not self.isCommandLine)
         super().__init__()
 
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
@@ -86,10 +91,6 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         # boolean that when set to True means the program will login
         # to a known email account wihtout extra inputs needed
         self.useDefault = useDefault 
-
-        # this variable is neccesary for the webApp and anything that wants to 
-        # implement this class not using the command line
-        self.isCommandLine = isCommandLine
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId

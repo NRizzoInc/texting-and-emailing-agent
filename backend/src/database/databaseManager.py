@@ -20,7 +20,7 @@ from backend.src.database.contactsCollectionManager import ContactsCollectionMan
 class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
     _numInits = 0
 
-    def __init__(self):
+    def __init__(self, printCollectionCreation=True):
         """
             \n@Brief: This class is meant to help manage the database of users' information
             \n@Note: Will create the database if it does not already exist
@@ -34,6 +34,6 @@ class DatabaseManager(UsersCollectionManager, ContactsCollectionManager):
             # if db or collection(s) don't exist, add dummy data to them to create it
             allCollections = [self.usersColl, self.contactsColl]
             for collObj in allCollections: 
-                self._createCollDNE(collObj)
+                self._createCollDNE(collObj, printCreation=printCollectionCreation)
         DatabaseManager._numInits += 1
 

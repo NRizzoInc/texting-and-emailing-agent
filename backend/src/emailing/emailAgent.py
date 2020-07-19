@@ -162,6 +162,14 @@ class EmailAgent(DatabaseManager):
         msgToAppend = f"\n\nAdd '{self._uniqueUserEmailSignature}' if you want them to be able to see your response"
         return msgToAppend
 
+    def getTextableProviders(self)->list():
+        """
+            \n@Brief: Returns list containing all cell service providers that allow texts via email
+            \n@Note: Based on self.emailProvidersInfo
+        """
+        filterPossibleSms = lambda name: utils.keyExists(self.emailProvidersInfo[name]["smtpServer"], "SMS-Gateways")
+        return list(filter(filterPossibleSms, self.emailProvidersInfo.keys()))
+
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
         """
             \n@Brief: Calls all other functions necessary to send an a message (either through text or email)

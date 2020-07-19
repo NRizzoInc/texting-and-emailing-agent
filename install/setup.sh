@@ -114,15 +114,7 @@ $pythonLocation -m pip install --upgrade pip
 
 # now pip necessary packages
 echo "#3 Installing all packages"
-$pipLocation install flask
-$pipLocation install pyinstaller # to turn python to .exe
-$pipLocation install fleep # to identify file types based on content -  https://github.com/floyernick/fleep-py
-$pipLocation install flask-login
-$pipLocation install flask-wtf
-$pipLocation install flask-socketio
-$pipLocation install is-safe-url
-$pipLocation install pymongo # for mongoDB
-$pipLocation install pynput # for keyboard event listeners
+$pipLocation install -r ${installDir}/requirements.txt
 
 # Start service after everything installed if linux
 if [[ "${isWindows}" = false ]]; then

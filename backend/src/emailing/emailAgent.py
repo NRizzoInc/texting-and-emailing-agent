@@ -974,15 +974,23 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         return emailList
 
     ############################# Mark as (un)read functions ###########################
-    # Note: +/-FLAGS either adds or removes flag
+    # Note: +/-FLAGS either adds or removes flag (Dont work due to "unexpected response")
     ####################################################################################
-    def markAsUnread(self, emailId):
-        """Mark an email (with 'emailId') as unread"""
-        self.IMAPClient.store(emailId, "-FLAGS", "\SEEN")
+    def markAsUnread(self, emailId:str):
+        """
+            Mark an email (with 'emailId' in its original encoded form) as unread
+            WARNING: Does not seem to work with gmail so use at your own risk
+        """
+        self.IMAPClient.store(str(emailId), "-FLAGS", "\SEEN")
 
-    def markAsRead(self, emailId):
-        """Mark an email (with 'emailId') as read"""
-        self.IMAPClient.store(emailId, "+FLAGS", "\SEEN")
+    def markAsRead(self, emailId:str):
+        """
+            Mark an email (with 'emailId' in its original encoded form) as read
+            WARNING: Does not seem to work with gmail so use at your own risk
+            Note: Due to necessity & the weirdness of gmail, necessary approach to marking as read will be to fetch
+        """
+        # self.IMAPClient.uid("STORE", str(emailId), "+FLAGS", "\SEEN") -- produces "UNEXPECTED RESPONSE" fatal error
+        self.fetchEmail(emailId, leaveUnread=False)
     ####################################################################################
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):

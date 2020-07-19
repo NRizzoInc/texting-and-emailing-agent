@@ -8,6 +8,7 @@
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import os, sys
 import argparse # for CLI Flags
+import functools
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 # make sure to include 'backend' dir to get access to module
@@ -120,6 +121,13 @@ class CLIManager(EmailAgent):
             required=False,
             help="The receipient's lastname",
         )
+        receipientManagerGroup.add_argument(
+            "--available-provider-list",
+            action="store_true",
+            dest="getProviderList",
+            required=False,
+            help="Print out all cell service providers that can be texted with this program & exit",
+        )
 
         ##################################################################################################################
         # Login Managers
@@ -160,6 +168,13 @@ class CLIManager(EmailAgent):
         elif args["setUsername"] or args["setPassword"]:
             super().__init__(displayContacts=False, isCommandLine=True)
             self.configureLogin(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
+            sys.exit(0)
+        elif args["getProviderList"]:
+            super().__init__(displayContacts=False, isCommandLine=True)
+            cellProviders = self.getTextableProviders()
+            formatProviders = lambda x, y: f"{x}\n{y}" 
+            formattedProviders = functools.reduce(formatProviders, cellProviders)
+            print(f"The possible cell providers are:\n{formattedProviders}")
             sys.exit(0)
 
         # Create a class obj for this file

@@ -6,14 +6,14 @@
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import os, sys
 import argparse # for CLI Flags
-from threading import Thread
+from threading import Thread, Event
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pynput.keyboard import Key, KeyCode, Controller, Listener # to monitor keyboard
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-from backend.src.threadHelper.killableThreads import threadWithException
+from backend.src.threadHelper.killableThreads import threadWithException, stopThreadOnSetCallback
 
 class KeyboardMonitor():
     def __init__(self, printKeyPresses=False):
@@ -47,7 +47,18 @@ class KeyboardMonitor():
 
         return __onRelease
 
-    def inputUntil(self, returnThread:bool=True, stopKey:str=None, suppressTerm:bool=False)->Listener():
+    def _pressEscape(self):
+        """Helper function to press the escape ('esc') key"""
+        keyboard = Controller()
+        # press & release escape
+        keyboard.press(Key.esc)
+        keyboard.release(Key.esc)
+
+    def inputUntil(self, 
+            returnThread:bool=True,
+            stopKey:str=None,
+            suppressTerm:bool=False,
+        )->Listener():
         """
             \n@Brief: Collects keypresses until 'stopKey' is pressed and released (defaults to 'escape' key)
             \n@Param: returnThread - If False, block until stop key. If True, return the thread to be handled locally
@@ -98,34 +109,62 @@ class KeyboardMonitor():
         # remove extra newlines
         return msgToRtn.strip()
 
-    def _stopOnKeypress(self, workerFn, prompt:str="\b", toPrintOnStop:str=""):
+    def _stopOnKeypress(self, workerFn, prompt:str="\b", toPrintOnStop:str="", printPrompts:bool=True):
         """
             \n@Brief: Stops running 'workerFn()' when a certain key is pressed
-            \n@Param: workerFn - The function that should be stopped on the keypress
+            \n@Param: workerFn - The function that should be stopped on the keypress 
+            (Needs threading.Event arg that will stop worker if event.isSet())
             \n@Param: toPrintOnStop - (optional) What's printed when the thread is stopped during target's execution
             \n@Param: prompt - The prompt to the user before they wait to stop about wait they are waiting for
+            \n@Param: printPrompts - Set to false to keep prints to a minimum
         """
         # hide terminal inputs (only care about 'escape')
-        print(f"Press escape ('esc') to {prompt}...")
-        # Create threads to run
+        if printPrompts: print(f"Press escape ('esc') to {prompt}...")
 
+        # Create Event & EventThread to stop keyboard thread if worker finishes
+        # If worker fn finishes first, will trigger a callback that presses the escape key to stop keyboard monitor
+        stopEvent = Event()
+        stopEventCallback = stopThreadOnSetCallback(
+            name="stopEventCallback",
+            onStopCallback=self._pressEscape,
+            stopEvent=stopEvent
+        )
+
+        # Create threads to run
         # worker that should be stopped when the key is pressed
         funcToRunThread = threadWithException(
             name="stop-me-on-keypress-thread",
             target=workerFn,
-            toPrintOnStop=toPrintOnStop
+            toPrintOnStop=toPrintOnStop if printPrompts == True else "",
+            stopEvent=stopEvent
         )
 
-        # on 'esc'
-        stopKeyThread = self.inputUntil(returnThread=True, suppressTerm=True, )
+        # on 'esc' (suppressTerm = False so user can still use keyboard -- just not in terminal)
+        stopKeyThread = self.inputUntil(returnThread=True, suppressTerm=False)
 
         # have the custom function run, but stop it when the stop key thread finishes
         # https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
-        stopKeyThread.start() # start monitor first (might be delay, so it should be available prior)
-        funcToRunThread.start() # start worker function
-        stopKeyThread.join() # block main thread until monitoring thread stop (i.e. 'esc' is clicked)
-        funcToRunThread.raise_exception() # ends the worker function by causing an exception
-        funcToRunThread.join() # kill the thread completely
+        # start monitor threads first (might be delay, so it should be available prior)
+
+        # checks if worker fn finishes first (if so, triggers callback to trigger stop on monitor)
+        stopEventCallback.start()
+
+        # montiors keyboard -- stopped when 'esc' is clicked or stopEventCallback is triggered by end of worker
+        stopKeyThread.start()
+
+        # start worker function
+        funcToRunThread.start()
+
+        # block main thread until monitoring thread stop (i.e. 'esc' is clicked)
+        stopKeyThread.join()
+        
+        # ends the worker function by causing an exception
+        funcToRunThread.raise_exception()
+
+        # kill the threads completely
+        # (make sure to set stopEvent to ensure stopEventCallback is killed)
+        funcToRunThread.join()
+        stopEvent.set() # Warning: Remove at risk of leaving thread up
 
 # Test functionality
 if __name__ == "__main__":

@@ -162,7 +162,7 @@ class WebApp(UserManager):
                 # check results
                 isSuccess = validUsername and validPassword # only both true == success
                 if isSuccess:
-                    user = self.getUserByUsername(username)
+                    user = self.getUserByUsername(username, User)
                     login_user(user, remember=form.rememberMe.data)
 
                     # route to original destination
@@ -250,7 +250,6 @@ class WebApp(UserManager):
                 elif (proccessData['task'] == "receiving"):
                     # responsible for login to get preliminary email data
                     # use ui dropdown to select which email to fully fetch
-                    print("receiving")
                     numToFetch = current_user.getNumFetch()
                     preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)

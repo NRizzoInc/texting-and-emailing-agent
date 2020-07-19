@@ -894,7 +894,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             print("WARNING UNKNOWN EMAIL FILTER ENTERED- may result in undefined behavior")
 
         # opens folder/label you want to read from
-        self.IMAPClient.select('INBOX')
+        self.IMAPClient.select('INBOX', readonly=False)
         # print("Successfully Opened Inbox")
                     
         # get all the emails and their id #'s that match the filter
@@ -902,15 +902,9 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         if rtnCode != "OK":
             print("Bad return code from inbox!")
 
-        numEmails = len(data[0].decode()) 
-        msgIds = data[0].decode() # convert byte to string
-
-        # convert to descending ordered list (msgIds is a str with the msgIds seperated by spaces)
-        idList = list(map(lambda x:int(x), list(msgIds.split()))) 
-        idList.sort(reverse = True) # sort() performs operation on the same variable
-        # print("idList: {0}".format(idList))
-        
-        return idList
+        msgIdsList = data[0].decode().split()
+        msgIdsList.reverse()
+        return msgIdsList
 
     def fetchEmail(self, emailIdNum:int, leaveUnread:bool=True)->bytearray():
         """
@@ -923,7 +917,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         """
         if leaveUnread:     openCode = '(BODY.PEEK[])'
         else:               openCode = '(RFC822)'
-        rtnCode, emailData = self.IMAPClient.fetch(str(emailIdNum).encode(), openCode) 
+        rtnCode, emailData = self.IMAPClient.fetch(emailIdNum, openCode) 
         if (rtnCode != "OK"):
             print("Bad email return code received!!")
             

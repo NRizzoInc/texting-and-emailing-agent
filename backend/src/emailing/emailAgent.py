@@ -1125,17 +1125,18 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 return (printedStr, emailDict)
 
             # error checking for valid email id
-            while not idSelected in idDict.keys():
+            idListInt = utils.convertToIntList(idDict.keys())
+            while not idSelected in idListInt:
                 idSelected = input("Enter email id to open: ").replace('\n', '').strip()
                 if idSelected.isspace() or not idSelected.isdigit(): idSelected = -1
                 idSelected = int(idSelected)
 
         # open selected email
-        relevantInfo = idDict[idSelected]
+        relevantInfo = idDict[str(idSelected)]
         emailListIdx = relevantInfo["idx"]
         emailDict = emailList[emailListIdx]
         printedStr = self.processEmailDict(emailDict)
-        self.markAsRead(idSelected)
+        self.markAsRead(emailDict["idNum"])
         return (printedStr, emailDict)
 
     def _reply(self, startedBySendingEmail:bool, emailMsgDict:dict):

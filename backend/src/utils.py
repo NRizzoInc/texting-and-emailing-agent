@@ -85,3 +85,11 @@ def isList(objToTest):
 
 def isDict(objToTest):
     return type(objToTest) is dict
+
+def convertToIntList(listToConvert):
+    toInt = lambda x: int(x)
+    return list(map(toInt, listToConvert))
+
+def convertToStrList(listToConvert):
+    toStr  = lambda x: str(x)
+    return list(map(toStr, listToConvert))

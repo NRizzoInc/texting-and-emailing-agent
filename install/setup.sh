@@ -10,6 +10,61 @@ if [[ "${isWindows}" = false ]]; then
     fi
 fi
 
+# CLI Flags
+print_flags () {
+    echo "========================================================================================================================="
+    echo "Usage: setup.sh"
+    echo "========================================================================================================================="
+    echo "Helper utility to setup everything to use this repo"
+    echo "========================================================================================================================="
+    echo "How to use:" 
+    echo "  To Start: ./setup.sh [flags]"
+    echo "========================================================================================================================="
+    echo "Available Flags (mutually exclusive):"
+    echo "    -a | --install-all: If used, install everything (recommended for fresh installs)"
+    echo "    -p | --python-packages: Update virtual environment with current python packages (this should be done on pulls)"
+    echo "    -s | --deploy-services: Deploy the source code to enable the system service to run (only works on Ubuntu)"
+    echo "    -m | --install-mongo: Install & setup MongoDB (needed for managing users & only needed once)"
+    echo "    -h | --help: This message"
+    echo "========================================================================================================================="
+}
+
+# parse command line args
+upgradePkgs=false
+installMongo=false
+deployServices=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -a | --install-all )
+            upgradePkgs=true
+            installMongo=true
+            break
+            ;;
+        -m | --install-mongo )
+            installMongo=true
+            break
+            ;;
+        -p | --python-packages )
+            upgradePkgs=true
+            break
+            ;;
+        -s | --deploy-services )
+            deployServices=true
+            break
+            ;;
+        -h | --help )
+            print_flags
+            exit 0
+            ;;
+        * )
+            echo "... Unrecognized Command: $1"
+            print_flags
+            exit 1
+    esac
+    shift
+done
+
+
 THIS_FILE_DIR="$(readlink -fm $0/..)"
 virtualEnvironName="emailEnv"
 rootDir="$(readlink -fm ${THIS_FILE_DIR}/..)"
@@ -23,13 +78,15 @@ pythonVersion=3.7
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
 
-echo "#0 Downloading/Installing Prerequisite Software"
 
-echo "#0.1 Downloading/Installing MongoDB -- Database"
-bash ${mongoInstallScript} \
-    --root-dir ${rootDir} \
-    --install-dir ${installDir} \
-    --helper-script-dir ${helpScriptDir} \
+if [[ ${installMongo} == true ]]; then
+    echo "#0 Downloading/Installing Prerequisite Software"
+    echo "#0.1 Downloading/Installing MongoDB -- Database"
+    bash ${mongoInstallScript} \
+        --root-dir ${rootDir} \
+        --install-dir ${installDir} \
+        --helper-script-dir ${helpScriptDir}
+fi
 
 # check OS... (decide how to activate virtual environment)
 echo "#1 Setting up virtual environment"
@@ -76,65 +133,73 @@ else
     source ${virtualEnvironDir}/bin/activate
     pipLocation=${virtualEnvironDir}/bin/pip${pythonVersion}
 
-    echo "#1.5 Exporting Path to Source Code"
-    # set it locally
+    if [[ ${deployServices} == true ]]; then
+        echo "#1.5 Exporting Path to Source Code"
+        # set it locally
 
-    # make environment variable for path global (if already exists -> replace it, but keep backup)
-    # https://serverfault.com/a/413408 -- safest way to create & use environment vars with services
-    environDir=/etc/sysconfig
-    environFile=${environDir}/webAppEnviron
-    echo "Environment File: ${environFile}"
+        # make environment variable for path global (if already exists -> replace it, but keep backup)
+        # https://serverfault.com/a/413408 -- safest way to create & use environment vars with services
+        environDir=/etc/sysconfig
+        environFile=${environDir}/webAppEnviron
+        echo "Environment File: ${environFile}"
 
-    # if dir & file do not exist, add them before trying to scan & create backup
-    test -d ${environDir} && echo "${environDir} Already Exists" || mkdir ${environDir}
-    test -f ${environFile} && echo "${environFile} Already Exists" || touch ${environFile}
+        # if dir & file do not exist, add them before trying to scan & create backup
+        test -d ${environDir} && echo "${environDir} Already Exists" || mkdir ${environDir}
+        test -f ${environFile} && echo "${environFile} Already Exists" || touch ${environFile}
 
-    # create backup & save new version with updated path
-    sed -i.bak '/emailWebAppRootDir=/d' ${environFile}
-    echo "emailWebAppRootDir=${rootDir}" >> ${environFile}
-    source ${environFile}
-    echo "emailWebAppRootDir: ${rootDir}"
+        # create backup & save new version with updated path
+        sed -i.bak '/emailWebAppRootDir=/d' ${environFile}
+        echo "emailWebAppRootDir=${rootDir}" >> ${environFile}
+        source ${environFile}
+        echo "emailWebAppRootDir: ${rootDir}"
 
-    echo "#1.6 Deploying Service File"
-    sysServiceDir=/etc/systemd/system
-    serviceFileDir=${rootDir}/install${sysServiceDir}
-    serviceFile=$(find ${serviceFileDir} -maxdepth 1 -name "*web-app*" -print)
-    serviceFileName=$(basename "${serviceFile}")
-    cp ${serviceFile} ${sysServiceDir}/
-    echo "-- Deployed ${serviceFile} -> ${sysServiceDir}/${serviceFileName}"
+        echo "#1.6 Deploying Service File"
+        sysServiceDir=/etc/systemd/system
+        serviceFileDir=${rootDir}/install${sysServiceDir}
+        serviceFile=$(find ${serviceFileDir} -maxdepth 1 -name "*web-app*" -print)
+        serviceFileName=$(basename "${serviceFile}")
+        cp ${serviceFile} ${sysServiceDir}/
+        echo "-- Deployed ${serviceFile} -> ${sysServiceDir}/${serviceFileName}"
 
-    echo "#1.8 Getting Path to Virtual Environment's Python"
-    pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
-    echo "-- pythonLocation: ${pythonLocation}"
+        echo "#1.8 Getting Path to Virtual Environment's Python"
+        pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
+        echo "-- pythonLocation: ${pythonLocation}"
+    fi
 fi
 
-# update pip to latest
-echo "#2 Upgrading pip to latest"
-$pythonLocation -m pip install --upgrade pip
+if [[ ${upgradePkgs} == true ]]; then
+    # update pip to latest
+    echo "#2 Upgrading pip to latest"
+    $pythonLocation -m pip install --upgrade pip
 
-# now pip necessary packages
-echo "#3 Installing all packages"
-$pipLocation install -r ${installDir}/requirements.txt
+    # now pip necessary packages
+    echo "#3 Installing all packages"
+    $pipLocation install -r ${installDir}/requirements.txt
+fi
 
-# Start service after everything installed if linux
-if [[ "${isWindows}" = false ]]; then
-    echo "#4 Starting Services"
-    # stop daemon to allow reload
-    echo "-- Stopping ${serviceFileName} Daemon"
-    systemctl stop ${serviceFileName}
-    echo "-- Stopping MongoDB Daemon"
-    systemctl stop mongodb
-    echo "-- Stopped ${serviceFileName} Daemon"
 
-    # refresh service daemons
-    systemctl daemon-reload
+if [[ ${deployServices} == true ]]; then
 
-    # Restart Daemons
-    echo "-- Reloaded ${serviceFileName} Daemon"
-    systemctl start ${serviceFileName}
-    echo "-- Reloaded MongoDB Daemon"
-    systemctl start mongodb
+    # Start service after everything installed if linux
+    if [[ "${isWindows}" = false ]]; then
+        echo "#4 Starting Services"
+        # stop daemon to allow reload
+        echo "-- Stopping ${serviceFileName} Daemon"
+        systemctl stop ${serviceFileName}
+        echo "-- Stopping MongoDB Daemon"
+        systemctl stop mongodb
+        echo "-- Stopped ${serviceFileName} Daemon"
 
-    # Done
-    echo "-- Started ${serviceFileName} Daemon"
+        # refresh service daemons
+        systemctl daemon-reload
+
+        # Restart Daemons
+        echo "-- Reloaded ${serviceFileName} Daemon"
+        systemctl start ${serviceFileName}
+        echo "-- Reloaded MongoDB Daemon"
+        systemctl start mongodb
+
+        # Done
+        echo "-- Started ${serviceFileName} Daemon"
+    fi
 fi

@@ -250,7 +250,6 @@ class WebApp(UserManager):
                 elif (proccessData['task'] == "receiving"):
                     # responsible for login to get preliminary email data
                     # use ui dropdown to select which email to fully fetch
-                    print("receiving")
                     numToFetch = current_user.getNumFetch()
                     preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)

@@ -115,9 +115,9 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: myId - The password to find's id
             \n@Returns: The matching password (or "" if not yet set)
         """
-        match = list(self.usersColl.find({"id": myId}))[0]
-        actualPassword = match["password"] if utils.keyExists(match, "password") else ""
-        return actualPassword
+        match = self._getDocById(self.usersColl, myId)
+        username = match["password"] if utils.keyExists(match, "password") else ""
+        return username
 
     def updateUserObjById(self, myId:str, updatedUserObj:object)->dict():
         """

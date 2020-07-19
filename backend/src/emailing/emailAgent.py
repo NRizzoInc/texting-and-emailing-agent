@@ -981,25 +981,25 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         emailList = self.getEmailListWithContent(emailFilter=_unreadEmailFilter)
         return emailList
 
-    ############################# Mark as (un)read functions ###########################
+    ############################# Mark as (un)read functions ##################################################
     # Note: +/-FLAGS either adds or removes flag (Dont work due to "unexpected response")
-    ####################################################################################
+    # Warning: These will throw exceptions if the email is already in the state you are trying to set it to
+    ###########################################################################################################
     def markAsUnread(self, emailId:str):
         """
             Mark an email (with 'emailId' in its original encoded form) as unread
-            WARNING: Does not seem to work with gmail so use at your own risk
+            WARNING: Only works if email is not ALREADY unread
         """
-        self.IMAPClient.store(str(emailId), "-FLAGS", "\SEEN")
+        self.IMAPClient.store(emailId, "-FLAGS", "\SEEN")
 
     def markAsRead(self, emailId:str):
         """
             Mark an email (with 'emailId' in its original encoded form) as read
-            WARNING: Does not seem to work with gmail so use at your own risk
-            Note: Due to necessity & the weirdness of gmail, necessary approach to marking as read will be to fetch
+            WARNING: Only works if email is not ALREADY read 
         """
-        # self.IMAPClient.uid("STORE", str(emailId), "+FLAGS", "\SEEN") -- produces "UNEXPECTED RESPONSE" fatal error
-        self.fetchEmail(emailId, leaveUnread=False)
-    ####################################################################################
+        print(f"marking {emailId} as read")
+        self.IMAPClient.store(str(emailId), "+FLAGS", "\SEEN")
+    ###########################################################################################################
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
         """
@@ -1028,8 +1028,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n@Return: String of printed line content
         """
         # if unread, print it
-        if emailMsg["unread"] == True:  unreadText = "(unread)"
-        else:                           unreadText = ""
+        unreadText = "(unread)" if emailMsg["unread"] == True else ""
 
         # get terminal size to make message appear on one line (subtract to make comfortable)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
@@ -1152,7 +1151,9 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         emailListIdx = relevantInfo["idx"]
         emailDict = emailList[emailListIdx]
         printedStr = self.processEmailDict(emailDict)
-        self.markAsRead(emailDict["idNum"])
+
+        # if the email is not ALREADY unread, mark it as read
+        if emailDict["unread"] == True: self.markAsRead(emailDict["idNum"])
         return (printedStr, emailDict)
 
     def _reply(self, startedBySendingEmail:bool, emailMsgDict:dict):

@@ -94,7 +94,10 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId
-        if self.isCommandLine: self.configureLogin()
+
+        # text to match on receive side
+        self.username = self.configureLogin()
+        self._uniqueUserEmailSignature = f"Dest: {self.username}"
 
         # Fetch the contact list from the database
         self.contactList = self.getContactList(self._userId)
@@ -119,7 +122,11 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n@Brief: Helper function that sets username & password if needed
             \n@Param: (optional - default = False) overrideUsername - Update the username?
             \n@Param: (optional - default = False) overridePassword - Update the password?
+            \n@Return: The current user's username
         """
+        # if not command line, just return with the username
+        if not self.isCommandLine: return self.getUsernameById(self._userId)
+
         # will only be the case for command line (myUsername == "" if first time doing command line)
         myUsername = self.getUsernameById(self._userId)
         myPassword = self.getPasswordFromId(self._userId)
@@ -132,19 +139,20 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                 if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
                 else: break
             self.setUsernameById(self._userId, newUsername)
+            myUsername = newUsername
 
         if needToSetPassword:
             newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI - can be updated later): ")
             self.setPasswordById(self._userId, newPassword)
 
-        # Set variables needed for future
-        self._sendTextBlurb = f"Dest: {myUsername}" # text to match on receive side
+        # finally return the username
+        return myUsername
 
     def createTextReturnInstructions(self)->str():
         """Helper function for telling receiver how to send a message back so it can be received"""
         myUsername = self.getUsernameById(self._userId)
         # Note: Text will not send if you do 'To: <username>' -- probably interferes with native email code
-        msgToAppend = f"\n\nAdd '{self._sendTextBlurb}' if you want them to be able to see your response"
+        msgToAppend = f"\n\nAdd '{self._uniqueUserEmailSignature}' if you want them to be able to see your response"
         return msgToAppend
 
     def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
@@ -1079,7 +1087,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         emailList = []
         idDict = {}
-        if not self.isCommandLine: print("Fetching x{0} emails".format(maxFetchCount))
+        if not self.isCommandLine: print(f"Fetching x{maxFetchCount} emails -- {self.username}")
         def fetchEmailsWorker():
             for idx, idNum in enumerate(idList):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
@@ -1388,8 +1396,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # check if the email is relevant to the logged in user
         # remove special footer if there
-        belongsToUser = body.find(self._sendTextBlurb) != -1
-        if belongsToUser: body = body.replace(self._sendTextBlurb, "").strip()
+        belongsToUser = body.find(self._uniqueUserEmailSignature) != -1
+        if belongsToUser: body = body.replace(self._uniqueUserEmailSignature, "").strip()
 
         # Get date and time of email
         dataTuple = email.utils.parsedate_tz(emailMsg['Date'])

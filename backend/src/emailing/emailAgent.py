@@ -912,7 +912,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         
         return idList
 
-    def fetchEmail(self, emailIdNum:int, leaveUnread:bool=False)->bytearray():
+    def fetchEmail(self, emailIdNum:int, leaveUnread:bool=True)->bytearray():
         """
             \n@Brief: Helper function that fetches and returns emails of the specified id number
             \n@Param: emailIdNum- the id number of the email to fetch
@@ -932,7 +932,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
 
 
-    def getEmailListWithContent(self, emailFilter:str=_unreadEmailFilter,  leaveUnread=False)->list():
+    def getEmailListWithContent(self, emailFilter:str=_unreadEmailFilter,  leaveUnread=True)->list():
         """
             \n@brief: Helper function that fetches the data for all emails (matching the filter) and returns the list
             \n@Param: emailFilter(str): either 'ALL' or '(UNSEEN)' for only unread emails 
@@ -979,9 +979,17 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         emailList = self.getEmailListWithContent(emailFilter=_unreadEmailFilter)
         return emailList
 
+    ############################# Mark as (un)read functions ###########################
+    # Note: +/-FLAGS either adds or removes flag
+    ####################################################################################
     def markAsUnread(self, emailId):
         """Mark an email (with 'emailId') as unread"""
-        self.IMAPClient.uid("STORE", emailId, "+FLAGS", "\SEEN")
+        self.IMAPClient.store(emailId, "-FLAGS", "\SEEN")
+
+    def markAsRead(self, emailId):
+        """Mark an email (with 'emailId') as read"""
+        self.IMAPClient.store(emailId, "+FLAGS", "\SEEN")
+    ####################################################################################
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):
         """
@@ -1036,7 +1044,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
     def getEmailsGradually(self,
             emailFilter:str=_unreadEmailFilter,
             printDescriptors:bool=True,
-            leaveUnread:int=False,
+            leaveUnread:int=True,
             maxFetchCount=-1,
             printEmails:bool=True
         )->dict():
@@ -1089,7 +1097,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             self._stopOnKeypress(
                 fetchEmailsWorker,
                 prompt="stop fetching emails (this may take awhile)",
-                toPrintOnStop="Stopped fetching",
+                toPrintOnStop="Stopped fetching\n",
                 printPrompts=printEmails
             )
         else: fetchEmailsWorker()
@@ -1128,6 +1136,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         emailListIdx = relevantInfo["idx"]
         emailDict = emailList[emailListIdx]
         printedStr = self.processEmailDict(emailDict)
+        self.markAsRead(idSelected)
         return (printedStr, emailDict)
 
     def _reply(self, startedBySendingEmail:bool, emailMsgDict:dict):
@@ -1205,7 +1214,12 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         if fetchedEmailsDict == None or len(fetchedEmailsDict) == 0:
             emailFilter = self.chooseEmailFilter(onlyUnread)
             fetchedEmailsDict = self.getEmailsGradually(emailFilter=emailFilter, maxFetchCount=maxFetchCount)
-        
+        else:
+            # print out each description
+            for currMsg in fetchedEmailsDict["idDict"].values():
+                currMsgDesc = currMsg["desc"]
+                print(currMsgDesc)
+
         # due to depth of fetchedEmailsDict, have to manually set values of toRtn
         toRtn = utils.mergeDicts(toRtn, fetchedEmailsDict)
 

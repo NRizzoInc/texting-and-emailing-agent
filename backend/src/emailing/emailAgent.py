@@ -986,18 +986,20 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
     ###########################################################################################################
     def markAsUnread(self, emailId:str):
         """
-            Mark an email (with 'emailId' in its original encoded form) as unread
+            Mark an email (based on its 'emailId') as unread
             WARNING: Only works if email is not ALREADY unread
         """
-        self.IMAPClient.store(emailId, "-FLAGS", "\SEEN")
+        self.IMAPClient.store(str(int(emailId)), "-FLAGS", "\SEEN")
 
     def markAsRead(self, emailId:str):
         """
-            Mark an email (with 'emailId' in its original encoded form) as read
+            Mark an email (based on its 'emailId') as read
             WARNING: Only works if email is not ALREADY read 
         """
-        print(f"marking {emailId} as read")
-        self.IMAPClient.store(str(emailId), "+FLAGS", "\SEEN")
+        # ... I hate that it took me > 1 hr to realize python was interpreting the type wrong
+        # have to be explicit and convert it to an int, and then convert to a string
+        self.IMAPClient.store(str(int(emailId)), "+FLAGS", "\SEEN")
+
     ###########################################################################################################
 
     def printEmailListPretty(self, emailList:list, lowerBound:int=0, upperBound:int=-1):

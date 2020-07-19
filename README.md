@@ -21,6 +21,27 @@
 On Linux: `sudo ./install/setup.sh`
 On Windows (with Git Bash): `./install/setup.sh`
 
+Create dummy login to perform email operations:
+
+1. You will need to either get access to the dummy email account I set up or make your own
+    *  (only contributors will get access to mine on)
+2. To make your own: 
+    1. Create a low security gmail account (or else email app cannot get past default security)
+        1. Create the account -> click on your name icon on the top right of gmail's screen -> `Manage your Google Account`
+        2. On left side click `security` -> scroll down to find `Less secure app access` -> `Turn on access`
+        3. Note: do NOT do this with your actual gmail account as it will leave you vulnerable
+    1. Create a file called `defaultLogin.json` at `backend/src/emailing/defaultLogin.json`
+    2. Insert the following json and modify the email address & password to match your gmail account made with low security
+
+``` json
+{
+  "dummy-email": {
+      "email-address": "<insert your email>",
+      "password": "<insert your password>"
+  }
+}
+```
+
 That's it! Done!!
 (I tried to make it as straightforward as possible)
 

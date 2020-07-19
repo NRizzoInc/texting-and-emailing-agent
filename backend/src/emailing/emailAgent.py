@@ -86,8 +86,12 @@ class EmailAgent(DatabaseManager):
 
         # these are the credentials to login to a throwaway gmail account 
         # with lower security that I set up for this program
-        self.myEmailAddress = "codinggenius9@gmail.com"
-        self.password = "codingisfun1"
+        # contained within gitignored json that I will only give to contributors
+        dummyEmailLoginPath = os.path.join(self.__pathToThisDir, "defaultLogin.json")
+        dummyLogin = utils.loadJson(dummyEmailLoginPath)["dummy-email"]
+        self.myEmailAddress = dummyLogin["email-address"]
+        self.password = dummyLogin["password"]
+
         # will be set to true if non-default account is used and login entered
         # allows user to not hav eto tpe login multiple times
         self.loginAlreadySet = False 

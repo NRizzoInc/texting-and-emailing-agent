@@ -18,3 +18,6 @@ extern/MongoDB/mongod.cfg
 
 # Extern Downloads
 **-signed.msi
+
+# Private Data (on request/contributor basis only)
+**defaultLogin.json

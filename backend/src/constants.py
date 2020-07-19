@@ -13,6 +13,8 @@ class Constants():
 
         # EmailAgent / Databases
         self.contactListKey = "contact-list"
+        self.openUnread = '(BODY.PEEK[])'
+        self.openMarkRead = '(RFC822)'
 
         # Web App
         self.siteTitleDict = {

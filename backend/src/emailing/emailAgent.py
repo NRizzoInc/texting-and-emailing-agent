@@ -923,8 +923,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             \n@Note: call 'processRawEmail(rawEmail, emailIdNum)' to convert to usable form
 
         """
-        if leaveUnread:     openCode = '(BODY.PEEK[])'
-        else:               openCode = '(RFC822)'
+        openCode = self.openUnread if leaveUnread else self.openMarkRead
         rtnCode, emailData = self.IMAPClient.fetch(emailIdNum, openCode) 
         if (rtnCode != "OK"):
             print("Bad email return code received!!")

@@ -33,23 +33,28 @@ print_flags () {
 upgradePkgs=false
 installMongo=false
 deployServices=false
+noneSet=true
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -a | --install-all )
             upgradePkgs=true
             installMongo=true
+            noneSet=false
             break
             ;;
         -m | --install-mongo )
             installMongo=true
+            noneSet=false
             break
             ;;
         -p | --python-packages )
             upgradePkgs=true
+            noneSet=false
             break
             ;;
         -s | --deploy-services )
             deployServices=true
+            noneSet=false
             break
             ;;
         -h | --help )
@@ -63,6 +68,12 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+if [[ ${noneSet} == true ]]; then
+    print_flags
+    echo "Please use one of the flags (just use -a if you are unsure)"
+    exit
+fi
 
 
 THIS_FILE_DIR="$(readlink -fm $0/..)"

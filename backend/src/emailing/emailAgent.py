@@ -36,9 +36,8 @@ import fleep # to identify file types
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 from backend.src import utils
 from backend.src.database.databaseManager import DatabaseManager
-from backend.src.emailing.keyboardHandler import KeyboardMonitor
 
-class EmailAgent(DatabaseManager, KeyboardMonitor):
+class EmailAgent(DatabaseManager):
     """
         \n@Brief: This class handles the sending and receiving of email/text messages
         \n@Note: The main high level api functions once the class is instantiated are: sendMsg, receiveEmail/openEmailById
@@ -65,7 +64,11 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # Inheret all functions and 'self' variables
         DatabaseManager.__init__(self, printCollectionCreation=not self.isCommandLine)
-        super().__init__()
+
+        # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
+        if self.isCommandLine: 
+            from backend.src.emailing.keyboardHandler import KeyboardMonitor
+            self.keyboardMonitor = KeyboardMonitor()
 
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.__srcDir = os.path.join(self.__pathToThisDir, "..")
@@ -307,7 +310,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
         
         # Get content to send in text message
         if self.isCommandLine:
-            body = self._getMultiLineInput("Please enter the message you would like to send")
+            body = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
         # not using command line
         else: 
             body = msgToSend
@@ -419,7 +422,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
                     receiverName=receiver, senderName=self.myEmailAddress) 
 
             elif typeOfMsg == 'inputContent':
-                myInput = self._getMultiLineInput("Please enter the message you would like to send")
+                myInput = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
                 sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
             
             # Default to default file 
@@ -1109,7 +1112,7 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # if command line, do special trick to get user to stop the fetching
         if self.isCommandLine: 
-            self._stopOnKeypress(
+            self.keyboardMonitor._stopOnKeypress(
                 fetchEmailsWorker,
                 prompt="stop fetching emails (this may take awhile)",
                 toPrintOnStop="Stopped fetching\n",

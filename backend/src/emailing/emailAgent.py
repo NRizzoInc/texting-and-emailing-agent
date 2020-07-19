@@ -1017,11 +1017,15 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
 
         # get terminal size to make message appear on one line (subtract to make comfortable)
         columns, rows = shutil.get_terminal_size(fallback=(80, 24))
-        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + len(unreadText) + 5 # last 5 comes from email id reaching up to 99999 (might need to make more)
+        # last 5 comes from email id reaching up to 99999 (might need to make more)
+        spaceCushion = len(emailMsg["DateTime"]) + len(" - #) ") + len(unreadText) + 5
+
+        # actually format the brief description string 
         descStr = ""
         if (emailMsg['Subject'].strip().isspace() or emailMsg['Subject'] == '' or emailMsg['Subject'] == None):
             # there is no subject, show part of message instead
-            descStr = "{0} - #{1}) {2}...{3}".format(emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion], unreadText)
+            descStr = "{0} - #{1}) {2}...{3}".format(
+                emailMsg['DateTime'] , emailMsg['idNum'], emailMsg['Body'][:columns-spaceCushion], unreadText)
 
         # there is an actual subject in the message
         else:
@@ -1030,7 +1034,8 @@ class EmailAgent(DatabaseManager, KeyboardMonitor):
             if overflow < 0: 
                 emailMsg = emailMsg[:overflow]
                 moreToMsg = "..."
-            descStr = "{0} - #{1}) {2}{3}{4}".format(emailMsg['DateTime'], emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText)
+            descStr = "{0} - #{1}) {2}{3}{4}".format(
+                emailMsg['DateTime'],  emailMsg['idNum'], emailMsg['Subject'], moreToMsg, unreadText)
 
         return descStr
 

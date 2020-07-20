@@ -118,7 +118,12 @@ class User(UserMixin):
     def getContactList(self):
         client = self.initializeEmailAgent()
         return client.printContactListPretty(printToTerminal=False)
-    
+
+    def getProvidersList(self)->list():
+        """Returns a list of all valid providers that can be texted via email"""
+        client = self.initializeEmailAgent()
+        return client.getTextableProviders()
+
     def getNumFetch(self):
         return self.numEmailsToFetch
     

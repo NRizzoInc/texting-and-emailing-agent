@@ -60,11 +60,11 @@
         </div>
         <div class="row vertical-margins" id="carrier-container">
             <div class="col-25 flex-center-align">
-                <label for="carrier">Phone carrier</label>
+                <label for="carrier-selector">Phone Carrier</label>
             </div>
-            <div class="col-75">
-                <input class="input-padding flex-grow-item" type="text" id="carrier" name="carrier" placeholder="New contacts cell provider(verizon, AT&T, etc...)" autocomplete="on">
-            </div>
+            <select class="dropdown dropdown-ellipsis input-padding" id="carrier-selector">
+                <option id="carrier-selector-placeholder" value="placeholder" disabled selected>Select their phone carrier</option>
+            </select>
         </div>
         <div class="row vertical-margins" id="helper-row">
             <select class="dropdown dropdown-ellipsis input-padding" id="email-id-selector">

@@ -8,6 +8,7 @@ import { resizeContactList } from "./contactList.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector", true, onChooseEmail)
 const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false, updateNumEmailFetch)
+const carrierSelDropdown = new Dropdown("carrier-selector", true, updateSelCarrier)
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
 const defaultDisplayDict = {
@@ -111,6 +112,17 @@ async function onFormBtnClick(id) {
     }
     else if (id == 'add-contact-button') {
         displayDict = addContactDisplayDict
+
+        // update placeholder for "Email Address" from "Your Email Address" -> "Their Email Address"
+        const emailAddressEl = document.getElementById("emailAddress")
+        const emailPlaceholder = "New contact's email addres"
+        emailAddressEl.setAttribute("placeholder", emailPlaceholder)
+
+        // Update the dropdown for "Phone Carrier" to contain the only available ones
+        const urls = await loadResource(urlsPath)
+        const providerData = await getData(urls.infoSites.cellProviders)
+        const possibleCellProviders = providerData.providersList
+        possibleCellProviders.forEach(carrierOpt => carrierSelDropdown.addOption(carrierOpt, carrierOpt))
     }
     else {
         console.error("ID Does Not Mean Anything");
@@ -276,6 +288,17 @@ function exitForm() {
     window.location.href = currPage
 }
 
+/**
+ * @Brief Helper function for the Carrier dropdown's 'onChange' callback 
+ * that update's its 'value' attribute for form processing
+ * @param {Dropdown} dropdownObj Reference to the 'Carrier' Dropdown object
+ * @note This data will be retrieved by formProcessor.js on "Submit"
+ */
+function updateSelCarrier(dropdownObj) {
+    const currSel = dropdownObj.getSelected().value
+    dropdownObj.getDropdownEl().setAttribute("value", currSel)
+}
+ 
 /**
  * @Brief Helper function for the numFetch dropdown's 'onChange' callback.
  * Does a POST request to update user's backend settings for 'numFetch'

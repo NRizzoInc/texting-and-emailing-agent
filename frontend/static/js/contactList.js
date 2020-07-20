@@ -6,6 +6,5 @@ export function resizeContactList() {
     const contactListArea = $(`#${contactListId}`)
     const contactListEl = contactListArea[0]
     const textToWrite = contactListArea.innerHTML
-    console.log(`textToWrite: ${textToWrite}`)
     writeResizeTextarea(contactListId, textToWrite)
 }

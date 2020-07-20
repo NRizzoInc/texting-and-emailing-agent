@@ -9,6 +9,7 @@ from flask_login import UserMixin
 
 #--------------------------------OUR DEPENDENCIES--------------------------------#
 from backend.src.emailing.emailAgent import EmailAgent
+from backend.src import utils
 
 class User(UserMixin):
     def __init__(self, userId):
@@ -24,44 +25,41 @@ class User(UserMixin):
         # self.client = emailAgent.EmailAgent(displayContacts=False, isCommandLine=False)
 
         # vals to be defined later
-        self.fname = None
-        self.lname = None
-        self.emailAddress = None
-        self.password = None
         self.numEmailsToFetch = 5 # default to 5
 
-    def updateEmailLogin(self, firstname, lastname, emailAddress=None, password=None):
-        """Updates class info about email/text sender"""
-        self.fname = firstname
-        self.lname = lastname
-        self.emailAddress = emailAddress
-        self.password = password
-
-    def send(self, sendMethod, message):
+    def send(self, sendMethod:str, message:str, recvFname:str, recvLname:str, emailAddress:str, emailPassword:str):
         """
             \n@Brief: Sends the email/text
             \n@Param: `sendMethod` - "text" or "email"
-            \n@Param: `message` - (string) The message to send
+            \n@Param: `message` -  The message to send
+            \n@Param: `recvFname` -  The receiver's first name
+            \n@Param: `recvLname` -  The receiver's last name
+            \n@Param: `emailAddress` - The email to log into to send the email
+            \n@Param: `emailPassword` - The password for the email to log into to send the email
             \n@Return: Return code (Success = None, Error = stringified error message)
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
         """
-        client = self.initializeEmailAgent()
-        receiverContactInfo = self.getContactInfo(client)
+        client = self.initializeEmailAgent(emailAddress=emailAddress, emailPassword=emailPassword)
+        receiverContactInfo = self.getContactInfo(client, recvFname, recvLname)
         toRtn = client.sendMsg(receiverContactInfo, sendMethod=sendMethod, msgToSend=message)
         self.logoutClient(client)
         return toRtn
 
-    def userReceiveEmailUser(self, numToFetch):
+    def userReceiveEmailUser(self, numToFetch:int, emailAddress:str, emailPassword:str):
         """
             \n@Brief: Receives the preliminary email data that needs to be parsed more to fully fetch an email
             \n@Param: numToFetch (int) - The number of email descriptors to get
+            \n@Param: `emailAddress` - The email to log into to send the email
+            \n@Param: `emailPassword` - The password for the email to log into to send the email
             \n\t@Return: `{
             \n\t    error: bool,
             \n\t    text: str,
             \n\t    idDict: {'<email id>': {idx: '<list index>', desc: ''}}, # dict of email ids mapped to indexes of emailList
             \n\t    emailList: [{To, From, DateTime, Subject, Body, idNum, unread}] # list of dicts with email message data
             \n\t} If error, 'error' key will be true, printed email (or error) will be in 'text' key`
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
         """
-        client = self.initializeEmailAgent()
+        client = self.initializeEmailAgent(emailAddress=emailAddress, emailPassword=emailPassword)
         toRtn = client.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
         self.logoutClient(client)
         return toRtn
@@ -92,28 +90,31 @@ class User(UserMixin):
         client.addContact(firstName, lastName, emailAddress, carrier, phoneNumber)
         self.logoutClient(client)
 
-    def initializeEmailAgent(self)->EmailAgent():
+    def initializeEmailAgent(self, emailAddress:str=None, emailPassword:str=None)->EmailAgent():
         """
             \n@Brief: Helps create an EmailAgent object on demand
+            \n@Param: `emailAddress` - The email to log into to
+            \n@Param: `emailPassword` - The password for the email to log into to
             \n@Returns: The new EmailAgent object
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
         """
-        newClient = EmailAgent(displayContacts=False, isCommandLine=False, userId=self.id)
+        newClient = EmailAgent(
+            displayContacts=False,
+            isCommandLine=False,
+            userId=self.id,
+            emailAddress=emailAddress,
+            emailPassword=emailPassword
+        )
         return newClient
 
-    def getContactInfo(self, client:EmailAgent):
-        """Establish emailAgent client for user based on provided info & return contact info needed for other stuff"""
-        # login info error-checking
-        try:
-            if (len(self.emailAddress) == 0 or len(self.password) == 0):
-                client.setDefaultState(True)
-            else:
-                # if no errors and not empty then okay to use non default accoount
-                client.setDefaultState(False) 
-        except Exception as e:
-            # if there is an error just use the default sender/receiver
-            client.setDefaultState(True)
-            
-        return client.getReceiverContactInfo(self.fname, self.lname)
+    def getContactInfo(self, client:EmailAgent, recvFname:str, recvLname:str):
+        """
+            \n@Brief: Gets the contact info to send msg to a specific person
+            \n@Param: client - An EmailAgent obj that has already been created
+            \n@Param: recvFname - The receiver's first name
+            \n@Param: recvLname - The receiver's last name
+        """
+        return client.getReceiverContactInfo(recvFname, recvLname)
 
     def getContactList(self):
         client = self.initializeEmailAgent()

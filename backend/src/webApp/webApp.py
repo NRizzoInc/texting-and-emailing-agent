@@ -205,6 +205,10 @@ class WebApp(UserManager):
         @self.app.route(self.infoSites["emailData"], methods=["POST"])
         @login_required
         def getEmailData()->dict():
+            """
+                \n@Brief: 2nd stage of receiving. Frontend sends all its data for backend to open/process & return it
+                \n@Note: 1st stage occurs in when processing the form submission under 'createTextForm()'
+            """
             emailData = flask.request.get_json()
             toRtn = {}
             emailContents = current_user.selectEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])
@@ -235,35 +239,51 @@ class WebApp(UserManager):
         formData = {}
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         @login_required
-        def createTextForm():
-            optDataDict = {} # add keys to be returned at end of post request
+        def createTextForm()->dict():
+            """
+                \n@Return: {
+                \t\n    "error": str # Empty string if success, stringified error message if not
+                \t\n    "task": str # the task being done (addContact, send, receive)
+                \t\n}
+            """
+            # add keys to be returned at end of post request
+            optDataDict = {"error": ""}
             if (not self.initializingStatus):
-                url = self.hostAddr + self.formSites['textForm']
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
-                current_user.updateEmailLogin(
-                    proccessData["firstName"],
-                    proccessData["lastName"],
-                    emailAddress=proccessData["emailAddress"],
-                    password=proccessData["password"]
-                )
+                optDataDict["task"] = proccessData["task"]
 
-                # check if receive if sending/receiving message form
+                # check what actions need to be done based on task
                 if (proccessData['task'] == "sending"):
-                    sendErr = current_user.send("text", proccessData["message"])
+                    sendErr = current_user.send(
+                        "text",
+                        proccessData["message"],
+                        proccessData["firstName"],
+                        proccessData["lastName"],
+                        proccessData["emailAddress"],
+                        proccessData["password"]
+                    )
                     if (sendErr != None):
-                        print(sendErr)
-                        # TODO: somehow inform user on webpage of send error (return should have error message)
+                        optDataDict["error"] = sendErr
+                        # print(sendErr)
                 
                 elif (proccessData['task'] == "receiving"):
                     # responsible for login to get preliminary email data
                     # use ui dropdown to select which email to fully fetch
                     numToFetch = current_user.getNumFetch()
-                    preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
+
+                    # get all the emails (user later picks which ones the want to open)
+                    preliminaryEmailData = current_user.userReceiveEmailUser(
+                        numToFetch,
+                        proccessData["emailAddress"],
+                        proccessData["password"]
+                    )
+
+                    # update dict to return
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)
-                    # TODO: somehow inform user on webpage of send error (return should have error message)
                     if (optDataDict["error"] == True):
-                        print("Failed to receive emails: \n{0}".format(optDataDict["text"]))
+                        # print("Failed to receive emails: \n{0}".format(optDataDict["text"]))
+                        optDataDict["error"] = optDataDict["text"] # frontend reads error msgs from "error" key
                 
                 elif (proccessData['task'] == "adding-contact"):
                     current_user.addContact(

@@ -55,23 +55,6 @@ class CLIManager(EmailAgent):
         )
 
         ##################################################################################################################
-        # Login Group
-        # TODO: eventually add flags to specific username & password
-        ##################################################################################################################
-        contactManagerGroup = parser.add_argument_group(
-            title="Login Helpers",
-            description="Helps log in to your email account (or use default)"
-        )
-        # check if using default email account
-        contactManagerGroup.add_argument(
-            "-d", "--use-default-sender",
-            action="store_true", # defaults to false
-            required=False,
-            dest="useDefault",
-            help="If used, will login to default account that does not require user interaction",
-        )
-
-        ##################################################################################################################
         # Service Types (Send & Receiving)
         ##################################################################################################################
         serviceDest = "serviceType" # Both send & receive set their value in the args['serviceType']
@@ -134,7 +117,7 @@ class CLIManager(EmailAgent):
         ##################################################################################################################
         loginManagersGroup = parser.add_argument_group(
             title="Login",
-            description="Helps update login information",
+            description="Helps update login information & log in to your email account (or use default)"
         )
         loginManagersGroup.add_argument(
             "-x", "--username",
@@ -150,6 +133,28 @@ class CLIManager(EmailAgent):
             required=False,
             help="Set your password when logging in and exit",
         )
+        loginManagersGroup.add_argument(
+            "-ea", "--email-address",
+            default=None,
+            dest="emailAddress",
+            required=False,
+            help="What is your actual (i.e. gmail) email address",
+        )
+        loginManagersGroup.add_argument(
+            "-ep", "--email-password",
+            default=None,
+            dest="emailPassword",
+            required=False,
+            help="What is your actual (i.e. gmail) email address's password",
+        )
+        # check if using default email account
+        loginManagersGroup.add_argument(
+            "-nd", "--non-default",
+            action="store_false", # defaults to true
+            required=False,
+            dest="useDefault",
+            help="If used, will make user login to the non-default account that requires user interaction to login"
+        )
 
         # Actually Parse Flags (turn into dictionary)
         args = vars(parser.parse_args()) # converts all '-' after '--' to '_' (--add-contact -> 'add_contact')
@@ -157,20 +162,24 @@ class CLIManager(EmailAgent):
         # use this phrase to easily add more contacts to the contact list
         # trigger EmailAgent init based on the situation (this point forward, 'self' will contain EmailAgent attributes)
         if args["addContact"]:
-            super().__init__(displayContacts=True, isCommandLine=True)
+            super().__init__(displayContacts=True, isCommandLine=True, useDefault=args["useDefault"],
+                emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
             self.simpleAddContact()
             sys.exit(0)
         
         elif args["updateContact"]:
-            super().__init__(displayContacts=True, isCommandLine=True)
+            super().__init__(displayContacts=True, isCommandLine=True, useDefault=args["useDefault"],
+                emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
             self.updateContactInfo()
             sys.exit(0)
         elif args["setUsername"] or args["setPassword"]:
-            super().__init__(displayContacts=False, isCommandLine=True)
+            super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],
+                emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
             self.configureLogin(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
             sys.exit(0)
         elif args["getProviderList"]:
-            super().__init__(displayContacts=False, isCommandLine=True)
+            super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],
+                emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
             cellProviders = self.getTextableProviders()
             formatProviders = lambda x, y: f"{x}\n{y}" 
             formattedProviders = functools.reduce(formatProviders, cellProviders)
@@ -178,7 +187,8 @@ class CLIManager(EmailAgent):
             sys.exit(0)
 
         # Create a class obj for this file
-        super().__init__(displayContacts=False, isCommandLine=True)
+        super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],
+            emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
 
         # based on if CLI flag is used, set the default's state
         self.setDefaultState(args["useDefault"])

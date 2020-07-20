@@ -211,6 +211,17 @@ async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
         }
 
         const resData = await parseForm(triggerID, formAddr)
+
+        // check for error messages (empty string = success)
+        if (resData.error != "") {
+            const errMsgHeader = [
+                `Failed ${resData.task}:`,
+                resData.error,
+                "\n(Copy to clipboard: Ctrl+C, Enter)"
+            ].join("\n")
+            // print the message, and have the meat of the error code be copyable (but somewhat unreadable)
+            window.prompt(errMsgHeader, resData.error);
+        }
         
         // fill dropdown so user can select which email to show
         if (isReceiving) parseEmailData(resData)

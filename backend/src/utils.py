@@ -93,3 +93,6 @@ def convertToIntList(listToConvert):
 def convertToStrList(listToConvert):
     toStr  = lambda x: str(x)
     return list(map(toStr, listToConvert))
+
+def isNonEmptyStr(strToTest:str):
+    return strToTest != None and len(strToTest) > 0

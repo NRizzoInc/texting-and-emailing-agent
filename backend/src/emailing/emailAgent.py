@@ -50,13 +50,24 @@ class EmailAgent(DatabaseManager):
     __success = 0
     __error = -1
 
-    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False, userId:str=""):
+    def __init__(self,
+                 displayContacts:bool=True,
+                 isCommandLine:bool=False,
+                 useDefault:bool=False,
+                 userId:str="",
+                 emailAddress:str=None,
+                 emailPassword:str=None
+                ):
         """
             \n@Brief: This class is responsible for sending & receiving emails
             \n@input: displayContacts- If true, print the contact list during init
             \n@input: isCommandLine- True if using through the command line
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
             \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
+            \n@Param: emailAddress - (optional) The email address of the account you want to log in to
+            \n@Param: emailPassword - (optional) The email password of the account you want to log in to
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
+            \n@Note: useDefault will be automically set to true if another login is not provided
         """
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
@@ -89,15 +100,18 @@ class EmailAgent(DatabaseManager):
         # contained within gitignored json that I will only give to contributors
         dummyEmailLoginPath = os.path.join(self.__emailDataDir, "defaultLogin.json")
         dummyLogin = utils.loadJson(dummyEmailLoginPath)["dummy-email"]
-        self.myEmailAddress = dummyLogin["email-address"]
-        self.password = dummyLogin["password"]
+        # only use provided login if all pieces present
+        isLoginProvided = utils.isNonEmptyStr(emailAddress) and utils.isNonEmptyStr(emailPassword)
+        self.myEmailAddress =   emailAddress  if isLoginProvided else dummyLogin["email-address"]
+        self.password =         emailPassword if isLoginProvided else dummyLogin["password"]
 
-        # will be set to true if non-default account is used and login entered
-        # allows user to not hav eto tpe login multiple times
-        self.loginAlreadySet = False 
         # boolean that when set to True means the program will login
-        # to a known email account wihtout extra inputs needed
-        self.useDefault = useDefault 
+        # to a known email account without extra inputs needed
+        # will be set to true if non-default account is used and login entered
+        self.useDefault = useDefault and not isLoginProvided
+
+        # allows user to not have to type login multiple times
+        self.loginAlreadySet = False 
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId
@@ -559,8 +573,8 @@ class EmailAgent(DatabaseManager):
         smtpPort = smtpInfo['portNum']
 
         # Establish connection to both email servers using self.myEmailAddress and password given by user
-        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)        
-        self.connectSMTP(smtpHostAddr, smtpPort)        
+        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)
+        self.connectSMTP(smtpHostAddr, smtpPort)
         self.connectIMAP(imapHostAddr, imapPort)
 
         # Try to login to email server, if it fails then catch exception
@@ -571,22 +585,26 @@ class EmailAgent(DatabaseManager):
             print("Successfully logged into email account!\n")
             return None
             
-        except Exception as error:
+        except smtplib.SMTPAuthenticationError as rawError:
+            errCode = str(rawError.smtp_code)
+            errorMsg = str(rawError.smtp_error.decode()).replace("\n", "")
+            formattedErr = f"Error code {errCode} - {errorMsg}"
             linkToPage = "https://myaccount.google.com/lesssecureapps"
             errorMsg = ""
 
-            if '535' in str(error):
+            # Only print custom message if can copy on command line
+            if '535' in formattedErr and self.isCommandLine:
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
                 # TODO make connection more secure
                 errorMsg = "\n".join([
-                    "\nCould not connect to email server because of error:\n{0}\n".format(error),
+                    "\nCould not connect to email server because of error:\n{0}\n".format(formattedErr),
                     "Try changing your account settings to allow less secure apps to allow connection to be made.",
                     "Or try enabling two factor authorization and generating an app-password\n{0}".format(linkToPage),
                     "Quiting program, try connecting again with correct email/password",
                     "after making the changes, or trying a different email\n"
                 ])
             else:
-                errorMsg = "\nEncountered error while trying to connect to email server: \n{0}".format(error)
+                errorMsg = "\nEncountered error while trying to connect to email server: \n{0}".format(formattedErr)
 
             if (self.isCommandLine):
                 print(errorMsg)

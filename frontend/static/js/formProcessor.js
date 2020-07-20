@@ -4,7 +4,8 @@
  * @brief Helper function that reads through the form data and collates it to be sent to backend
  * @param {String} formId The form's html element's name
  * @param {String} formLink The URL to the form being used (i.e. /textForm or /emailForm)
- * @returns {JSON} Response data from backend POST request
+ * @returns {JSON} Response data from backend POST request 
+ * ("error" field will be empty if successful, but contain the stringified error message if not)
  */
 export async function parseForm(formId, formLink) {
     // loop through form to get form key:value pairs 
@@ -45,9 +46,9 @@ export async function parseForm(formId, formLink) {
  * Contains some stuff like authKey UUID for retrieving backend's processed data or the data itself
  */
 async function postFormData(formLink, formData) {
-    const reqResponse = {terminalData: null, authKey: null}
+    let reqResponse = {}
     try {
-        const resData = await $.ajax({
+        reqResponse = await $.ajax({
             url: formLink,
             type: 'POST',
             // need both for flask to understand MIME Type
@@ -55,9 +56,8 @@ async function postFormData(formLink, formData) {
             contentType: "application/json",
             data: JSON.stringify(formData),
         })
-        Object.assign(reqResponse, reqResponse, resData) // merge dicts
     } catch (err) {
-        console.log(`Failed to post to '${formLink}': ${JSON.stringify(err)}`);
+        console.log(`Failed to post to '${formLink}': ${err.status} - ${err.statusText}`);
     }
     return reqResponse
 }

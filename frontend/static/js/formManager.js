@@ -113,6 +113,11 @@ async function onFormBtnClick(id) {
     else if (id == 'add-contact-button') {
         displayDict = addContactDisplayDict
 
+        // update placeholder for "Email Address" from "Your Email Address" -> "Their Email Address"
+        const emailAddressEl = document.getElementById("emailAddress")
+        const emailPlaceholder = "New contact's email addres"
+        emailAddressEl.setAttribute("placeholder", emailPlaceholder)
+
         // Update the dropdown for "Phone Carrier" to contain the only available ones
         const urls = await loadResource(urlsPath)
         const providerData = await getData(urls.infoSites.cellProviders)

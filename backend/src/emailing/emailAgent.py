@@ -66,7 +66,8 @@ class EmailAgent(DatabaseManager):
             \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
             \n@Param: emailAddress - (optional) The email address of the account you want to log in to
             \n@Param: emailPassword - (optional) The email password of the account you want to log in to
-            \n@Note: If both emailAddress & emailPassword are not provided, default account gets used
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
+            \n@Note: useDefault will be automically set to true if another login is not provided
         """
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
@@ -99,16 +100,18 @@ class EmailAgent(DatabaseManager):
         # contained within gitignored json that I will only give to contributors
         dummyEmailLoginPath = os.path.join(self.__emailDataDir, "defaultLogin.json")
         dummyLogin = utils.loadJson(dummyEmailLoginPath)["dummy-email"]
-        isLoginProvided = emailAddress != None and emailPassword != None # only use provided login if all pieces present
+        # only use provided login if all pieces present
+        isLoginProvided = utils.isNonEmptyStr(emailAddress) and utils.isNonEmptyStr(emailPassword)
         self.myEmailAddress =   emailAddress  if isLoginProvided else dummyLogin["email-address"]
         self.password =         emailPassword if isLoginProvided else dummyLogin["password"]
 
-        # will be set to true if non-default account is used and login entered
-        # allows user to not hav eto tpe login multiple times
-        self.loginAlreadySet = False 
         # boolean that when set to True means the program will login
-        # to a known email account wihtout extra inputs needed
-        self.useDefault = useDefault 
+        # to a known email account without extra inputs needed
+        # will be set to true if non-default account is used and login entered
+        self.useDefault = useDefault and not isLoginProvided
+
+        # allows user to not have to type login multiple times
+        self.loginAlreadySet = False 
 
         # if running via CLI, access account meant for CLI user
         self._userId = self._cliUserId if self.isCommandLine else userId

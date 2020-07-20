@@ -15,7 +15,7 @@
     },
     "infoSites": {
         "emailData"     :   "/emailData",
-        "cellProviders" :   "/info/available-cell-providers"
+        "cellProviders" :   "/info/available-cell-providers.json"
     },
     "settingsSites": {
         "numFetch"      :   "/settings/numFetch"

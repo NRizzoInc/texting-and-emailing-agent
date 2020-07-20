@@ -250,11 +250,16 @@ async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
  *   text: String,
  *   authKey: String
  *   idDict: {'<email id>': {idx: '<list index>', desc: ''}, ...},
- *   emailList: [{To, From, DateTime, Subject, Body, idNum, unread}, ...]
+ *   emailList: [{To, From, DateTime, Subject, Body, idNum, unread}, ...],
+ *   task: String
+ *   emailAddress: String
+ *   emailPassword: String
+ *   isDefault: Boolean
  * }} emailData
  * If error, 'error' key will be true & message will be in 'text' key
  * "emailList": list of dicts with email message data
  * "idDict": dict of email ids mapped to indexes of emailMsgLlist
+ * @note: if isDefault = true, email address/password = empty string to protect default email from unscrupulous user
  */ 
 async function parseEmailData(emailData) {
     const emailDicts = Object.entries(emailData.idDict)
@@ -265,7 +270,7 @@ async function parseEmailData(emailData) {
         emailSelDropdown.addOption(realVal, text)
     }
 
-    // need to store authKey, emailList, and other important info related to email dropdown
+    // need to store emailList/Dict, and other important info related to email dropdown
     emailSelDropdown.appendData(emailData)
 }
 
@@ -340,10 +345,12 @@ async function onChooseEmail(dropdownObj) {
     // case when need to do POST request to get backend to fully fetch selected email
     const dropdownData = dropdownObj.getData()
     const selEmailData = {
-        emailId     : dropdownObj.getSelected().value,
-        idDict      : dropdownData.idDict,
-        emailList   : dropdownData.emailList,
-        authKey     : dropdownData.authKey
+        emailId         : dropdownObj.getSelected().value,
+        idDict          : dropdownData.idDict,
+        emailList       : dropdownData.emailList,
+        isDefault       : dropdownData.isDefault,
+        emailAddress    : dropdownData.emailAddress,
+        emailPassword   : dropdownData.emailPassword
     }
 
     // post collated data about selected email to allow backend to fully fetch

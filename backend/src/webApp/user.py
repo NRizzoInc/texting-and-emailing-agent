@@ -64,15 +64,19 @@ class User(UserMixin):
         self.logoutClient(client)
         return toRtn
 
-    def selectEmailById(self, idDict, emailList, emailId)->str():
+    def selectEmailById(self, idDict, emailList, emailId,  emailAddress:str, emailPassword:str, isDefault:bool)->str():
         """
             \n@Brief: Given brief information about user's email selection options, open the correct one (by its id)
             \n@Param: idDict- dict of email ids mapped to indexes of emailList in format {'<email id>': {idx: '<list index>', desc: ''}}
             \n@Param: emailList- list of emailInfo dicts with format [{To, From, DateTime, Subject, Body, idNum, unread}]
             \n@Param: emailId- Selected email's id to open (should be determined by your code prior to calling this)
+            \n@Param: `emailAddress` - The email to log into to send the email
+            \n@Param: `emailPassword` - The password for the email to log into to send the email
+            \n@Param: `isDefault` - If true, email address/password are empty and means use default account
             \n@Returns: The email's contents
+            \n@Note: may need login as backend will need to login to mark the emails as read
         """
-        client = self.initializeEmailAgent()
+        client = self.initializeEmailAgent(emailAddress=emailAddress, emailPassword=emailPassword)
         toRtn = client.openEmailById(idDict, emailList, emailId)
         self.logoutClient(client)
         return toRtn

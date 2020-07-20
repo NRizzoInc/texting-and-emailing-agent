@@ -28,7 +28,7 @@ export class Dropdown {
         this._data = {} // can be used to hold misc data (like emailList)
 
         // create event listener based on input
-        this._dropdownElJquery.change(() => onChange(this))
+        if (onChange != null) this._dropdownElJquery.change(() => onChange(this))
     }
 
     /**

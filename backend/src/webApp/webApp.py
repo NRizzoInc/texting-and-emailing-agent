@@ -211,7 +211,14 @@ class WebApp(UserManager):
             """
             emailData = flask.request.get_json()
             toRtn = {}
-            emailContents = current_user.selectEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])
+            emailContents = current_user.selectEmailById(
+                emailData["idDict"],
+                emailData["emailList"],
+                emailData["emailId"],
+                emailData["emailAddress"],
+                emailData["emailPassword"],
+                emailData["isDefault"]
+            )
             toRtn["emailContent"] = emailContents.strip()
             return self.returnSuccessResp(additionalDict=toRtn)
 
@@ -246,12 +253,24 @@ class WebApp(UserManager):
                 \t\n    "task": str # the task being done (addContact, send, receive)
                 \t\n}
             """
-            # add keys to be returned at end of post request
-            optDataDict = {"error": ""}
             if (not self.initializingStatus):
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
-                optDataDict["task"] = proccessData["task"]
+                # add keys to be returned at end of post request
+                # receive frontend side will need emailAddress & password if not default
+                # (at same time, protect default email login by only transfering it by reference)
+                isDefault = not (
+                    utils.isNonEmptyStr(proccessData["emailAddress"]) and 
+                    utils.isNonEmptyStr(proccessData["password"])
+                )
+
+                optDataDict = {
+                    "error": "",
+                    "task": proccessData["task"],
+                    "emailAddress":  "" if isDefault else proccessData["emailAddress"],
+                    "emailPassword": "" if isDefault else proccessData["password"],
+                    "isDefault": isDefault
+                }
 
                 # check what actions need to be done based on task
                 if (proccessData['task'] == "sending"):

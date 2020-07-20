@@ -1031,22 +1031,31 @@ class EmailAgent(DatabaseManager):
     ############################# Mark as (un)read functions ##################################################
     # Note: +/-FLAGS either adds or removes flag (Dont work due to "unexpected response")
     # Warning: These will throw exceptions if the email is already in the state you are trying to set it to
+    # Catch the error as that means you are trying to set them to the state they are in
     ###########################################################################################################
     def markAsUnread(self, emailId:str):
         """
             Mark an email (based on its 'emailId') as unread
             WARNING: Only works if email is not ALREADY unread
         """
-        self.IMAPClient.store(str(int(emailId)), "-FLAGS", "\SEEN")
+        try:
+            if not self.isConnectedToServers: self.connectToEmailServers()
+            self.IMAPClient.store(str(int(emailId)), "-FLAGS", "\SEEN")
+        except Exception as err:
+            print(f"error marking {emailId} as read: {err}")
+            return
 
     def markAsRead(self, emailId:str):
         """
             Mark an email (based on its 'emailId') as read
             WARNING: Only works if email is not ALREADY read 
         """
-        # ... I hate that it took me > 1 hr to realize python was interpreting the type wrong
-        # have to be explicit and convert it to an int, and then convert to a string
-        self.IMAPClient.store(str(int(emailId)), "+FLAGS", "\SEEN")
+        try:
+            if not self.isConnectedToServers: self.connectToEmailServers()
+            self.IMAPClient.store(str(int(emailId)), "+FLAGS", "\SEEN")
+        except Exception as err:
+            print(f"error marking {emailId} as read: {err}")
+            return
 
     ###########################################################################################################
 

@@ -2,7 +2,8 @@
 // This file contains all the button commands
 
 import { parseForm/*, loadEmailDropdown*/ } from "./formProcessor.js"
-import { loadResource, writeResizeTextarea, isVisible, postData, getData } from "./utils.js"
+import { loadResource, writeResizeTextarea, isVisible, postData, 
+         getData, makeCursorSpin, makeCursorNormal } from "./utils.js"
 import { Dropdown } from "./dropdown.js"
 import { resizeContactList } from "./contactList.js"
 
@@ -179,6 +180,9 @@ function setDisplays(displayDict, newSubmitBtnText=null) {
  * @param {Boolean} isSelectingEmail True if email dropdown is showing to allow user to pick email to fetch
  */
 async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
+    // change cursor into "spinning wheel" to show user work is being done
+    makeCursorSpin()
+
     // has id of submit button (need to extrapolate form id parent)
     const triggerID = submitBtn.closest("form").id
 
@@ -213,7 +217,10 @@ async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
         const resData = await parseForm(triggerID, formAddr)
 
         // check for error messages (empty string = success)
+        // return cursor to normal now that everything is completed
+        // (do it before prompting the error or else it'll look busy even user reads error msg)
         if (resData.error != "") {
+            // makeCursorNormal()
             const errMsgHeader = [
                 `Failed ${resData.task}:`,
                 resData.error,
@@ -221,11 +228,13 @@ async function onSubmitClick(submitBtn, isReceiving, isSelectingEmail) {
             ].join("\n")
             // print the message, and have the meat of the error code be copyable (but somewhat unreadable)
             window.prompt(errMsgHeader, resData.error);
+        } else if (!isReceiving) {
+            makeCursorNormal()
+        } else if (isReceiving) {
+            // fill dropdown so user can select which email to show
+            parseEmailData(resData)
+            makeCursorNormal()
         }
-        
-        // fill dropdown so user can select which email to show
-        if (isReceiving) parseEmailData(resData)
-        // wait for another submit (after a dropdown option is selected using callback)
     }
 
     if (!isReceiving) {

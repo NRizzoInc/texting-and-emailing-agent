@@ -52,6 +52,15 @@ export function isVisible(elId) {
     return $(`#${elId}`).is(":visible")
 }
 
+export function makeCursorSpin(){
+    $("body").css("cursor", "progress")
+}
+
+export function makeCursorNormal(){
+    $("body").css("cursor", "default")
+}
+
+
 /********************************************** GET & POST FUNCTIONS **********************************************/
 
 /**

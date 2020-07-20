@@ -12,8 +12,10 @@ export async function parseForm(formId, formLink) {
     const inputs = [] 
     inputs.push(Array.from(form.getElementsByTagName("input")))
     inputs.push(Array.from(form.getElementsByTagName("textarea")).filter(el => !el.readOnly))
-    const formData = {};
-    
+    const formData = {
+        "carrier": document.getElementById("carrier-selector").getAttribute("value") // value is updated onChange
+    }
+
     // get all inputs to form
     for (const tags of inputs) {
         for (const div of tags) {

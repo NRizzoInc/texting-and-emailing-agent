@@ -205,6 +205,10 @@ class WebApp(UserManager):
         @self.app.route(self.infoSites["emailData"], methods=["POST"])
         @login_required
         def getEmailData()->dict():
+            """
+                \n@Brief: 2nd stage of receiving. Frontend sends all its data for backend to open/process & return it
+                \n@Note: 1st stage occurs in when processing the form submission under 'createTextForm()'
+            """
             emailData = flask.request.get_json()
             toRtn = {}
             emailContents = current_user.selectEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])

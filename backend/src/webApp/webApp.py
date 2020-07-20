@@ -238,7 +238,6 @@ class WebApp(UserManager):
         def createTextForm():
             optDataDict = {} # add keys to be returned at end of post request
             if (not self.initializingStatus):
-                url = self.hostAddr + self.formSites['textForm']
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
                 current_user.updateEmailLogin(

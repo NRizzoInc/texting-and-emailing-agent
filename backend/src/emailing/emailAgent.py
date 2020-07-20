@@ -585,22 +585,25 @@ class EmailAgent(DatabaseManager):
             print("Successfully logged into email account!\n")
             return None
             
-        except Exception as error:
+        except smtplib.SMTPAuthenticationError as rawError:
+            errCode = str(rawError.smtp_code)
+            errorMsg = str(rawError.smtp_error.decode()).replace("\n", "")
+            formattedErr = f"Error code {errCode} - {errorMsg}"
             linkToPage = "https://myaccount.google.com/lesssecureapps"
             errorMsg = ""
 
-            if '535' in str(error):
+            if '535' in formattedErr:
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
                 # TODO make connection more secure
                 errorMsg = "\n".join([
-                    "\nCould not connect to email server because of error:\n{0}\n".format(error),
+                    "\nCould not connect to email server because of error:\n{0}\n".format(formattedErr),
                     "Try changing your account settings to allow less secure apps to allow connection to be made.",
                     "Or try enabling two factor authorization and generating an app-password\n{0}".format(linkToPage),
                     "Quiting program, try connecting again with correct email/password",
                     "after making the changes, or trying a different email\n"
                 ])
             else:
-                errorMsg = "\nEncountered error while trying to connect to email server: \n{0}".format(error)
+                errorMsg = "\nEncountered error while trying to connect to email server: \n{0}".format(formattedErr)
 
             if (self.isCommandLine):
                 print(errorMsg)

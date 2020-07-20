@@ -1039,7 +1039,9 @@ class EmailAgent(DatabaseManager):
             WARNING: Only works if email is not ALREADY unread
         """
         try:
+            # need to connect & open inbox to mark as read
             if not self.isConnectedToServers: self.connectToEmailServers()
+            self.IMAPClient.select('INBOX', readonly=False)
             self.IMAPClient.store(str(int(emailId)), "-FLAGS", "\SEEN")
         except Exception as err:
             print(f"error marking {emailId} as read: {err}")
@@ -1051,7 +1053,9 @@ class EmailAgent(DatabaseManager):
             WARNING: Only works if email is not ALREADY read 
         """
         try:
+            # need to connect & open inbox to mark as read
             if not self.isConnectedToServers: self.connectToEmailServers()
+            self.IMAPClient.select('INBOX', readonly=False)
             self.IMAPClient.store(str(int(emailId)), "+FLAGS", "\SEEN")
         except Exception as err:
             print(f"error marking {emailId} as read: {err}")

@@ -244,16 +244,17 @@ class WebApp(UserManager):
             if (not self.initializingStatus):
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
-                current_user.updateEmailLogin(
-                    proccessData["firstName"],
-                    proccessData["lastName"],
-                    emailAddress=proccessData["emailAddress"],
-                    password=proccessData["password"]
-                )
 
-                # check if receive if sending/receiving message form
+                # check what actions need to be done based on task
                 if (proccessData['task'] == "sending"):
-                    sendErr = current_user.send("text", proccessData["message"])
+                    sendErr = current_user.send(
+                        "text",
+                        proccessData["message"],
+                        proccessData["firstName"],
+                        proccessData["lastName"],
+                        proccessData["emailAddress"],
+                        proccessData["password"]
+                    )
                     if (sendErr != None):
                         print(sendErr)
                         # TODO: somehow inform user on webpage of send error (return should have error message)

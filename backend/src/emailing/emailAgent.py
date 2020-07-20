@@ -250,7 +250,7 @@ class EmailAgent(DatabaseManager):
 
             else:
                 self.SMTPClient.send_message(msg)
-            print("Successfully sent the email/text to {0} {1}".format(
+            if self.isCommandLine: print("Successfully sent the email/text to {0} {1}".format(
                 receiverContactInfo['firstName'], receiverContactInfo['lastName']))
         return None
 
@@ -286,8 +286,9 @@ class EmailAgent(DatabaseManager):
 
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            self.scanForAttachments()
-            
+            # DO NOT scan for attachment on local machine if a user can input something malicious
+            if self.isCommandLine: self.scanForAttachments()
+
             # check if text payload is empty besides newline (enter to submit)
             for part in msg.walk():
                 if part.get_content_type() == 'text/plain':                
@@ -337,7 +338,7 @@ class EmailAgent(DatabaseManager):
         actualPhoneNum = ''.join(char for char in receiverContactInfo['phoneNumber'] if char.isdigit())
         
         textMsgAddress = "{0}@{1}".format(actualPhoneNum, domainName)
-        print("Sending text message to {0}".format(textMsgAddress))
+        if self.isCommandLine: print("Sending text message to {0}".format(textMsgAddress))
         
         # Get content to send in text message
         if self.isCommandLine:
@@ -500,7 +501,7 @@ class EmailAgent(DatabaseManager):
         for lastName in self.contactList.keys():
             for firstName in self.contactList[lastName].keys():
                 if firstName.lower() == myFirstName.lower() and lastName.lower() == myLastName.lower():
-                    print("\nFound a match!\n")
+                    if self.isCommandLine: print("\nFound a match!\n")
                     contactFirstName = firstName
                     contactLastName = lastName
                     # stores contact information in the form {"email": "blah@gmail.com", "carrier":"version"}
@@ -511,19 +512,28 @@ class EmailAgent(DatabaseManager):
 
         # if values were not initialized then no match was found
         if email == '' and phoneNumber == '' and carrier == '':
-            if self.isCommandLine:
-                toPrint = [
-                    f"\nContact '{myFirstName} {myLastName}' does not exist!",
-                    f"Add them to the contact list by calling this program followed by 'using the --add-contact flag'",
-                    "\n"
-                ]
-                print("\n".join(toPrint))
+            toPrint = [
+                f"\nContact '{myFirstName} {myLastName}' does not exist!",
+                f"Add them to the contact list by calling this program followed by 'using the --add-contact flag'",
+                "\n"
+            ]
+            # print immediately and return
             # Return an empty dict to signify DNE
+            if self.isCommandLine: print("\n".join(toPrint))
             return {}
-            
-        print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(myFirstName, myLastName))
-        print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
-            contactFirstName, contactLastName, email, carrier, phoneNumber))
+
+        foundContactPrint = [
+            f"Based on the inputs of:",
+            f"first name = {myFirstName}",
+            f"last name = {myLastName}",
+            f"\nThe contact found is: {contactFirstName} {contactLastName}",
+            f"Email Address: {email}",
+            f"Carrier: {carrier}",
+            f"Phone Number: {phoneNumber}",
+        ]
+
+        # print messages (if command line)
+        if self.isCommandLine: print("\n".join(foundContactPrint))
 
         dictToRtn = {
             'firstName' : contactFirstName,
@@ -582,7 +592,7 @@ class EmailAgent(DatabaseManager):
             self.SMTPClient.login(self.myEmailAddress, self.password)
             self.IMAPClient.login(self.myEmailAddress, self.password)
             self.isConnectedToServers = True
-            print("Successfully logged into email account!\n")
+            if self.isCommandLine: print("Successfully logged into email account!\n")
             return None
             
         except smtplib.SMTPAuthenticationError as rawError:
@@ -613,14 +623,14 @@ class EmailAgent(DatabaseManager):
                 return errorMsg
 
     def connectSMTP(self, server, portNum):
-        print("Connecting to SMTP email server")
+        if self.isCommandLine: print("Connecting to SMTP email server")
         self.SMTPClient = smtplib.SMTP(host=server, port=int(portNum))
         self.SMTPClient.ehlo()
         self.SMTPClient.starttls(context=self.context)
         self.SMTPClient.ehlo()    
 
     def connectIMAP(self, server, portNum):    
-        print("Connecting to IMAP email server")
+        if self.isCommandLine: print("Connecting to IMAP email server")
         self.IMAPClient = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
     def getEmailProviderInfo(self, emailWebsite:str="")->dict():
@@ -647,7 +657,7 @@ class EmailAgent(DatabaseManager):
         # use email name (if possible) to guess provider to skip user input
         if len(emailWebsite) > 0 and not emailWebsite.isspace():
             emailServiceProvider = (emailWebsite[emailWebsite.find("@")+1:emailWebsite.find('.')])
-            print("Email Provider: {0}".format(emailServiceProvider))
+            if self.isCommandLine: print("Email Provider: {0}".format(emailServiceProvider))
             if emailServiceProvider.lower() in lowerCaseList:
                 foundValidEmailProvider = True
 

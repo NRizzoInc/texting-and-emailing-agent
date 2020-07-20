@@ -8,6 +8,7 @@ import { resizeContactList } from "./contactList.js"
 
 const emailSelDropdown = new Dropdown("email-id-selector", true, onChooseEmail)
 const numFetchSelDropdown = new Dropdown("num-email-fetch-selector", false, updateNumEmailFetch)
+const carrierSelDropdown = new Dropdown("carrier-selector", true)
 const urlsPath = "/static/urls.json"
 // true means show (default everything to that except terminal data & selector)
 const defaultDisplayDict = {
@@ -112,9 +113,11 @@ async function onFormBtnClick(id) {
     else if (id == 'add-contact-button') {
         displayDict = addContactDisplayDict
 
+        // Update the dropdown for "Phone Carrier" to contain the only available ones
         const urls = await loadResource(urlsPath)
         const providerData = await getData(urls.infoSites.cellProviders)
         const possibleCellProviders = providerData.providersList
+        possibleCellProviders.forEach(carrierOpt => carrierSelDropdown.addOption(carrierOpt, carrierOpt))
     }
     else {
         console.error("ID Does Not Mean Anything");

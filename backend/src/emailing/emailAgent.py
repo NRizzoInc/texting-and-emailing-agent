@@ -250,7 +250,7 @@ class EmailAgent(DatabaseManager):
 
             else:
                 self.SMTPClient.send_message(msg)
-            print("Successfully sent the email/text to {0} {1}".format(
+            if self.isCommandLine: print("Successfully sent the email/text to {0} {1}".format(
                 receiverContactInfo['firstName'], receiverContactInfo['lastName']))
         return None
 
@@ -592,7 +592,7 @@ class EmailAgent(DatabaseManager):
             self.SMTPClient.login(self.myEmailAddress, self.password)
             self.IMAPClient.login(self.myEmailAddress, self.password)
             self.isConnectedToServers = True
-            print("Successfully logged into email account!\n")
+            if self.isCommandLine: print("Successfully logged into email account!\n")
             return None
             
         except smtplib.SMTPAuthenticationError as rawError:
@@ -623,14 +623,14 @@ class EmailAgent(DatabaseManager):
                 return errorMsg
 
     def connectSMTP(self, server, portNum):
-        print("Connecting to SMTP email server")
+        if self.isCommandLine: print("Connecting to SMTP email server")
         self.SMTPClient = smtplib.SMTP(host=server, port=int(portNum))
         self.SMTPClient.ehlo()
         self.SMTPClient.starttls(context=self.context)
         self.SMTPClient.ehlo()    
 
     def connectIMAP(self, server, portNum):    
-        print("Connecting to IMAP email server")
+        if self.isCommandLine: print("Connecting to IMAP email server")
         self.IMAPClient = imaplib.IMAP4_SSL(host=server, port=int(portNum), ssl_context=self.context)
 
     def getEmailProviderInfo(self, emailWebsite:str="")->dict():

@@ -239,11 +239,19 @@ class WebApp(UserManager):
         formData = {}
         @self.app.route(self.formSites['textForm'], methods=['POST'])
         @login_required
-        def createTextForm():
-            optDataDict = {} # add keys to be returned at end of post request
+        def createTextForm()->dict():
+            """
+                \n@Return: {
+                \t\n    "error": str # Empty string if success, stringified error message if not
+                \t\n    "task": str # the task being done (addContact, send, receive)
+                \t\n}
+            """
+            # add keys to be returned at end of post request
+            optDataDict = {"error": ""}
             if (not self.initializingStatus):
                 formData = flask.request.get_json()
                 proccessData = self.manageFormData(formData)
+                optDataDict["task"] = proccessData["task"]
 
                 # check what actions need to be done based on task
                 if (proccessData['task'] == "sending"):
@@ -256,8 +264,8 @@ class WebApp(UserManager):
                         proccessData["password"]
                     )
                     if (sendErr != None):
-                        print(sendErr)
-                        # TODO: somehow inform user on webpage of send error (return should have error message)
+                        optDataDict["error"] = sendErr
+                        # print(sendErr)
                 
                 elif (proccessData['task'] == "receiving"):
                     # responsible for login to get preliminary email data
@@ -265,9 +273,9 @@ class WebApp(UserManager):
                     numToFetch = current_user.getNumFetch()
                     preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)
-                    # TODO: somehow inform user on webpage of send error (return should have error message)
                     if (optDataDict["error"] == True):
-                        print("Failed to receive emails: \n{0}".format(optDataDict["text"]))
+                        # print("Failed to receive emails: \n{0}".format(optDataDict["text"]))
+                        optDataDict["error"] = optDataDict["text"] # frontend reads error msgs from "error" key
                 
                 elif (proccessData['task'] == "adding-contact"):
                     current_user.addContact(

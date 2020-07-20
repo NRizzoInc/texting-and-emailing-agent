@@ -24,7 +24,7 @@ On Windows (with Git Bash): `./install/setup.sh a`
 Create dummy login to perform email operations:
 
 1. You will need to either get access to the dummy email account I set up or make your own
-    *  (only contributors will get access to mine on)
+    *  (only contributors will get access to mine)
 2. To make your own: 
     1. Create a low security gmail account (or else email app cannot get past default security)
         1. Create the account -> click on your name icon on the top right of gmail's screen -> `Manage your Google Account`

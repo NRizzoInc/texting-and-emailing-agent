@@ -1137,11 +1137,11 @@ class EmailAgent(DatabaseManager):
         idDict = {}
         if not self.isCommandLine: print(f"Fetching x{maxFetchCount} emails -- {self.username}")
         def fetchEmailsWorker():
+            numFetched = 0
             for idx, idNum in enumerate(idList):
                 rawEmail = self.fetchEmail(idNum, leaveUnread=leaveUnread)
                 emailUnreadBool = idNum in idListUnread 
                 emailMsg = self.processRawEmail(rawEmail, idNum, unread=emailUnreadBool)
-                numFetched = 0
                 if emailMsg["belongsToUser"] == True:
                     emailList.append(emailMsg)
                     emailDescLine = "" # default to empty string 

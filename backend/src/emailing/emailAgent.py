@@ -592,7 +592,8 @@ class EmailAgent(DatabaseManager):
             linkToPage = "https://myaccount.google.com/lesssecureapps"
             errorMsg = ""
 
-            if '535' in formattedErr:
+            # Only print custom message if can copy on command line
+            if '535' in formattedErr and self.isCommandLine:
                 # Sometimes smtp servers wont allow connection becuase the apps trying to connect are not secure enough
                 # TODO make connection more secure
                 errorMsg = "\n".join([

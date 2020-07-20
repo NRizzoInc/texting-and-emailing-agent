@@ -284,10 +284,15 @@ class EmailAgent(DatabaseManager):
 
     def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
         '''
-            @Args:
-                - receiverContactInfo: a dictionary containing the following information 
-                    {first name, last name, email, carrier, phone number}
-                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
+            \n@Param: receiverContactInfo - a dictionary containing the following information:
+            \n\t{
+            \n\t    firstName: str,
+            \n\t    lastName: str,
+            \n\t    email: str,
+            \n\t    carrier: str,
+            \n\t    phoneNumber: str
+            \n\t}
+            \n@Param: msgToSend - a string containing the message to be sent (dont fill in if using command line)
         '''
         receiverCarrier = receiverContactInfo['carrier'].lower()        
 

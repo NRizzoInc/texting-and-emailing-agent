@@ -30,7 +30,7 @@ Create dummy login to perform email operations:
         1. Create the account -> click on your name icon on the top right of gmail's screen -> `Manage your Google Account`
         2. On left side click `security` -> scroll down to find `Less secure app access` -> `Turn on access`
         3. Note: do NOT do this with your actual gmail account as it will leave you vulnerable
-    1. Create a file called `defaultLogin.json` at `backend/src/emailing/defaultLogin.json`
+    1. Create a file called `defaultLogin.json` at `backend/emailData/defaultLogin.json`
     2. Insert the following json and modify the email address & password to match your gmail account made with low security
 
 ``` json

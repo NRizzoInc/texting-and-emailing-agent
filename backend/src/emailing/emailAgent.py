@@ -50,13 +50,23 @@ class EmailAgent(DatabaseManager):
     __success = 0
     __error = -1
 
-    def __init__(self, displayContacts:bool=True, isCommandLine:bool=False, useDefault:bool=False, userId:str=""):
+    def __init__(self,
+                 displayContacts:bool=True,
+                 isCommandLine:bool=False,
+                 useDefault:bool=False,
+                 userId:str="",
+                 emailAddress:str=None,
+                 emailPassword:str=None
+                ):
         """
             \n@Brief: This class is responsible for sending & receiving emails
             \n@input: displayContacts- If true, print the contact list during init
             \n@input: isCommandLine- True if using through the command line
             \n@input: useDefault- True to use the default email account to send/receive texts & emails
             \n@Param: userId - (optional) The UUID belonging to the user for non-command line uses
+            \n@Param: emailAddress - (optional) The email address of the account you want to log in to
+            \n@Param: emailPassword - (optional) The email password of the account you want to log in to
+            \n@Note: If both emailAddress & emailPassword are not provided, default account gets used
         """
         # this variable is neccesary for the webApp and anything that wants to 
         # implement this class not using the command line
@@ -89,8 +99,9 @@ class EmailAgent(DatabaseManager):
         # contained within gitignored json that I will only give to contributors
         dummyEmailLoginPath = os.path.join(self.__emailDataDir, "defaultLogin.json")
         dummyLogin = utils.loadJson(dummyEmailLoginPath)["dummy-email"]
-        self.myEmailAddress = dummyLogin["email-address"]
-        self.password = dummyLogin["password"]
+        isLoginProvided = emailAddress != None and emailPassword != None # only use provided login if all pieces present
+        self.myEmailAddress =   emailAddress  if isLoginProvided else dummyLogin["email-address"]
+        self.password =         emailPassword if isLoginProvided else dummyLogin["password"]
 
         # will be set to true if non-default account is used and login entered
         # allows user to not hav eto tpe login multiple times

@@ -573,8 +573,8 @@ class EmailAgent(DatabaseManager):
         smtpPort = smtpInfo['portNum']
 
         # Establish connection to both email servers using self.myEmailAddress and password given by user
-        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)        
-        self.connectSMTP(smtpHostAddr, smtpPort)        
+        # Have to choose correct protocol for what the program is trying to do(IMAP-receive, SMTP-send)
+        self.connectSMTP(smtpHostAddr, smtpPort)
         self.connectIMAP(imapHostAddr, imapPort)
 
         # Try to login to email server, if it fails then catch exception

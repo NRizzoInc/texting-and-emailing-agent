@@ -14,7 +14,8 @@
         "webAppRegister":   "/register"
     },
     "infoSites": {
-        "emailData"     :   "/emailData"
+        "emailData"     :   "/emailData",
+        "cellProviders" :   "/info/available-cell-providers"
     },
     "settingsSites": {
         "numFetch"      :   "/settings/numFetch"

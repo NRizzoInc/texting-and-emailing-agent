@@ -118,6 +118,7 @@ class WebApp(UserManager):
         def createTextPage():
             # proxy for current User object that triggered this
             contactList = current_user.getContactList()
+            # availableCellProviders = current_user.getTextableProviders()
             return render_template("textPage.html", title=self.siteTitleDict["textpage"], 
                 links=self.sites, formLinks=self.formSites, contacts=contactList)
 
@@ -209,7 +210,14 @@ class WebApp(UserManager):
             emailContents = current_user.selectEmailById(emailData["idDict"], emailData["emailList"], emailData["emailId"])
             toRtn["emailContent"] = emailContents.strip()
             return self.returnSuccessResp(additionalDict=toRtn)
-        
+
+        @self.app.route(self.infoSites["cellProviders"], methods=["GET"])
+        @login_required
+        def getCellProviders():
+            providersList = current_user.getProvidersList()
+            returnableJson = {"providersList": providersList}
+            return self.returnSuccessResp(additionalDict=returnableJson)
+
         @self.app.route(self.formSites["webAppLogout"], methods=["GET", "POST"])
         @login_required
         def logoutEmailAccount()->dict():

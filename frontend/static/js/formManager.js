@@ -111,6 +111,10 @@ async function onFormBtnClick(id) {
     }
     else if (id == 'add-contact-button') {
         displayDict = addContactDisplayDict
+
+        const urls = await loadResource(urlsPath)
+        const providerData = await getData(urls.infoSites.cellProviders)
+        const possibleCellProviders = providerData.providersList
     }
     else {
         console.error("ID Does Not Mean Anything");

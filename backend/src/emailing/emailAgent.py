@@ -657,7 +657,7 @@ class EmailAgent(DatabaseManager):
         # use email name (if possible) to guess provider to skip user input
         if len(emailWebsite) > 0 and not emailWebsite.isspace():
             emailServiceProvider = (emailWebsite[emailWebsite.find("@")+1:emailWebsite.find('.')])
-            print("Email Provider: {0}".format(emailServiceProvider))
+            if self.isCommandLine: print("Email Provider: {0}".format(emailServiceProvider))
             if emailServiceProvider.lower() in lowerCaseList:
                 foundValidEmailProvider = True
 

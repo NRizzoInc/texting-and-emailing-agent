@@ -500,7 +500,7 @@ class EmailAgent(DatabaseManager):
         for lastName in self.contactList.keys():
             for firstName in self.contactList[lastName].keys():
                 if firstName.lower() == myFirstName.lower() and lastName.lower() == myLastName.lower():
-                    print("\nFound a match!\n")
+                    if self.isCommandLine: print("\nFound a match!\n")
                     contactFirstName = firstName
                     contactLastName = lastName
                     # stores contact information in the form {"email": "blah@gmail.com", "carrier":"version"}
@@ -511,19 +511,28 @@ class EmailAgent(DatabaseManager):
 
         # if values were not initialized then no match was found
         if email == '' and phoneNumber == '' and carrier == '':
-            if self.isCommandLine:
-                toPrint = [
-                    f"\nContact '{myFirstName} {myLastName}' does not exist!",
-                    f"Add them to the contact list by calling this program followed by 'using the --add-contact flag'",
-                    "\n"
-                ]
-                print("\n".join(toPrint))
+            toPrint = [
+                f"\nContact '{myFirstName} {myLastName}' does not exist!",
+                f"Add them to the contact list by calling this program followed by 'using the --add-contact flag'",
+                "\n"
+            ]
+            # print immediately and return
             # Return an empty dict to signify DNE
+            if self.isCommandLine: print("\n".join(toPrint))
             return {}
-            
-        print("Based on the inputs of: \nfirst name = {0} \nlast name = {1}\n".format(myFirstName, myLastName))
-        print("The contact found is:\n{0} {1}\nEmail Address: {2}\nCarrier: {3}\nPhone Number: {4}".format(
-            contactFirstName, contactLastName, email, carrier, phoneNumber))
+
+        foundContactPrint = [
+            f"Based on the inputs of:",
+            f"first name = {myFirstName}",
+            f"last name = {myLastName}",
+            f"\nThe contact found is: {contactFirstName} {contactLastName}",
+            f"Email Address: {email}",
+            f"Carrier: {carrier}",
+            f"Phone Number: {phoneNumber}",
+        ]
+
+        # print messages (if command line)
+        if self.isCommandLine: print("\n".join(foundContactPrint))
 
         dictToRtn = {
             'firstName' : contactFirstName,

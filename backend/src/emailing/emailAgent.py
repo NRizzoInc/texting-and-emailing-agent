@@ -286,8 +286,9 @@ class EmailAgent(DatabaseManager):
 
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            self.scanForAttachments()
-            
+            # DO NOT scan for attachment on local machine if a user can input something malicious
+            if self.isCommandLine: self.scanForAttachments()
+
             # check if text payload is empty besides newline (enter to submit)
             for part in msg.walk():
                 if part.get_content_type() == 'text/plain':                
@@ -337,7 +338,7 @@ class EmailAgent(DatabaseManager):
         actualPhoneNum = ''.join(char for char in receiverContactInfo['phoneNumber'] if char.isdigit())
         
         textMsgAddress = "{0}@{1}".format(actualPhoneNum, domainName)
-        print("Sending text message to {0}".format(textMsgAddress))
+        if self.isCommandLine: print("Sending text message to {0}".format(textMsgAddress))
         
         # Get content to send in text message
         if self.isCommandLine:

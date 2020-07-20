@@ -271,7 +271,15 @@ class WebApp(UserManager):
                     # responsible for login to get preliminary email data
                     # use ui dropdown to select which email to fully fetch
                     numToFetch = current_user.getNumFetch()
-                    preliminaryEmailData = current_user.userReceiveEmailUser(numToFetch)
+
+                    # get all the emails (user later picks which ones the want to open)
+                    preliminaryEmailData = current_user.userReceiveEmailUser(
+                        numToFetch,
+                        proccessData["emailAddress"],
+                        proccessData["password"]
+                    )
+
+                    # update dict to return
                     optDataDict = utils.mergeDicts(optDataDict, preliminaryEmailData)
                     if (optDataDict["error"] == True):
                         # print("Failed to receive emails: \n{0}".format(optDataDict["text"]))

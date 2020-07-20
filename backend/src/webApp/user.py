@@ -45,18 +45,21 @@ class User(UserMixin):
         self.logoutClient(client)
         return toRtn
 
-    def userReceiveEmailUser(self, numToFetch):
+    def userReceiveEmailUser(self, numToFetch:int, emailAddress:str, emailPassword:str):
         """
             \n@Brief: Receives the preliminary email data that needs to be parsed more to fully fetch an email
             \n@Param: numToFetch (int) - The number of email descriptors to get
+            \n@Param: `emailAddress` - The email to log into to send the email
+            \n@Param: `emailPassword` - The password for the email to log into to send the email
             \n\t@Return: `{
             \n\t    error: bool,
             \n\t    text: str,
             \n\t    idDict: {'<email id>': {idx: '<list index>', desc: ''}}, # dict of email ids mapped to indexes of emailList
             \n\t    emailList: [{To, From, DateTime, Subject, Body, idNum, unread}] # list of dicts with email message data
             \n\t} If error, 'error' key will be true, printed email (or error) will be in 'text' key`
+            \n@Note: Both emailAddress & emailPassword need to be provided, or else the default account gets used
         """
-        client = self.initializeEmailAgent()
+        client = self.initializeEmailAgent(emailAddress=emailAddress, emailPassword=emailPassword)
         toRtn = client.receiveEmail(onlyUnread=False, maxFetchCount=numToFetch)
         self.logoutClient(client)
         return toRtn

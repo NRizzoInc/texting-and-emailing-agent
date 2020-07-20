@@ -294,30 +294,30 @@ class EmailAgent(DatabaseManager):
             \n\t}
             \n@Param: msgToSend - a string containing the message to be sent (dont fill in if using command line)
         '''
-        receiverCarrier = receiverContactInfo['carrier'].lower()        
+        receiverCarrier = receiverContactInfo['carrier'].lower()
 
         # Check if this email provider allows emails to be sent to phone numbers
-        lowerCaseList = list(map(lambda x:x.lower(), self.emailProvidersInfo.keys()))
-        # use index of lower case match to get actual value of key according to original mapped dict keys
-        dictKeysMappedToList = list(map(lambda x:x, self.emailProvidersInfo.keys()))
+        # use index of lower case match to get actual value of key according to original list
+        possibleProviders = self.getTextableProviders()
+        lowerCaseProviders = list(map(lambda x:x.lower(), possibleProviders))
 
-        if receiverCarrier in lowerCaseList:
-            indexInListOfCarrier = lowerCaseList.index(receiverCarrier)
-            keyForDesiredCarrier = dictKeysMappedToList[indexInListOfCarrier]
+        if receiverCarrier in lowerCaseProviders:
+            indexInListOfCarrier = lowerCaseProviders.index(receiverCarrier)
+            keyForDesiredCarrier = possibleProviders[indexInListOfCarrier]
+            domainName = self.emailProvidersInfo[keyForDesiredCarrier]["smtpServer"]['SMS-Gateways']
 
-            if 'SMS-Gateways' not in self.emailProvidersInfo[keyForDesiredCarrier]["smtpServer"].keys():
-                print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
-                        receiverContactInfo['firstName'], receiverContactInfo['lastName']))
+        else:
+            # if carrier cannot accepts texts as emaisl
+            print("Sending text messages to {0} {1} is not possible due to their cell provider".format(
+                receiverContactInfo['firstName'], receiverContactInfo['lastName']))
 
-                # Since cant send a text message to the person, ask if user want to send email message instead
-                if input("Do you want to send an email instead (y/n): ").lower() == 'y':
-                    return self.composeEmailMsg()
-                
-                # If user cant send a text and wont send an email then just return
-                else:
-                    return None
-            else:
-                domainName = self.emailProvidersInfo[keyForDesiredCarrier]["smtpServer"]['SMS-Gateways']
+            # Since cant send a text message to the person, ask if user want to send email message instead
+            emailInstead = utils.promptUntilSuccess(
+                "Do you want to send an email instead (y/n): ", successCondition=utils.containsConfirmation)
+
+            if emailInstead == 'y': return self.composeEmailMsg()
+            # If user cant send a text and wont send an email then just return
+            else: return None
 
         # Remove all non-numerical parts of phone number (should be contiguous 10 digit number)
         actualPhoneNum = ''.join(char for char in receiverContactInfo['phoneNumber'] if char.isdigit())

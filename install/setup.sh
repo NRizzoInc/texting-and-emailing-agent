@@ -212,5 +212,9 @@ if [[ ${deployServices} == true ]]; then
 
         # Done
         echo "-- Started ${serviceFileName} Daemon"
+
+        # Make Daemons Persistent for Boot
+        systemctl enable ${serviceFileName}
+        echo "-- Making Daemons Persistent for Boot"
     fi
 fi

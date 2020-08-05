@@ -86,6 +86,7 @@ helpScriptDir=${installDir}/helper-scripts
 mongoInstallScript=${helpScriptDir}/install-mongoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
 pythonVersion=3.7
+mongoVersion=4.2
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
 
@@ -129,15 +130,32 @@ else
     echo "#1.1 Adding python ppa"
     add-apt-repository -y ppa:deadsnakes/ppa
 
+    if [[ ${installMongo} == true ]]; then
+        echo "-- Adding MongoDB key"
+        wget -qO - https://www.mongodb.org/static/pgp/server-${mongoVersion}.asc | apt-key add -
+        echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/${mongoVersion} multiverse" | tee /etc/apt/sources.list.d/mongodb-org-${mongoVersion}.list
+    fi
+
     echo "#1.2 Updating..."
     apt update -y
 
-    echo "#1.3 Upgrading..."
-    apt upgrade -y
+    echo "#1.3 Installing..."
     apt install -y \
         ${pythonName} \
         ${pythonName}-venv \
-        mongodb
+
+    if [[ ${installMongo} == true ]]; then
+        echo "-- Installing MongoDB"
+        apt install -y \
+            mongodb-org=${mongoVersion} \
+            mongodb-org-server=${mongoVersion} \
+            mongodb-org-shell=${mongoVersion} \
+            mongodb-org-mongos=${mongoVersion} \
+            mongodb-org-tools=${mongoVersion}
+    fi
+
+    echo "#1.3.3 Upgrading Packages..."
+    apt upgrade -y
 
     echo "#1.4 Creating Virtual Environment"
     ${pythonName} -m venv ${virtualEnvironDir} # actually create the virtual environment

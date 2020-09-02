@@ -1,8 +1,0 @@
-Dear ${receiver_name}, 
-
-This is a test message. 
-Have a great life! 
-
-Yours Truly,
-
-${sender_name}

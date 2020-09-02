@@ -116,7 +116,7 @@ class EmailAgent(DatabaseManager):
         self._userId = self._cliUserId if self.isCommandLine else userId
 
         # text to match on receive side
-        self.username = self.configureLogin()
+        self.username = self.configureLogin(self._userId)
         self._uniqueUserEmailSignature = f"Dest: {self.username}"
 
         # Fetch the contact list from the database
@@ -137,20 +137,23 @@ class EmailAgent(DatabaseManager):
         """
         return EmailAgent._unreadEmailFilter if onlyUnread else EmailAgent._allEmailFilter
 
-    def configureLogin(self, overrideUsername:bool=False, overridePassword:bool=False):
+    def configureLogin(self, userId, overrideUsername:bool=False, overridePassword:bool=False):
         """
             \n@Brief: Helper function that sets username & password if needed
+            \n@Param: userId - The id to set/check
             \n@Param: (optional - default = False) overrideUsername - Update the username?
             \n@Param: (optional - default = False) overridePassword - Update the password?
             \n@Return: The current user's username
         """
         # if not command line, just return with the username
-        if not self.isCommandLine: return self.getUsernameById(self._userId)
-        self._createUserDocIfIdDNE(self._userId)
+        if not self.isCommandLine: return self.getUsernameById(userId)
+
+        # Create user document in database if it doesn't already exist
+        self._createUserDocIfIdDNE(userId)
 
         # will only be the case for command line (myUsername == "" if first time doing command line)
-        myUsername = self.getUsernameById(self._userId)
-        myPassword = self.getPasswordFromId(self._userId)
+        myUsername = self.getUsernameById(userId)
+        myPassword = self.getPasswordFromId(userId)
         needToSetUsername = overrideUsername or myUsername == ""
         needToSetPassword = overridePassword or myPassword == ""
 
@@ -159,7 +162,7 @@ class EmailAgent(DatabaseManager):
                 newUsername = utils.promptUntilSuccess("Enter your display name when sending texts (can be updated later): ")
                 if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
                 else: break
-            self.setUsernameById(self._userId, newUsername)
+            self.setUsernameById(userId, newUsername)
             myUsername = newUsername
 
         if needToSetPassword:

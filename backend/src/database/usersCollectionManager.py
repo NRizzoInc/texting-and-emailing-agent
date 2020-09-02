@@ -121,10 +121,13 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: username - (optional) The username to try to assign to the user if dne
             \n@Param: password - (optional) If username does not exit, user this password for the user
             \n@Note: A user doc in the database contains id, username, password, and User object
+            \n@Return: True if already exists, false if had to create it
         """
         idInUse = self.isIdInUse(id)
+        if idInUse: return True
         username = "" if username == "" or username == None or self.isUsernameInUse(username) else username
         self._addUserToColl(id, username, password, None)
+        return False
 
     def __checkIfUserValid(self, userDoc:dict):
         """

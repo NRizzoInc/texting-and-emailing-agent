@@ -67,8 +67,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Return: The corresponding id
             \n@Note: Useful if chained with other functions that require id (i.e. 'findUserById()')
         """
-        match = list(self.usersColl.find({"username": username}))
-        matchId = match[0]["id"]
+        matches = list(self.usersColl.find({"username": username}))
+        matchId = list(filter(self.filterLocalhost(), matches))[0]["id"]
         return matchId
 
     def findUserById(self, userToken, UserObjRef):
@@ -79,6 +79,9 @@ class UsersCollectionManager(DatabaseBaseClass):
         """
         userDoc = self._getDocById(self.usersColl, userToken)
         return self._createUserObjIfDNE(userDoc, UserObjRef)
+
+    def countNumUsernameMatch(self, username):
+        return self.usersColl.find({"username": username}).count()
 
     def getUserByUsername(self, username, UserObjRef):
         """
@@ -146,8 +149,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: username - The password to find's username
             \n@Returns: The matching password 
         """
-        match = list(self.usersColl.find({"username": username}))
-        actualPassword = match[0]["password"]
+        matches = list(self.usersColl.find({"username": username}))
+        actualPassword = list(filter(self.filterLocalhost(), matches))[0]["password"]
         return actualPassword
 
     def getPasswordFromId(self, myId:str)->str():

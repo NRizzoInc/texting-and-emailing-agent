@@ -260,6 +260,7 @@ class CLIManager(EmailAgent):
                     firstname = utils.promptUntilSuccess(createNamePrompt("firstname"))
                 elif lastname == None:
                     lastname = utils.promptUntilSuccess(createNamePrompt("lastname"))
+            else: return
 
         # get contact info regardless of method to reach this point
         receiverContactInfo = self.getReceiverContactInfo(firstname, lastname)

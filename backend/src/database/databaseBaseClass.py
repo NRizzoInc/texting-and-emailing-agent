@@ -81,7 +81,8 @@ class DatabaseBaseClass(Constants):
 
     def _getDocByUsername(self, collObj:MongoClient, username):
         """Returns collection object based on the username -- returns empty dict for non-existant user"""
-        match = list(collObj.find({"username": username})) # "match" because there should only ever be one
+        matches = list(collObj.find({"username": username})) # "match" because there should only ever be one
+        matches = list(filter(self.filterLocalhost(), matches))
         numMatches = len(match)
         if numMatches > 0:  return match[0]
         else:               return {} 
@@ -91,6 +92,13 @@ class DatabaseBaseClass(Constants):
         match = list(collObj.find(query))
         numMatches = len(match)
         return numMatches > 0
+
+    def filterLocalhost(self):
+        """
+            \n@Brief: Helper function that generates lambda to filter out users with id = 'localhost'
+            \n@Note: Due localhost and web app acct might share username -- avoid collision
+        """
+        return lambda myDict: myDict["id"] != "localhost"
 
     def _deserializeData(self, data:bytes):
         """

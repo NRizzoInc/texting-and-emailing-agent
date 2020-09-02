@@ -5,6 +5,7 @@
 #------------------------------STANDARD DEPENDENCIES-----------------------------#
 import json
 import pickle, copyreg, ssl # for serializing User objects (SSL obj requires more work)
+import uuid
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 from pymongo import MongoClient, collection
@@ -22,6 +23,17 @@ class UsersCollectionManager(DatabaseBaseClass):
         """
         # Inheret all functions and 'self' variables
         super().__init__()
+
+    def createSafeCookieId(self):
+        """Creates UUID for users"""
+        # do-while loop to make sure non-colliding unique id is made
+        while True:
+            # https://docs.python.org/3/library/uuid.html -- safe random uuid
+            userToken = str(uuid.uuid4())
+            inUse = self.isIdInUse(userToken)
+            if not inUse: break # leave loop once new id is found
+            else: print(f"userToken '{userToken}' is already taken")
+        return userToken
 
     def _addUserToColl(self, userToken, username, password, userObj):
         """
@@ -55,8 +67,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Return: The corresponding id
             \n@Note: Useful if chained with other functions that require id (i.e. 'findUserById()')
         """
-        match = list(self.usersColl.find({"username": username}))
-        matchId = match[0]["id"]
+        matches = list(self.usersColl.find({"username": username}))
+        matchId = list(filter(self.filterLocalhost(), matches))[0]["id"]
         return matchId
 
     def findUserById(self, userToken, UserObjRef):
@@ -66,7 +78,10 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Return: The 'User' object (None if 'User' DNE or unset)
         """
         userDoc = self._getDocById(self.usersColl, userToken)
-        return self._createUserIfDNE(userDoc, UserObjRef)
+        return self._createUserObjIfDNE(userDoc, UserObjRef)
+
+    def countNumUsernameMatch(self, username):
+        return self.usersColl.find({"username": username}).count()
 
     def getUserByUsername(self, username, UserObjRef):
         """
@@ -75,9 +90,9 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Returns: None if username does not exist
         """
         userDoc = self._getDocByUsername(self.usersColl, username)
-        return self._createUserIfDNE(userDoc, UserObjRef)
+        return self._createUserObjIfDNE(userDoc, UserObjRef)
 
-    def _createUserIfDNE(self, userDoc, UserObjRef):
+    def _createUserObjIfDNE(self, userDoc, UserObjRef):
         """
             \n@Brief: Get the User object referenced in the document. If it doesn't exist, create one
             \n@Param: userDoc - The dictionary containing the information belonging to a specific user
@@ -88,6 +103,34 @@ class UsersCollectionManager(DatabaseBaseClass):
         userObj = self.__checkIfUserValid(userDoc)
         userId = userDoc["id"]
         return userObj if userObj != None else UserObjRef(userId)
+
+    def _createUserDocIfUsernameDNE(self, username, id="", password:str=""):
+        """
+            \n@BRief: Helper function that creates a new user in the database if username not found
+            \n@Param: username - the username to search for
+            \n@Param: id - (optional) The id to try to assign to the user if dne. WARNING: only use for cli
+            \n@Param: password - (optional) If username does not exit, user this password for the user
+            \n@Note: A user doc in the database contains id, username, password, and User object
+        """
+        usernameExists = self.isUsernameInUse(username)
+        idInUse = self.isIdInUse(id)
+        uuid = id if not idInUse else self.createSafeCookieId()
+        self._addUserToColl(uuid, username, password, None)
+
+    def _createUserDocIfIdDNE(self, id, username="", password:str=""):
+        """
+            \n@BRief: Helper function that creates a new user in the database if username not found
+            \n@Param: id - the user's id to search for
+            \n@Param: username - (optional) The username to try to assign to the user if dne
+            \n@Param: password - (optional) If username does not exit, user this password for the user
+            \n@Note: A user doc in the database contains id, username, password, and User object
+            \n@Return: True if already exists, false if had to create it
+        """
+        idInUse = self.isIdInUse(id)
+        if idInUse: return True
+        username = "" if username == "" or username == None or self.isUsernameInUse(username) else username
+        self._addUserToColl(id, username, password, None)
+        return False
 
     def __checkIfUserValid(self, userDoc:dict):
         """
@@ -106,8 +149,8 @@ class UsersCollectionManager(DatabaseBaseClass):
             \n@Param: username - The password to find's username
             \n@Returns: The matching password 
         """
-        match = list(self.usersColl.find({"username": username}))
-        actualPassword = match[0]["password"]
+        matches = list(self.usersColl.find({"username": username}))
+        actualPassword = list(filter(self.filterLocalhost(), matches))[0]["password"]
         return actualPassword
 
     def getPasswordFromId(self, myId:str)->str():

@@ -113,6 +113,20 @@ class CLIManager(EmailAgent):
         )
 
         ##################################################################################################################
+        # Message Content
+        ##################################################################################################################
+        contentGroup = parser.add_argument_group(
+            title="Message Content",
+            description="Helps craft email/text to send via command line without needing input later on"
+        )
+        contentGroup.add_argument(
+            "-m,", "--message",
+            default=None,
+            required=False,
+            help="The message to send",
+        )
+
+        ##################################################################################################################
         # Login Managers
         ##################################################################################################################
         loginManagersGroup = parser.add_argument_group(
@@ -200,7 +214,7 @@ class CLIManager(EmailAgent):
         # each function takes the email agent as first arg, and have optional for the rest
         # firstname, lastname, etc...
         selectedFn = self.serviceTypes[str(serviceType)]
-        selectedFn(firstname=args['fname'], lastname=args['lname'])
+        selectedFn(firstname=args['fname'], lastname=args['lname'], message=args["message"])
 
         # logout
         self.logoutEmail()
@@ -208,7 +222,7 @@ class CLIManager(EmailAgent):
         print("Closing Program")
 
 
-    def sendText(self, firstname=None, lastname=None):
+    def sendText(self, firstname=None, lastname=None, message=None):
         # If first and last name not provided, have to manually ask for it
         receiveInfoProvided = firstname != None and lastname != None
         if not receiveInfoProvided:
@@ -249,7 +263,7 @@ class CLIManager(EmailAgent):
             "Do you want to wait for a new message (y/n): ", successCondition=utils.containsConfirmation)
         if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
-    def getText(self, firstname=None, lastname=None):
+    def getText(self, firstname=None, lastname=None, message=None):
         # Entering something in the second argument signifies that you want to use the default login
         seeUnopned = utils.promptUntilSuccess(
             "Do you want to see only unopened emails (y/n): ", successCondition=utils.containsConfirmation)

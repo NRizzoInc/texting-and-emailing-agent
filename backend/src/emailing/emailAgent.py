@@ -146,6 +146,7 @@ class EmailAgent(DatabaseManager):
         """
         # if not command line, just return with the username
         if not self.isCommandLine: return self.getUsernameById(self._userId)
+        self._createUserDocIfIdDNE(self._userId)
 
         # will only be the case for command line (myUsername == "" if first time doing command line)
         myUsername = self.getUsernameById(self._userId)
@@ -162,7 +163,13 @@ class EmailAgent(DatabaseManager):
             myUsername = newUsername
 
         if needToSetPassword:
-            newPassword = utils.promptUntilSuccess("Enter your password (to login via the web GUI - can be updated later): ")
+            while True:
+                newPassword = utils.promptUntilSuccess(
+                    "Enter your password (to login via the web GUI - can be updated later): ", hideInput=True)
+                newPasswordConfirm = utils.promptUntilSuccess(
+                    "Re-Enter your password: ", hideInput=True)
+                if newPassword == newPasswordConfirm:   break
+                else:                                   print("Passwords do not match, please try again")
             self.setPasswordById(self._userId, newPassword)
 
         # finally return the username

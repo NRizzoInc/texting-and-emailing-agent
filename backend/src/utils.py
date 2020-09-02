@@ -1,5 +1,6 @@
 import os, sys
 import json
+import getpass
 # needed to determine which OS is being used
 import re
 import platform
@@ -65,16 +66,18 @@ def containsConfirmation(response):
     """Helper function that returns if 'y' or 'n' is contained within the argument"""
     return 'y' in response or 'n' in response
 
-def promptUntilSuccess(message, successCondition=None):
+def promptUntilSuccess(message, successCondition=None, hideInput:bool=False):
     """
         \n@Brief: Keeps prompting user with 'message' until they respond correctly
         \n@Param: message - The message to prompt users with repetitively
         \n@Param: successCondition - (optional) Comparison function that returns a bool -> true means return
+        \n@Param: hideInput - (optional) Should 'getpass' be used to hide what the user is typing (i.e. password) 
         \n@Returns: The validated response
     """
     isValidResponse = False
     while isValidResponse == False:
-        response = input(message)
+        if hideInput:   response = getpass.getpass(message)
+        else:           response = input(message)
         if response != None and len(response) > 0: 
             if successCondition == None:        return response # if no comparison fn, return checked response
             elif successCondition(response):    return response # if returns true, can return valid response

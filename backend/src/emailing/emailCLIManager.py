@@ -121,9 +121,18 @@ class CLIManager(EmailAgent):
         )
         contentGroup.add_argument(
             "-m,", "--message",
+            metavar="<message>",
             default=None,
             required=False,
             help="The message to send",
+        )
+        contentGroup.add_argument(
+            "-x,", "--send-method",
+            metavar="<method>",
+            dest="sendMethod",
+            default=None,
+            required=False,
+            help="How the message should be sent (via 'text' or 'email')",
         )
 
         ##################################################################################################################
@@ -214,7 +223,7 @@ class CLIManager(EmailAgent):
         # each function takes the email agent as first arg, and have optional for the rest
         # firstname, lastname, etc...
         selectedFn = self.serviceTypes[str(serviceType)]
-        selectedFn(firstname=args['fname'], lastname=args['lname'], message=args["message"])
+        selectedFn(firstname=args['fname'], lastname=args['lname'], sendMethod=args["sendMethod"], message=args["message"])
 
         # logout
         self.logoutEmail()
@@ -222,7 +231,7 @@ class CLIManager(EmailAgent):
         print("Closing Program")
 
 
-    def sendText(self, firstname=None, lastname=None, message=None):
+    def sendText(self, firstname=None, lastname=None, sendMethod=None, message=None):
         # If first and last name not provided, have to manually ask for it
         receiveInfoProvided = firstname != None and lastname != None
         if not receiveInfoProvided:
@@ -256,7 +265,7 @@ class CLIManager(EmailAgent):
         receiverContactInfo = self.getReceiverContactInfo(firstname, lastname)
 
         # acutally send message
-        self.sendMsg(receiverContactInfo)
+        self.sendMsg(receiverContactInfo, sendMethod=sendMethod, msgToSend=message)
 
         # regardless of if sent a message or not, see if user wants to wait for reply
         waitForReply = utils.promptUntilSuccess(

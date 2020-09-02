@@ -85,7 +85,6 @@ class EmailAgent(DatabaseManager):
         self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
         self.__emailDataDir = os.path.join(self.__backendDir, "emailData")
-        self.messageTemplatesDir = os.path.join(self.__backendDir, "emailTemplates")
 
         # information to login
         self.emailProvidersInfo = utils.loadJson(os.path.join(self.__emailDataDir, "emailProvidersInfo.json"))
@@ -425,60 +424,17 @@ class EmailAgent(DatabaseManager):
                     {first name, last name, email, carrier, phone number}
                 - msgToSend: (optional) message string to be sent (dont fill in if want to querry for it later)
         '''
-        if self.isCommandLine:
-            # Get a list of all possible message types
-            listOfMsgTypes = [types.replace('.txt', '') for types in os.listdir(self.messageTemplatesDir)]
-            contents = ''
-            
-            typeOfMsg = 'default' 
-            pathToMsgTemplate = os.path.join(self.messageTemplatesDir, 'default.txt')
-
-            with open(pathToMsgTemplate) as readFile:
-                contents = readFile.read()
-
-            for msgType in listOfMsgTypes:
-                pathToMsgTemplate = os.path.join(self.messageTemplatesDir, msgType + '.txt')
-                with open(pathToMsgTemplate) as readFile:
-                    msgContents = readFile.read()
-                print("The {0} message type looks like: \n{1}".format(msgType, msgContents))
-                if 'y' in input("Would you like to send this message type? (y/n): ").lower():
-                    typeOfMsg = msgType   
-                    contents = msgContents 
-                    break
-
-
+        if msgToSend == None and self.isCommandLine:
             # create the body of the email to send
-            # read in the content of the text file to send as the body of the email
+            msgToSend = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
 
-            if msgToSend != None:
-                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=msgToSend)
-
-            elif typeOfMsg == "testMsg":
-                receiver = str(receiverContactInfo['firstName'])
-                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(
-                    receiverName=receiver, senderName=self.myEmailAddress) 
-
-            elif typeOfMsg == 'inputContent':
-                myInput = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
-                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=myInput)
-            
-            # Default to default file 
-            else:
-                sendableMsg = contents
-
-            # print("Sending message:\n{0}".format(sendableMsg))
-
-        # not using command line
-        else:
-            sendableMsg = msgToSend
-            
         # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object
         msg['From'] = self.myEmailAddress
         msg['To'] = receiverContactInfo['email'] # send message as if it were a text
         msg['Subject'] = "Emailing Application"
         # add in the message body
-        msg.attach(MIMEText(sendableMsg, 'plain'))
+        msg.attach(MIMEText(msgToSend, 'plain'))
         return msg
 
 

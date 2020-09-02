@@ -116,7 +116,7 @@ class EmailAgent(DatabaseManager):
         self._userId = self._cliUserId if self.isCommandLine else userId
 
         # text to match on receive side
-        self.username = self.configureLogin(self._userId)
+        self.username = self.configureLogin()
         self._uniqueUserEmailSignature = f"Dest: {self.username}"
 
         # Fetch the contact list from the database
@@ -137,23 +137,22 @@ class EmailAgent(DatabaseManager):
         """
         return EmailAgent._unreadEmailFilter if onlyUnread else EmailAgent._allEmailFilter
 
-    def configureLogin(self, userId, overrideUsername:bool=False, overridePassword:bool=False):
+    def configureLogin(self, overrideUsername:bool=False, overridePassword:bool=False):
         """
             \n@Brief: Helper function that sets username & password if needed
-            \n@Param: userId - The id to set/check
             \n@Param: (optional - default = False) overrideUsername - Update the username?
             \n@Param: (optional - default = False) overridePassword - Update the password?
             \n@Return: The current user's username
         """
         # if not command line, just return with the username
-        if not self.isCommandLine: return self.getUsernameById(userId)
+        if not self.isCommandLine: return self.getUsernameById(self._userId)
 
         # Create user document in database if it doesn't already exist
-        self._createUserDocIfIdDNE(userId)
+        self._createUserDocIfIdDNE(self._userId)
 
         # will only be the case for command line (myUsername == "" if first time doing command line)
-        myUsername = self.getUsernameById(userId)
-        myPassword = self.getPasswordFromId(userId)
+        myUsername = self.getUsernameById(self._userId)
+        myPassword = self.getPasswordFromId(self._userId)
         needToSetUsername = overrideUsername or myUsername == ""
         needToSetPassword = overridePassword or myPassword == ""
 
@@ -170,13 +169,17 @@ class EmailAgent(DatabaseManager):
                         inputPass = utils.promptUntilSuccess("Enter the password: ", hideInput=True)
                         validLogin = newAcctPass == inputPass
                         if not validLogin: print("Invalid password") # repeat loop
-                        else: break
-                # else (do attempt web login) repeat loop
-                else: break
-            self.setUsernameById(userId, newUsername)
+                        else: 
+                            # update localhost password to match
+                            self.setPasswordById(self._userId, newAcctPass)
+                            break # exit loop
+                else: break # not taken, so break out of loop
+            self.setUsernameById(self._userId, newUsername)
             myUsername = newUsername
 
-        if needToSetPassword:
+        if needToSetPassword and self.countNumUsernameMatch(myUsername) > 1:
+            print("Cannot change password since using web app login")
+        elif needToSetPassword:
             while True:
                 newPassword = utils.promptUntilSuccess(
                     "Enter your password (to login via the web GUI - can be updated later): ", hideInput=True)

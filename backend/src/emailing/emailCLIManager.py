@@ -198,7 +198,7 @@ class CLIManager(EmailAgent):
         elif args["setUsername"] or args["setPassword"]:
             super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],
                 emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
-            self.configureLogin(self._cliUserId, overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
+            self.configureLogin(overrideUsername=args["setUsername"], overridePassword=args["setPassword"])
             sys.exit(0)
         elif args["getProviderList"]:
             super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],

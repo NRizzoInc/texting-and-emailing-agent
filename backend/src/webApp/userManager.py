@@ -6,7 +6,6 @@
 import base64
 from datetime import datetime, timedelta
 import os
-import uuid
 
 #-----------------------------3RD PARTY DEPENDENCIES-----------------------------#
 # from werkzeug.contrib.securecookie import SecureCookie
@@ -42,7 +41,7 @@ class UserManager(LoginManager, DatabaseManager):
                 \n@Brief: When Flask app is asked for "current_user", this decorator gets the current user's User object
                 \n@Note: Refence current user with `current_user` (from flask_login import current_user) 
                 \n@Param: userToken - The user's unique token id
-                \n@Return: Reference to the User class related to this uuid
+                \n@Return: Reference to the User class related to this userToken
             """
             return self.findUserById(userToken, User)
 
@@ -57,10 +56,6 @@ class UserManager(LoginManager, DatabaseManager):
             # flash(loginMsg)
             return redirect(webAppConsts.formSites["webAppLogin"])
 
-    def createSafeCookieId(self):
-        # https://docs.python.org/3/library/uuid.html -- safe random uuid
-        return str(uuid.uuid4())
-
     def addUser(self, webAppUsername, webAppPassword):
         """
             \n@Brief: Add a user
@@ -68,12 +63,7 @@ class UserManager(LoginManager, DatabaseManager):
             \n@Param: webAppPassword - The user's password on the site
             \n@Note: Username has already been checked to not be a repeat
         """
-        # do-while loop to make sure non-colliding unique id is made
-        while True:
-            userToken = self.createSafeCookieId()
-            inUse = self.isIdInUse(userToken)
-            if not inUse: break # leave loop once new id is found
-            else: print(f"userToken '{userToken}' is already taken")
+        userToken = self.createSafeCookieId()
 
         # create new email agent for each user
         newUserObj = User(userToken)

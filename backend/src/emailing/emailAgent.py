@@ -184,7 +184,7 @@ class EmailAgent(DatabaseManager):
         filterPossibleSms = lambda name: utils.keyExists(self.emailProvidersInfo[name]["smtpServer"], "SMS-Gateways")
         return list(filter(filterPossibleSms, self.emailProvidersInfo.keys()))
 
-    def sendMsg(self, receiverContactInfo, sendMethod:str='', msgToSend:str='')->str():
+    def sendMsg(self, receiverContactInfo, sendMethod:str=None, msgToSend:str=None)->str():
         """
             \n@Brief: Calls all other functions necessary to send an a message (either through text or email)
             \n@Param: receiverContactInfo- a dictionary about the receiver of format: 
@@ -193,8 +193,8 @@ class EmailAgent(DatabaseManager):
             \n            firstName: {email: "", phoneNumber: "", carrier: ""}
             \n        }
             \n    }
-            \n@Param: sendMethod- a string that should either be 'email' or 'text'
-            \n@Param: msgToSend- a string that contains the message that is desired to be sent
+            \n@Param: sendMethod- (optional) a string that should either be 'email' or 'text'
+            \n@Param: msgToSend- (optional - None) a string that contains the message that is desired to be sent
             \n@Return: String of error message if error occurs (None if success)
         """
         # Check if passed contact info is valid
@@ -208,13 +208,13 @@ class EmailAgent(DatabaseManager):
             if (hasError): return err
 
         # second check if valid "sendMethod" is received
-        if sendMethod == '': pass
+        if sendMethod == None or sendMethod == '': sendTextBool = None
         elif sendMethod == 'email': sendTextBool = False
         elif sendMethod == 'text': sendTextBool = True
         else: raise Exception("Invalid sendMethod Param passed to function!")
 
         if self.isCommandLine:
-            msg = self.composeMsg(receiverContactInfo, msgToSend=msgToSend)
+            msg = self.composeMsg(receiverContactInfo, sendingText=sendTextBool, msgToSend=msgToSend)
         else:
             msg = self.composeMsg(receiverContactInfo, sendingText=sendTextBool, msgToSend=msgToSend)
         
@@ -254,35 +254,39 @@ class EmailAgent(DatabaseManager):
                 receiverContactInfo['firstName'], receiverContactInfo['lastName']))
         return None
 
-    def composeMsg(self, receiverContactInfo, sendingText:bool=False, msgToSend:str=''):
+    def composeMsg(self, receiverContactInfo, sendingText:bool=False, msgToSend:str=None):
         '''
             This function is responsible for composing the email message that get sent out
             - Args:
-                * sendingText: a bool that tells program if it should be sending a text message
-                * msgToSend: a string containing the desired message to be sent
+                * sendingText: (optional) a bool that tells program if it should be sending a text message
+                If None provded, user will be asked 
+                * msgToSend: (optional - None) a string containing the desired message to be sent
 
             - Returns:
                 * The sendable message 
                 * 'invalid' if no type of message was chosen to be send
                 * None if selected message could not be sent
         '''
-        if self.isCommandLine:
-            # determine if user wants to send an email message or phone text
-            if 'n' not in input("Do you want to send a text message if possible (y/n): ").lower():
-                msg = self.composeTextMsg(receiverContactInfo)
-            else:
-                if 'n' not in input("Do you want to send an email message? (y/n): ").lower():
-                    msg = self.composeEmailMsg(receiverContactInfo)
-                else:
-                    msg = 'invalid' # signifies to caller that no message is being sent
 
-        # not sending through command line
-        else:
-            if sendingText:
-                msg = self.composeTextMsg(receiverContactInfo, msgToSend)
-            else:
-                msg = self.composeEmailMsg(receiverContactInfo, msgToSend)
-            
+        # user did not provide method before hand
+        sendMethod="invalid" # either "text" or "email" (default to "invalid" incase incase of error)
+        if sendingText == None:
+            isText = utils.promptUntilSuccess("Send text message if possible (y/n): ", utils.containsConfirmation) == "y"
+            if isText: sendMethod = "text"
+            elif not isText:
+                isEmail = utils.promptUntilSuccess("Send email message (y/n): ", utils.containsConfirmation) == "y"
+                if isEmail: sendMethod = "email" 
+                else: msg = 'invalid' # signifies to caller that no message is being sent
+        elif sendingText: sendMethod = "text"
+        else:             sendMethod = "email"
+
+        # actually compose the message (for either email or text)
+        sendFn = {
+            "text": self.composeTextMsg,
+            "email": self.composeEmailMsg,
+            "invalid": lambda *args: "invalid" # set msg = "invalid" to show bad inputs
+        }
+        msg = sendFn[sendMethod](receiverContactInfo, msgToSend)
 
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
@@ -297,7 +301,7 @@ class EmailAgent(DatabaseManager):
                         part.set_payload(None)
         return msg
 
-    def composeTextMsg(self, receiverContactInfo, msgToSend:str=''):
+    def composeTextMsg(self, receiverContactInfo, msgToSend:str=None):
         '''
             \n@Param: receiverContactInfo - a dictionary containing the following information:
             \n\t{
@@ -307,7 +311,7 @@ class EmailAgent(DatabaseManager):
             \n\t    carrier: str,
             \n\t    phoneNumber: str
             \n\t}
-            \n@Param: msgToSend - a string containing the message to be sent (dont fill in if using command line)
+            \n@Param: msgToSend - (optional) message string to be sent (dont fill in if want to querry for it later)
         '''
         receiverCarrier = receiverContactInfo['carrier'].lower()
 
@@ -341,13 +345,12 @@ class EmailAgent(DatabaseManager):
         if self.isCommandLine: print("Sending text message to {0}".format(textMsgAddress))
         
         # Get content to send in text message
-        if self.isCommandLine:
-            body = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
-        # not using command line
-        else: 
+        if msgToSend != None:
+            # not using command line or message already provided
             body = msgToSend
-        # body += "\n" # have to add newline char at the end of the body
-
+            
+        elif self.isCommandLine:
+            body = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
 
         # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object with the body
@@ -414,13 +417,13 @@ class EmailAgent(DatabaseManager):
 
         return msgList
 
-    def composeEmailMsg(self, receiverContactInfo, msgToSend:str=''):
+    def composeEmailMsg(self, receiverContactInfo, msgToSend:str=None):
         '''
             This function provides the user with a method of choosing which email format to send and entering the desired message.
             @Args:
                 - receiverContactInfo: a dictionary containing the following information 
                     {first name, last name, email, carrier, phone number}
-                - msgToSend: a string containing the message to be sent (dont fill in if using command line)
+                - msgToSend: (optional) message string to be sent (dont fill in if want to querry for it later)
         '''
         if self.isCommandLine:
             # Get a list of all possible message types
@@ -447,8 +450,10 @@ class EmailAgent(DatabaseManager):
             # create the body of the email to send
             # read in the content of the text file to send as the body of the email
 
-            # TODO create other elif statements for different cases
-            if typeOfMsg == "testMsg":
+            if msgToSend != None:
+                sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(content=msgToSend)
+
+            elif typeOfMsg == "testMsg":
                 receiver = str(receiverContactInfo['firstName'])
                 sendableMsg = self.readTemplate(pathToMsgTemplate).substitute(
                     receiverName=receiver, senderName=self.myEmailAddress) 

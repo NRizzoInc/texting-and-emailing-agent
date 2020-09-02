@@ -160,7 +160,18 @@ class EmailAgent(DatabaseManager):
         if needToSetUsername:
             while True:
                 newUsername = utils.promptUntilSuccess("Enter your display name when sending texts (can be updated later): ")
-                if self.isUsernameInUse(newUsername): print(f"Username {newUsername} is already taken, choose another")
+                if self.isUsernameInUse(newUsername):
+                    useWebLogin = utils.promptUntilSuccess(
+                        f"Username {newUsername} is already taken, attempt to login (y/n): ",
+                        utils.containsConfirmation
+                    )
+                    if useWebLogin:
+                        newAcctPass = self.getPasswordFromUsername(newUsername)
+                        inputPass = utils.promptUntilSuccess("Enter the password: ", hideInput=True)
+                        validLogin = newAcctPass == inputPass
+                        if not validLogin: print("Invalid password") # repeat loop
+                        else: break
+                # else (do attempt web login) repeat loop
                 else: break
             self.setUsernameById(userId, newUsername)
             myUsername = newUsername

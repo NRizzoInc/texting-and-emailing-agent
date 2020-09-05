@@ -87,4 +87,4 @@ if [[ ${executePath} == "" ]]; then
 fi
 
 # use "$@" to pass on all parameter the same way to python script
-DISPLAY=":0" ${pythonLocation} ${executePath} "$@"
+DISPLAY=":0" "${pythonLocation}" "${executePath}" "$@"

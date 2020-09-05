@@ -76,11 +76,6 @@ class EmailAgent(DatabaseManager):
         # Inheret all functions and 'self' variables
         DatabaseManager.__init__(self, printCollectionCreation=not self.isCommandLine)
 
-        # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
-        if self.isCommandLine: 
-            from backend.src.emailing.keyboardHandler import KeyboardMonitor
-            self.keyboardMonitor = KeyboardMonitor()
-
         self.__pathToThisDir = os.path.dirname(os.path.abspath(__file__))
         self.__srcDir = os.path.join(self.__pathToThisDir, "..")
         self.__backendDir = os.path.join(self.__srcDir, "..")
@@ -373,6 +368,9 @@ class EmailAgent(DatabaseManager):
             body = msgToSend
             
         elif self.isCommandLine:
+            # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
+            from backend.src.emailing.keyboardHandler import KeyboardMonitor
+            keyboardMonitor = KeyboardMonitor()
             body = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
 
         # setup the Parameters of the message
@@ -449,8 +447,11 @@ class EmailAgent(DatabaseManager):
                 - msgToSend: (optional) message string to be sent (dont fill in if want to querry for it later)
         '''
         if msgToSend == None and self.isCommandLine:
+            # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
+            from backend.src.emailing.keyboardHandler import KeyboardMonitor
+            keyboardMonitor = KeyboardMonitor()
             # create the body of the email to send
-            msgToSend = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
+            msgToSend = keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
 
         # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object
@@ -1173,8 +1174,11 @@ class EmailAgent(DatabaseManager):
             return
 
         # if command line, do special trick to get user to stop the fetching
-        if self.isCommandLine: 
-            self.keyboardMonitor._stopOnKeypress(
+        if self.isCommandLine:
+            # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
+            from backend.src.emailing.keyboardHandler import KeyboardMonitor
+            keyboardMonitor = KeyboardMonitor()
+            keyboardMonitor._stopOnKeypress(
                 fetchEmailsWorker,
                 prompt="stop fetching emails (this may take awhile)",
                 toPrintOnStop="Stopped fetching\n",

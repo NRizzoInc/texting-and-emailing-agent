@@ -721,9 +721,11 @@ class EmailAgent(DatabaseManager):
 
                 user = newContactList[actualLastName][actualFirstName]
 
-                print("Found user: {0} {1} with the following information: \
-                    \nEmail: {2}\nPhone Number: {3}\nCell Carrier: {4}\n".format(
-                    actualLastName, actualFirstName, user['email'], user['phoneNumber'], user['carrier']))
+                print(f"""\nFound user {actualLastName} {actualFirstName} with the following information: \
+                          \nEmail: {user['email']} \
+                          \nPhone Number: {user['phoneNumber']} \
+                          \nCell Carrier: {user['carrier']} \
+                    """)
                 update = input("Do you want to update their information (y/n): ")
 
                 if (update == 'y'):
@@ -779,11 +781,26 @@ class EmailAgent(DatabaseManager):
             print("user not found!")
             return None
 
-        updateFirstName = input("\nTheir first name is '{0}', would you like to change it (y/n): ".format(actualFirstName))
-        updateLastName = input("Their last name is '{0}', would you like to change it (y/n): ".format(actualLastName))
-        updateEmail = input("Their email is '{0}', would you like to change it (y/n): ".format(user['email']))
-        updateCarrier = input("Their cell phone carrier is '{0}', would you like to change it (y/n): ".format(user['carrier']))
-        updatephoneNumber = input("Their phone number is '{0}', would you like to change it (y/n): ".format(user['phoneNumber']))
+        updateFirstName = utils.promptUntilSuccess(
+            f"\nTheir first name is '{actualFirstName}', would you like to change it (y/n): ",
+            utils.containsConfirmation
+        ) =="y"
+        updateLastName = utils.promptUntilSuccess(
+            f"Their last name is '{actualLastName}', would you like to change it (y/n): ",
+            utils.containsConfirmation
+        ) =="y"
+        updateEmail = utils.promptUntilSuccess(
+            f"Their email is '{user['email']}', would you like to change it (y/n): ",
+            utils.containsConfirmation
+        ) =="y"
+        updateCarrier = utils.promptUntilSuccess(
+            f"Their cell phone carrier is '{user['carrier']}', would you like to change it (y/n): ",
+            utils.containsConfirmation
+        ) =="y"
+        updatephoneNumber = utils.promptUntilSuccess(
+            f"Their phone number is '{user['phoneNumber']}', would you like to change it (y/n): ",
+            utils.containsConfirmation
+        ) =="y"
         print('') # space the text out in terminal
 
         newFirstName = firstName
@@ -792,33 +809,35 @@ class EmailAgent(DatabaseManager):
         commonDataDict['carrier'] = user['carrier']
         commonDataDict['phoneNumber'] = user['phoneNumber']
         updatePhrase = "What would you like to change the <field> to: "
-        if (updateFirstName == 'y'):
-            newFirstName = input(updatePhrase.replace('<field>', 'first name'))
-        if (updateLastName == 'y'):
-            newLastName = input(updatePhrase.replace('<field>', 'last name'))
-        if (updateEmail == 'y'):
-            commonDataDict['email'] = input (updatePhrase.replace('<field>', 'email'))
-        if (updateCarrier == 'y'):
-            commonDataDict['carrier'] = input(updatePhrase.replace('<field>', 'cell carrier'))
-        if (updatephoneNumber == 'y'):
-            commonDataDict['phoneNumber'] = input(updatePhrase.replace('<field>', 'phone number'))
+        if (updateFirstName):
+            newFirstName = utils.promptUntilSuccess(updatePhrase.replace('<field>', 'first name'))
+        if (updateLastName):
+            newLastName = utils.promptUntilSuccess(updatePhrase.replace('<field>', 'last name'))
+        if (updateEmail):
+            commonDataDict['email'] = utils.promptUntilSuccess(updatePhrase.replace('<field>', 'email'))
+        if (updateCarrier):
+            commonDataDict['carrier'] = utils.promptUntilSuccess(updatePhrase.replace('<field>', 'cell carrier'))
+        if (updatephoneNumber):
+            commonDataDict['phoneNumber'] = utils.promptUntilSuccess(updatePhrase.replace('<field>', 'phone number'))
         
         if (len(updatedContactList[actualLastName]) == 1):
             del updatedContactList[actualLastName]
             updatedContactList[newLastName] = {}
             updatedContactList[newLastName][newFirstName] = commonDataDict
         else:
+            # update these in reverse order (go from branches -> root) to make saving data easy
+            if (updateEmail or updateCarrier or updatephoneNumber):
+                updatedContactList[actualLastName][actualFirstName] = commonDataDict
+            if (updateFirstName):
+                updatedContactList[actualLastName][newFirstName] = dict(updatedContactList[actualLastName][actualFirstName])
+                del updatedContactList[actualLastName][actualFirstName]
+                actualFirstName = newFirstName
             if (updateLastName):
                 # get a copy of everything past the last name
                 updatedContactList[newLastName] = dict(updatedContactList[actualLastName])
                 del updatedContactList[actualLastName]
                 actualLastName = newLastName
-            if (updateFirstName):
-                updatedContactList[actualLastName][newFirstName] = dict(updatedContactList[actualLastName][actualFirstName])
-                del updatedContactList[actualLastName][actualFirstName]
-                actualFirstName = newFirstName
-            if (updateEmail or updateCarrier or updatephoneNumber):
-                updatedContactList[actualLastName][actualFirstName] = commonDataDict
+
         
         # handled by other function if internal
         if (addingExternally):

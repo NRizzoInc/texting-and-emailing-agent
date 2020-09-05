@@ -61,6 +61,7 @@ while [[ "$#" -gt 0 ]]; do
                 print_flags
                 exit 1
             fi
+            shift # remove --mode
             shift # remove --mode argument from CLI
             break # stop searching command line if mode provided
             ;;

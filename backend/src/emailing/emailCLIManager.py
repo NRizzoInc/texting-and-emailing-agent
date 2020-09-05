@@ -143,7 +143,7 @@ class CLIManager(EmailAgent):
             description="Helps update login information & log in to your email account (or use default)"
         )
         loginManagersGroup.add_argument(
-            "-x", "--username",
+            "-user", "--username",
             action="store_true",
             dest="setUsername",
             required=False,

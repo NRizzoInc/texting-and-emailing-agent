@@ -243,7 +243,11 @@ class CLIManager(EmailAgent):
         print("Closing Program")
 
 
-    def sendText(self, firstname=None, lastname=None, sendMethod=None, message=None):
+    def sendText(self, firstname=None, lastname=None,
+                sendMethod=None, message=None,
+                *args, **kwargs
+        ):
+
         # If first and last name not provided, have to manually ask for it
         receiveInfoProvided = firstname != None and lastname != None
         if not receiveInfoProvided:
@@ -285,7 +289,7 @@ class CLIManager(EmailAgent):
             "Do you want to wait for a new message (y/n): ", successCondition=utils.containsConfirmation)
         if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
-    def getText(self, firstname=None, lastname=None, message=None):
+    def getText(self, firstname=None, lastname=None, message=None, *args, **kwargs):
         # Entering something in the second argument signifies that you want to use the default login
         seeUnopned = utils.promptUntilSuccess(
             "Do you want to see only unopened emails (y/n): ", successCondition=utils.containsConfirmation)

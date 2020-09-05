@@ -89,6 +89,13 @@ class CLIManager(EmailAgent):
             description="Helps choose who to send the email to",
         )
         receipientManagerGroup.add_argument(
+            "-list", "--contact-list",
+            action="store_true",
+            dest="shouldPrintContacts",
+            required=False,
+            help="Print the contact list",
+        )
+        receipientManagerGroup.add_argument(
             "-f", "--firstname",
             metavar=nameMetaVar,
             default=None,
@@ -190,6 +197,11 @@ class CLIManager(EmailAgent):
             self.simpleAddContact()
             sys.exit(0)
         
+        elif args["shouldPrintContacts"]:
+            super().__init__(displayContacts=False, isCommandLine=True, useDefault=args["useDefault"],
+                emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])
+            self.printContactListPretty(printToTerminal=True)
+            sys.exit(0)
         elif args["updateContact"]:
             super().__init__(displayContacts=True, isCommandLine=True, useDefault=args["useDefault"],
                 emailAddress=args["emailAddress"], emailPassword=args["emailPassword"])

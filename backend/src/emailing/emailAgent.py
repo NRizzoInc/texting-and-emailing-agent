@@ -1629,7 +1629,7 @@ class EmailAgent(DatabaseManager):
     def printContactListPretty(self, printToTerminal=True):
         self.contactList = self.getContactList(self._userId)
         formattedContactList = pprint.pformat(self.contactList)
-        if self.isCommandLine and printToTerminal:  print(f"The updated contacts list is:\n{formattedContactList}")
+        if self.isCommandLine and printToTerminal:  print(f"The current contacts list is:\n{formattedContactList}")
         else:                                       return formattedContactList
 
     def logoutEmail(self):

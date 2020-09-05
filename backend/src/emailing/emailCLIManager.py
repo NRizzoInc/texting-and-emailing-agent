@@ -141,6 +141,13 @@ class CLIManager(EmailAgent):
             required=False,
             help="How the message should be sent (via 'text' or 'email')",
         )
+        contentGroup.add_argument(
+            "-nw,", "--no-wait",
+            dest="waitForReply",
+            action="store_false",
+            required=False,
+            help="Use flag to specifically NOT wait for a new message or reply",
+        )
 
         ##################################################################################################################
         # Login Managers
@@ -235,7 +242,10 @@ class CLIManager(EmailAgent):
         # each function takes the email agent as first arg, and have optional for the rest
         # firstname, lastname, etc...
         selectedFn = self.serviceTypes[str(serviceType)]
-        selectedFn(firstname=args['fname'], lastname=args['lname'], sendMethod=args["sendMethod"], message=args["message"])
+        selectedFn(firstname=args['fname'], lastname=args['lname'],
+                   sendMethod=args["sendMethod"], message=args["message"],
+                   waitForReply=args["waitForReply"], 
+        )
 
         # logout
         self.logoutEmail()
@@ -245,7 +255,7 @@ class CLIManager(EmailAgent):
 
     def sendText(self, firstname=None, lastname=None,
                 sendMethod=None, message=None,
-                *args, **kwargs
+                waitForReply=True, *args, **kwargs
         ):
 
         # If first and last name not provided, have to manually ask for it
@@ -284,10 +294,11 @@ class CLIManager(EmailAgent):
         # acutally send message
         self.sendMsg(receiverContactInfo, sendMethod=sendMethod, msgToSend=message)
 
-        # regardless of if sent a message or not, see if user wants to wait for reply
-        waitForReply = utils.promptUntilSuccess(
-            "Do you want to wait for a new message (y/n): ", successCondition=utils.containsConfirmation)
-        if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
+        if waitForReply:
+            # regardless of if sent a message or not, see if user wants to wait for reply
+            waitForReply = utils.promptUntilSuccess(
+                "Do you want to wait for a new message (y/n): ", successCondition=utils.containsConfirmation)
+            if 'n' not in waitForReply: self.receiveEmail(startedBySendingEmail=True, onlyUnread=True)
 
     def getText(self, firstname=None, lastname=None, message=None, *args, **kwargs):
         # Entering something in the second argument signifies that you want to use the default login

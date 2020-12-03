@@ -144,6 +144,10 @@ else
     source ${virtualEnvironDir}/bin/activate
     pipLocation=${virtualEnvironDir}/bin/pip${pythonVersion}
 
+    echo "#1.4.1 Getting Path to Virtual Environment's Python"
+    pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
+    echo "-- pythonLocation: ${pythonLocation}"
+
     if [[ ${deployServices} == true ]]; then
         echo "#1.5 Exporting Path to Source Code"
         # set it locally
@@ -171,21 +175,17 @@ else
         serviceFileName=$(basename "${serviceFile}")
         cp ${serviceFile} ${sysServiceDir}/
         echo "-- Deployed ${serviceFile} -> ${sysServiceDir}/${serviceFileName}"
-
-        echo "#1.8 Getting Path to Virtual Environment's Python"
-        pythonLocation=${virtualEnvironDir}/bin/python # NOTE: don't use ".exe"
-        echo "-- pythonLocation: ${pythonLocation}"
     fi
 fi
 
 if [[ ${upgradePkgs} == true ]]; then
     # update pip to latest
     echo "#2 Upgrading pip to latest"
-    $pythonLocation -m pip install --upgrade pip
+    "${pythonLocation}" -m pip install --upgrade pip
 
     # now pip necessary packages
     echo "#3 Installing all packages"
-    $pipLocation install -r ${installDir}/requirements.txt
+    "${pipLocation}" install -r "${installDir}"/requirements.txt
 fi
 
 

@@ -61,6 +61,7 @@ using the virtual environment so your global python system is not messed up
 * To run the web app: `<path to this dir>/start.sh --mode web`
 * Additional help can be found at `<path to this dir>/start.sh --help`
 * All command line flags used from the bash scripts will transfer over to the python scripts
+* Send text without requiring further input after executing: `./start.sh --mode cli --send -f <receiver firstname> -l <receiver lastname> --no-wait -x 'text' -m "<the message you want to text>"`
 
 ### Starting Code Directly (with Python)
 

@@ -8,7 +8,7 @@ fleep==1.0.1
 future==0.18.2
 is-safe-url==1.0
 itsdangerous==1.1.0
-Jinja2==2.11.2
+Jinja2==2.11.3
 MarkupSafe==1.1.1
 pefile==2019.4.18
 PyInstaller==3.6

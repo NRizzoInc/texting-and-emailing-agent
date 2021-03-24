@@ -8,7 +8,7 @@
   * Disadvantages:
     * Requires python on local machine to run it
 * Non-developer (laypeople) who do not have python, but stil want to text people can use the web app version of this code
-  * Currently running at [`http://72.68.204.143:65501/`](http://72.68.204.143:65501/) (contact me at `rizzo.n@northeastern.edu` if site is down)
+  * Currently running at [`http://71.167.9.86:65501/`](http://71.167.9.86:65501/) (contact me at `rizzo.n@northeastern.edu` if site is down)
   * Advantages:
     * Can text people from anywhere
     * Do not need to have any special software on your computer to use it

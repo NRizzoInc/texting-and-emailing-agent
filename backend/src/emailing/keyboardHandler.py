@@ -101,8 +101,7 @@ class KeyboardMonitor():
         stopKeyThread.start()
         while True:
             msgToRtn += input("") + "\n"
-            # remove last newline char (needed to actually stop inputting)
-            if not stopKeyThread.isAlive():
+            if not stopKeyThread.is_alive():
                 msgToRtn.rstrip()
                 break
 

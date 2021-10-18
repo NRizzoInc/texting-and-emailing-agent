@@ -371,7 +371,7 @@ class EmailAgent(DatabaseManager):
             # dynamically initialize keyboard class as it causes issues on ubuntu 18.04 LTS Server
             from backend.src.emailing.keyboardHandler import KeyboardMonitor
             keyboardMonitor = KeyboardMonitor()
-            body = self.keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
+            body = keyboardMonitor._getMultiLineInput("Please enter the message you would like to send")
 
         # setup the Parameters of the message
         msg = MIMEMultipart() # create a message object with the body

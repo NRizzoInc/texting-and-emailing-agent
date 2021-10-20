@@ -18,8 +18,8 @@
 
 ## Setup
 
-On Linux: `sudo ./install/setup.sh a`
-On Windows (with Git Bash): `./install/setup.sh a`
+On Linux: `sudo ./install/setup.sh -a`
+On Windows (with Git Bash): `./install/setup.sh -a`
 
 Create dummy login to perform email operations:
 

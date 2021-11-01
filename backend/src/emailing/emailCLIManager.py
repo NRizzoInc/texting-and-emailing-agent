@@ -237,7 +237,7 @@ class CLIManager(EmailAgent):
 
         # determine what the user wants to use the emailing agent for
         # dont ask if user already specified via CLI flags
-        serviceType = args[serviceDest] if utils.keyExists(args, serviceDest) else self.getServiceType()
+        serviceType = args[serviceDest] if serviceDest in args and args[serviceDest] != None else self.getServiceType()
 
         # each function takes the email agent as first arg, and have optional for the rest
         # firstname, lastname, etc...
@@ -310,14 +310,12 @@ class CLIManager(EmailAgent):
 
     def getServiceType(self):
         """Helps to determine what user wants to do via terminal inputs"""
-        createPrompt = lambda currKey, nextKey: f"{currKey} or {nextKey}"
-        keysString = reduce(createPrompt, list(serviceTypes.keys()))
-        prompt = "Type {0}".format(keysString)
+        prompt = "Type 'send' or 'receive': "
 
         isValidType = False
         while not isValidType:
             serviceType = input(prompt).lower()
-            isValidType = utils.keyExists(cls.serviceTypes, serviceType)
+            isValidType = utils.keyExists(self.serviceTypes, serviceType)
             # return or print error based on if entered value is valid
             if (not isValidType):   print("Please Enter a Valid Option!")
             else:                   return serviceType

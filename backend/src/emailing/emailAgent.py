@@ -308,7 +308,7 @@ class EmailAgent(DatabaseManager):
 
         # check if user added an attachment (either link or path to file) in message
         if (msg != 'invalid' and msg != None):
-            # DO NOT scan for attachment on local machine if a user can input something malicious
+            # DO NOT scan for attachment on remote machine if a user can input something malicious
             if self.isCommandLine: self.scanForAttachments()
 
             # check if text payload is empty besides newline (enter to submit)
@@ -1563,24 +1563,17 @@ class EmailAgent(DatabaseManager):
         if myPlatform == "Windows":
             regexPaths = r"([a-z, A-Z]:\\[^.]+.[^\s]+)" # <drive-letter>:\<words>.<extension><space>
         elif myPlatform == "Linux":
-            regexPaths = r"([/|~/][^.]+..[^\s]+)" # <~/ or /><words>.<extension><space>
+            regexPaths = r"(.*[/|~/][^.]+..[^\s]+)" # <~/ or /><words>.<extension><space>
         else:
             raise Exception( + " is currently unsupported")
         attachmentFilePaths = re.findall(regexPaths, self.textMsgToSend)
         attachmentList.extend(attachmentFilePaths)
         
-        # check for urls
-        regexUrl = r"(http[s]?://[^\s]+)" # <http(s)://<until space or newline-not url valid>
-        attachmentUrls = re.findall(regexUrl, self.textMsgToSend)
-        # make sure links arent links to regular webpages
-        for url in attachmentUrls:
-            attachmentList.append(url)
-
-        # add attachments that were found9-
-        print("Checking if the following items are valid:\n{0}".format(attachmentList))
-        for toAttach in attachmentList:
-            self.addAttachment(toAttach)
-        print("Done checking if attachments are valid")
+        # add attachments that were found
+        if len(attachmentList) > 0:
+            print("Checking if the following items are valid: {0}".format(attachmentList))
+            for toAttach in attachmentList:
+                self.addAttachment(toAttach)
 
     def addAttachment(self, toAttach:str):
         '''
@@ -1591,6 +1584,7 @@ class EmailAgent(DatabaseManager):
         # check if valid file path
         isValidPath = os.path.exists(toAttach)
         if (isValidPath):
+            print("File " + toAttach + " exists")
             # read the attachment and add it
             attachmentName = os.path.basename(toAttach)
             with open(toAttach, 'rb') as attachment:
@@ -1599,20 +1593,19 @@ class EmailAgent(DatabaseManager):
             attachable['Content-Disposition'] = 'attachment; filename={0}'.format(attachmentName)
             self.attachmentsList.append(attachable)
 
-        # check if valid url
-        isValidUrl = self.isURLValid(toAttach)
-        if (isValidUrl):
-            # use an agent or else browser will block it
-            request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
-            attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
-            attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
-            self.attachmentsList.append(attachable)
+        # check if valid url (dangeroud for remote execution)
+        # isValidUrl = self.isURLValid(toAttach)
+        # if (isValidUrl):
+        #     # use an agent or else browser will block it
+        #     request = urllib.request.Request(toAttach, headers={'User-Agent': 'Mozilla/5.0'})
+        #     attachable = MIMEApplication(urllib.request.urlopen(request).read(), Name="URL Link")
+        #     attachable['Content-Disposition'] = 'attachment; filename={0}'.format("URL Link")
+        #     print("Adding url '" + toAttach + "' to attachmentsList")
+        #     self.attachmentsList.append(attachable)
            
-        if (isValidPath or isValidUrl):
+        if (isValidPath):
             # remove text from payload that was attachment
             self.textMsgToSend = self.textMsgToSend.replace(toAttach, '', 1)
-        else:
-            print("NOT A VALID PATH OR URL!")
 
     def isURLValid(self, url:str):
         '''
@@ -1629,23 +1622,27 @@ class EmailAgent(DatabaseManager):
             # check if url exists (use an agent or else browser will block)
             request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             returnCode = urllib.request.urlopen(request).getcode()
-            if (returnCode != 200): return False # 200 return code means success!
+            if (returnCode != 200):
+                print("bad http code, rejecting url " + url)
+                return False
+            else:
+                return True
             
             # check if file type is media (pic/video/gif)
             # full list from fleep.supported_types: 
             #  ['3d-image', 'archive', 'audio', 'database', 'document', 'executable', 'font',
             #     'raster-image', 'raw-image', 'system', 'vector-image', 'video']
-            validTypes = ['3d-image', 'audio', 'raster-image', 'raw-image', 'vector-image', 'video']
-            urlContent = urllib.request.urlopen(request).read() # return is bytes
-            info = fleep.get(urlContent)
-            if info.type[0] in validTypes: 
-                return True
-            else: 
-                print("Type {0} is not accepted".format(info.type[0]))
-                return False
+            # validTypes = ['3d-image', 'audio', 'raster-image', 'raw-image', 'vector-image', 'video']
+            # urlContent = urllib.request.urlopen(request).read() # return is bytes
+            # info = fleep.get(urlContent)
+            # if info.type[0] in validTypes: 
+            #     return True
+            # else: 
+            #     print("Type {0} is not accepted".format(info.type[0]))
+            #     return False
 
         except:
-            print("NOT A VALID URL")
+            print("NOT A VALID URL: " + url)
             return False
 
     # prints the contact list and returns the printed string nicely printed

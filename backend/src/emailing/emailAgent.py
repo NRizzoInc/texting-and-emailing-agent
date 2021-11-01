@@ -313,7 +313,7 @@ class EmailAgent(DatabaseManager):
 
             # check if text payload is empty besides newline (enter to submit)
             for part in msg.walk():
-                if part.get_content_type() == 'text/plain':                
+                if part.get_content_type() == 'text/plain':
                     if (part.get_payload().isspace()):
                         # if so, remove the text payload
                         part.set_payload(None)
@@ -402,7 +402,7 @@ class EmailAgent(DatabaseManager):
         charLimit = 120
 
         # message is over character limit (and is not one giant word/url)
-        if totalLength > charLimit and text.count(' ') > 0: 
+        if totalLength > charLimit and text.count(' ') > 0:
             count = 0
             lastIndex = 0
             toAppend = ''
@@ -434,7 +434,7 @@ class EmailAgent(DatabaseManager):
 
         # normal (send one message)
         elif (not text.isspace()):
-            msgList.append(text.strip())      
+            msgList.append(text.strip())
 
         return msgList
 

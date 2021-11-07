@@ -85,7 +85,7 @@ installDir=${rootDir}/install
 helpScriptDir=${installDir}/helper-scripts
 mongoInstallScript=${helpScriptDir}/install-mongoDB.sh
 virtualEnvironDir=${rootDir}/${virtualEnvironName}
-pythonVersion=3.7
+pythonVersion=3.9
 pipLocation="" # make global
 pythonLocation="" # global (changed based on OS)
 
@@ -104,7 +104,7 @@ echo "#1 Setting up virtual environment"
 if [[ ${isWindows} = true ]]; then
     # windows
     echo "#1.1 Checking Python Version"
-    currVersionText=$(python3 --version)
+    currVersionText=$(py -3 --version)
     currVersionMinor=$(echo "$currVersionText" | awk '{print $2}')
     currVersion=$(echo "${currVersionMinor}" | sed -r 's/\.[0-9]$//') # strips away minor version (3.7.2 -> 3.7)
 
@@ -114,7 +114,7 @@ if [[ ${isWindows} = true ]]; then
     fi
 
     echo "#1.2 Creating Virtual Environment"
-    py -m venv $virtualEnvironDir # actually create the virtual environment
+    py -3 -m venv $virtualEnvironDir # actually create the virtual environment
     $virtualEnvironDir/Scripts/activate
     pipLocation=$virtualEnvironDir/Scripts/pip3.exe
 

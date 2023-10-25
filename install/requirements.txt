@@ -18,5 +18,5 @@ python-engineio==3.13.1
 python-socketio==4.6.0
 pywin32-ctypes==0.2.0
 six==1.15.0
-Werkzeug==1.0.1
+Werkzeug==3.0.1
 WTForms==2.3.1
